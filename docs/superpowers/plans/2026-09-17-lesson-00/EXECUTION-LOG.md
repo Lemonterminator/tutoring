@@ -91,7 +91,12 @@
 - Commit: 868f61c "feat: decibel ladder and cascade figure with tone"
 
 ## Task 12 — Lesson 0 English Content
-- Step 1: UNVERIFIED: sound-intensity, sound-intensity-level, kuulokynnys, kipukynnys (textbook PDF contains image scans without embedded text; terms.json left as plan specified)
+- Step 1: VERIFIED via multimodal inspection of `Textbook_materials/Physics/15 Äänen havaittu voimakkuus ilmaistaan desibeleinä ….pdf`:
+  - sound intensity → `äänen intensiteetti` (defined as $I = P/A$)
+  - sound intensity level → `äänen intensiteettitaso` (defined as $L = 10\ \mathrm{dB}\cdot\log(I/I_0)$)
+  - threshold of hearing → `kuulokynnys` ($I_0 = 10^{-12}\ \mathrm{W/m^2}$ at 0 dB)
+  - threshold of pain → `kipukynnys` (~120 fon / 120 dB)
+  - updated `terms.json` and `lesson.fi.mdx` with `äänen intensiteettitaso`.
 - Step 2: created `subjects/math/00-wave-math-foundations/terms.json`
 - Step 3: created `subjects/math/00-wave-math-foundations/lesson.test.tsx`
 - Step 4: ran `npx vitest run subjects/math/00-wave-math-foundations/lesson.test.tsx` → FAIL: `AssertionError: expected <h2 data-b="0" id="sec-0"></h2> to have a length of 6 but got 1`

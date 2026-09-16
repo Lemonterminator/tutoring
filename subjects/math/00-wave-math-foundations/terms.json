@@ -12,5 +12,5 @@
   "angular-velocity": { "en": "angular velocity", "fi": "kulmanopeus" },
   "amplitude": { "en": "amplitude", "fi": "amplitudi" },
   "sound-intensity": { "en": "sound intensity", "fi": "äänen intensiteetti" },
-  "sound-intensity-level": { "en": "sound intensity level", "fi": "äänenvoimakkuustaso" }
+  "sound-intensity-level": { "en": "sound intensity level", "fi": "äänen intensiteettitaso" }
 }
