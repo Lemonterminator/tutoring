@@ -10,7 +10,8 @@
     "test": "vitest run",
     "dev": "vite",
     "typecheck": "tsc --noEmit",
-    "build": "tsx scripts/build-all.ts"
+    "build": "tsx scripts/check.ts && tsx scripts/build-all.ts",
+    "check": "tsx scripts/check.ts"
   },
   "repository": {
     "type": "git",
