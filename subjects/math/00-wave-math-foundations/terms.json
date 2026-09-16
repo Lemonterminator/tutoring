@@ -1,1 +1,16 @@
-{}
+{
+  "derivative": { "en": "derivative", "fi": "derivaatta" },
+  "partial-derivative": { "en": "partial derivative", "fi": "osittaisderivaatta" },
+  "logarithm": { "en": "logarithm", "fi": "logaritmi" },
+  "imaginary-unit": { "en": "imaginary unit", "fi": "imaginaariyksikkö" },
+  "complex-plane": { "en": "complex plane", "fi": "kompleksitaso" },
+  "real-part": { "en": "real part", "fi": "reaaliosa" },
+  "imaginary-part": { "en": "imaginary part", "fi": "imaginaariosa" },
+  "complex-number": { "en": "complex number", "fi": "kompleksiluku" },
+  "unit-circle": { "en": "unit circle", "fi": "yksikköympyrä" },
+  "radian": { "en": "radian", "fi": "radiaani" },
+  "angular-velocity": { "en": "angular velocity", "fi": "kulmanopeus" },
+  "amplitude": { "en": "amplitude", "fi": "amplitudi" },
+  "sound-intensity": { "en": "sound intensity", "fi": "äänen intensiteetti" },
+  "sound-intensity-level": { "en": "sound intensity level", "fi": "äänenvoimakkuustaso" }
+}
