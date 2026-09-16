@@ -32,3 +32,15 @@ test('every Term in the lesson resolves and shows the other language', () => {
   act(() => setLang('fi'));
   expect(container.querySelector('[data-term="imaginary-unit"] .term__alt')?.textContent).toBe(' (imaginary unit)');
 });
+
+test('the Finnish body is really Finnish and keeps the same structure', () => {
+  const { container } = renderLesson();
+  const englishHeadings = Array.from(container.querySelectorAll('article h2'), (h) => h.textContent);
+  act(() => setLang('fi'));
+  const finnishHeadings = Array.from(container.querySelectorAll('article h2'), (h) => h.textContent);
+  expect(finnishHeadings).toHaveLength(englishHeadings.length);
+  expect(finnishHeadings[1]).not.toBe(englishHeadings[1]);
+  expect(container.querySelectorAll('article figure.figure')).toHaveLength(4);
+  expect(container.querySelectorAll('article .quiz')).toHaveLength(5);
+});
+
