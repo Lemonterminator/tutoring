@@ -11,7 +11,8 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "tsx scripts/check.ts && tsx scripts/build-all.ts",
-    "check": "tsx scripts/check.ts"
+    "check": "tsx scripts/check.ts",
+    "translate": "tsx scripts/translate.ts"
   },
   "repository": {
     "type": "git",
