@@ -1,3 +1,195 @@
-## 1. Paikanvaraus
+import { ImpedanceReflection } from './ImpedanceReflection';
+import { ResonanceLab } from './ResonanceLab';
 
-Oppitunnin sisältö kirjoitetaan tehtävässä 12.
+Jokainen puhallinsoitin, jokainen kitaran kieli ja jokainen huone, jossa olet koskaan puhunut, perustuu samaan ideaan: kahden rajan välissä oleva aalto voi elää vain tietyillä taajuuksilla. Tässä osiossa saadaan nämä taajuudet simuloinnin avulla ennen kuin kaava kirjoitetaan.
+
+## 1. Mitä tapahtuu rajapinnassa
+
+Oppikirjasi aloittaa tämän aiheen kysymyksellä. Ultraäänitutkimuksessa ihoon levitetään geeliä, ja anturia painetaan geelin läpi sen sijaan, että sitä pidettäisiin ilman päällä. Miksi vaivautua?
+
+Sen vuoksi, mitä aalto tekee saapuessaan väliaineen rajapintaan. Osa siitä jatkaa eteenpäin, osa heijastuu takaisin, ja jako määräytyy kunkin väliaineen yhden ominaisuuden perusteella — sen <Term id="acoustic-impedance">akustisen impedanssin</Term>. Kun kaksi väliainetta ovat samankaltaisia, rajapinta on lähes huomaamaton. Kun ne ovat hyvin erilaisia, lähes kaikki heijastuu.
+
+<Figure id="impedance">
+  <ImpedanceReflection />
+</Figure>
+
+Vedä liukusäädintä ääriasentoihin. Oikealla toinen väliaine on niin raskas, että pää ei voi liikkua ollenkaan, ja <Term id="reflection">heijastuminen</Term> palaa ylösalaisin — **kiinteä pää**. Vasemmalla toinen väliaine ei vastusta lainkaan, ja heijastuma palaa oikeinpäin — **vapaa pää**.
+
+<Syllabus>
+Kiinteässä päässä heijastunut siirtymä on käänteinen; vapaassa päässä se ei ole. Näiden välillä mitä suurempi epäsuhta on kahden väliaineen välillä, sitä enemmän aallosta heijastuu.
+</Syllabus>
+
+<Beyond>
+Äänelle $Z = \rho v$. Ilman impedanssi on noin 400 SI-yksiköissä ja pehmeä kudos noin 1.6 miljoonaa, suhde noin 4000 — paina "ilmasta kudokseen" -painiketta ja lue kuinka paljon palaa takaisin. Geelillä on lähes sama impedanssi kuin kudoksella, joten se poistaa ilman ja kudoksen välisen raon ja päästää äänen sisään. Sama periaate selittää, miksi kaiuttimessa tarvitaan kartio ja miksi stetoskooppi toimii.
+</Beyond>
+
+<ChoiceQuiz correct={2}>
+Miksi ultraäänitutkimuksessa tarvitaan geeliä anturin ja ihon välillä?
+
+<Choice>Pitääkseen anturin viileänä sen toimiessa</Choice>
+<Choice>Tehdäkseen anturin liukumisen helpommaksi</Choice>
+<Choice>Koska ilmaväli heijastaisi lähes kaiken äänen takaisin</Choice>
+<Choice>Hidastaakseen ääntä, jotta kaikujen saapuminen viivästyisi</Choice>
+
+<Hint>
+Aseta kuva tilaan "ilmasta kudokseen" ja lue heijastuneen prosenttiosuus.
+</Hint>
+
+<Solution>
+Ilman ja kudoksen impedanssit eroavat toisistaan noin kertoimella 4000, joten noin 99.9 % äänestä heijastuisi takaisin ilmavälissä, eikä käytännössä mikään pääsisi kudokseen asti. Geeli sovittaa impedanssit yhteen, ja rajapinta katoaa lähes kokonaan.
+</Solution>
+</ChoiceQuiz>
+
+<NumericQuiz answer={90} unit="m" rel={0.02}>
+<Term id="echo-sounder">kaikuluotain</Term> lähettää pulssin suoraan alas ja vastaanottaa kaiku 0.12 s myöhemmin. Ääni etenee merivedessä nopeudella 1500 m/s. Kuinka syvällä vesi on?
+
+<Hint>
+Kaksi ansaa yhdessä kysymyksessä. Pulssi menee alas **ja** palaa takaisin, ja äänen nopeus vedessä ei ole se 340 m/s, jota käytät ilmalle.
+</Hint>
+
+<Solution>
+Pulssi kulkee yhteensä $1500 \cdot 0.12 = 180$ m, joten syvyys on puolet tästä: 90 m. Jos olisi käytetty nopeutta 340 m/s, tulos olisi ollut 20 m, ja tekijän kaksi unohtaminen antaisi tulokseksi 180 m.
+</Solution>
+</NumericQuiz>
+
+## 2. Kaksi aaltoa, yksi kuvio joka ei etene mihinkään
+
+Nyt vangitaan aalto. Lähetä se molemmista päistä kiinnitetylle kielelle: se heijastuu, palaa takaisin ja laskee yhteen itsensä kanssa. Osiossa 1 kerrottiin jo, miltä heijastuminen näyttää kiinteässä päässä — sama aalto, käänteisenä, kulkiessa toiseen suuntaan. Laske nämä kaksi yhteen:
+
+$$
+\cos(\omega t - kx) - \cos(\omega t + kx) = 2\sin(kx)\sin(\omega t)
+$$
+
+ja oikea puoli on eri tyyppinen ilmiö. $x$-osa ja $t$-osa ovat eronneet toisistaan. Muoto $\sin(kx)$ ei koskaan liiku; kaikki, mikä muuttuu, on sen ilmaantumisen voimakkuus termin $\sin(\omega t)$ kautta. Tämä on <Term id="standing-wave">seisova aalto</Term>.
+
+Huomaa, että muoto on $\sin(kx)$, joka on nolla kohdassa $x = 0$, täysin siksi, että heijastuminen oli käänteistä. Muuta reunaehtoa ja muutat muotoa — mikä on koko seuraavan osion asia.
+
+<Syllabus>
+Seisovassa aallossa pisteet, joissa $\sin(kx) = 0$, eivät liiku lainkaan — nämä ovat <Term id="node">solmuja</Term>. Niiden puolivälissä väliaine heilahtelee voimakkaimmin — nämä ovat <Term id="antinode">kupuja</Term>. Vierekkäiset solmut ovat puolen aallonpituuden päässä toisistaan. Yhteenlaskettuna yhden jakson yli seisova aalto ei siirrä energiaa väliaineen läpi.
+</Syllabus>
+
+## 3. Reunaehdot ratkaisevat kaiken
+
+Tässä on kohta, joka yleensä opetellaan ulkoa, vaikka ei pitäisi.
+
+<Figure id="resonance">
+  <ResonanceLab />
+</Figure>
+
+Kuvassa ratkaistaan aaltoyhtälö vaiheittain — sama yhtälö kuin oppitunnilla 1, ruudukossa, ilman viittausta aallonpituuksiin tai harmonisiin. Valitse tapaus, pysy **Pyyhkäisy**-tilassa ja vedä taajuuden säädintä hitaasti. Lähes kaikkialla ei tapahdu mitään. Muutamilla erityisillä taajuuksilla amplitudi nousee ja ilmestyy siisti kuvio: <Term id="resonance">resonanssi</Term>. Mittarit laskevat solmujen määrän **kuvasta** etsimällä kohdat, joissa väliaine ei koskaan liiku.
+
+Laske nyt solmut itse ja huomaa, että kaikissa kolmessa tapauksessa käytetään samoja kahta kysymystä: mitä siirtymän täytyy tehdä kummassakin päässä, ja mikä on lyhin aalto, joka voi sopia niihin?
+
+- **Kiinteä kieli, molemmat päät kiinni.** Siirtymän täytyy olla nolla kummassakin päässä, joten molemmat päät ovat solmuja. Kokonaisia puolikkaita aaltoja mahtuu: $L = n\lambda/2$, jolloin $\lambda_n = 2L/n$. Solmut sijaitsevat kohdassa $x = mL/n$, joten kaksi niistä on päissä ja $n - 1$ tiukasti sisällä.
+- **Putki, molemmat päät auki.** Ilma avoimessa päässä voi liikkua vapaasti, joten molemmat päät ovat siirtymän kupuja. Uudelleen $L = n\lambda/2$ ja $\lambda_n = 2L/n$ — mutta nyt kupuja on $n + 1$ ja solmut $n$ ovat kaikki sisällä.
+- **Putki, toinen pää kiinni.** Solmu kiinni olevassa päässä, kupu auki olevassa päässä. Lyhin sopiva muoto on **neljäsosa** aallosta, ja sen jälkeen jokainen pariton neljäsosa: $\lambda_n = 4L/(2n-1)$. Joten taajuudet ovat $f_1, 3f_1, 5f_1, \ldots$ — parilliset harmoniset eivät yksinkertaisesti ole olemassa.
+
+<ExamTip>
+Älä ulkoa opettele "n kupua ja n − 1 solmua". Se on totta kiinteälle kielelle mutta väärä putkelle, jossa molemmat päät ovat auki. Piirrä päät ensin, sovita lyhin aalto, joka täyttää ne, ja laske sitten mitä piirsit. Se vie kymmenen sekuntia eikä se voi mennä pieleen.
+</ExamTip>
+
+<NumericQuiz answer={200} unit="Hz" rel={0.02}>
+Kitaran kieli on 0.65 m pitkä ja aallot etenevät siinä nopeudella 260 m/s. Mikä on sen <Term id="fundamental-frequency">perustaajuus</Term>?
+
+<Hint>
+Molemmat päät ovat kiinni, joten pisin mahtuva aalto on $\lambda_1 = 2L$.
+</Hint>
+
+<Solution>
+$\lambda_1 = 2 \cdot 0.65 = 1.3$ m, joten $f_1 = 260/1.3 = 200$ Hz.
+</Solution>
+</NumericQuiz>
+
+<NumericQuiz answer={600} unit="Hz" rel={0.02}>
+Mikä on tuon saman kielen kolmannen <Term id="harmonic">harmonisen</Term> taajuus?
+
+<Hint>
+Kiinteällä kielellä kaikki kokonaisluvun kertaluvut perustaajuudesta ovat sallittuja.
+</Hint>
+
+<Solution>
+$f_3 = 3f_1 = 600$ Hz.
+</Solution>
+</NumericQuiz>
+
+<NumericQuiz answer={500} unit="Hz" rel={0.02}>
+Putki, jossa toinen pää on kiinni, on 0.17 m pitkä, ilmassa, jonka äänen nopeus on 340 m/s. Mikä on sen perustaajuus?
+
+<Hint>
+Solmu kiinni olevassa päässä, kupu auki olevassa päässä. Se on neljäsosa aallosta, joten $\lambda_1 = 4L$.
+</Hint>
+
+<Solution>
+$\lambda_1 = 4 \cdot 0.17 = 0.68$ m, joten $f_1 = 340/0.68 = 500$ Hz.
+</Solution>
+</NumericQuiz>
+
+<ChoiceQuiz correct={1}>
+Samassa kiinni olevassa putkessa on $f_1 = 500$ Hz. Millä näistä se **ei** voi resonoida?
+
+<Choice>500 Hz</Choice>
+<Choice>1000 Hz</Choice>
+<Choice>1500 Hz</Choice>
+<Choice>2500 Hz</Choice>
+
+<Hint>
+Aseta kuva "putki, toinen pää kiinni" ja tee pyyhkäisy. Mitkä huiput puuttuvat?
+</Hint>
+
+<Solution>
+1000 Hz, koska se on toinen harmoninen ja putkessa, jossa toinen pää on kiinni, on vain parittomat: 500, 1500, 2500 Hz jne.
+</Solution>
+</ChoiceQuiz>
+
+<NumericQuiz answer={3} rel={0}>
+Kiinteä kieli molemmissa päissä värähtelee neljännessä harmonisessa. Kuinka monta solmua on tiukasti kahden pään välissä?
+
+<Hint>
+$\lambda_4 = 2L/4 = L/2$, joten piirrä neljä puolikasta aaltoa kielen päälle ja laske nollakohdat, jotka eivät ole päässä. Voit myös asettaa kuvan kielelle, tehdä pyyhkäisyn neljänteen huippuun ja lukea mitatun määrän.
+</Hint>
+
+<Solution>
+Kolme. Solmut ovat kohdissa $L/4$, $L/2$ ja $3L/4$; ne kohdissa 0 ja $L$ ovat kiinteät päät. Yleisesti ottaen kieli, joka on $n$:nessä harmonisessa, sisältää $n - 1$ sisäistä solmua — mutta tarkista tämä putkeen nähden, jossa molemmat päät ovat auki, ennen kuin luotat siihen muualla.
+</Solution>
+</NumericQuiz>
+
+## 4. Siirtymä vai paine? Ne vaihtavat paikkaa
+
+<ExamTip>
+Putkessa termi "solmu" on epäselvä, ennen kuin kerrot, minkä suureen **solmusta** on kyse. Siirtymän solmu on paineen kupu ja siirtymän kupu on paineen solmu. Kokeissa siirrytään tahallisesti näiden kahden välillä.
+</ExamTip>
+
+Oppitunnilla 1 annettiin syy: $p = -B\,\partial\xi/\partial x$. Siellä, missä ilma ei liiku lainkaan mutta sen molemmilla puolilla oleva ilma liikkuu sitä kohti, <Term id="pressure">paine</Term> vaihtelee voimakkaimmin. Siellä, missä ilma heilahtelee voimakkaimmin, vierekkäiset kerrokset liikkuvat yhdessä ja paine muuttuu vain vähän.
+
+Avoin pää on selkein tapaus. Ilma siellä voi liikkua vapaasti, joten se on siirtymän kupu. Se on myös yhteydessä ilmakehään, joten sen paine ei voi muuttua — paineen solmu. Molemmat väittämät kuvaavat saman putken samaa päätä.
+
+<ChoiceQuiz correct={0}>
+Putken avoimessa päässä ilma on:
+
+<Choice>siirtymän kupu ja paineen solmu</Choice>
+<Choice>siirtymän solmu ja paineen kupu</Choice>
+<Choice>molempien solmu</Choice>
+<Choice>molempien kupu</Choice>
+
+<Hint>
+Voiko ilma putken avoimessa päässä liikkua? Voiko sen paine erota ulkopuolisen ilmanpaineesta?
+</Hint>
+
+<Solution>
+Siirtymän kupu ja paineen solmu. Se voi liikkua vapaasti, ja se on yhteydessä ulkoilmaan, joten sen paine on kiinnitetty ilmakehän paineeseen.
+</Solution>
+</ChoiceQuiz>
+
+## 5. Mitä simulaatio ei vielä kerro sinulle
+
+<Beyond>
+Kaksi rehellistä huomiota kuvasta.
+
+Ensinnäkin, putken avoin pää ei ole täsmälleen kupu. Putken ulkopuolella oleva ilma vedetään mukaan, joten putki käyttäytyy kuin se olisi hieman pidempi — noin $0.6r$ **päätykorjaus** putkelle, jonka säde on $r$. Soitinten valmistajat säätävät sen mukaisesti; oppimäärä jättää sen huomiotta.
+
+Toiseksi, pyyhkäisyn huiput ovat leveitä, koska simulaatiossa on vaimennusta. Ilman vaimennusta ne olisivat äärettömän teräviä ja korkeita, mikä on sekä fyysisesti mahdotonta että mahdotonta löytää liukusäätimellä.
+</Beyond>
+
+Vaihda kuva **Näppäys**-tilaan ja siirrä näppäyskohtaa. Väliaine järjestäytyy itsestään samoiksi harmonisiksi säveliksi, mutta niiden *painot* muuttuvat — ja jos näppäät täsmälleen keskeltä, parilliset harmoniset sävelet katoavat, koska keskipiste on solmu kaikille niille.
+
+Tämä on koko äänenväri. Klarinetti ja huilu soittavat samaa nuottia, jolla on sama <Term id="fundamental-frequency">perustaajuus</Term> ja täysin erilaiset yläsävelrakenteet. Tästä alkaa oppitunti 3.

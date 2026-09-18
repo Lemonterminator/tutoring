@@ -41,3 +41,15 @@ test('every Term resolves and the glossary lists them all', () => {
   act(() => setLang('fi'));
   expect(container.querySelectorAll('.glossary__row')).toHaveLength(13);
 });
+
+test('the Finnish body is really Finnish and keeps the same structure', () => {
+  const { container } = renderLesson();
+  const english = Array.from(container.querySelectorAll('article h2'), (h) => h.textContent);
+  act(() => setLang('fi'));
+  const finnish = Array.from(container.querySelectorAll('article h2'), (h) => h.textContent);
+  expect(finnish).toHaveLength(english.length);
+  expect(finnish[0]).not.toBe(english[0]);
+  expect(container.querySelectorAll('article figure.figure')).toHaveLength(2);
+  expect(container.querySelectorAll('article .quiz')).toHaveLength(8);
+  expect(container.querySelector('[data-term="node"] .term__alt')?.textContent).toBe(' (node)');
+});
