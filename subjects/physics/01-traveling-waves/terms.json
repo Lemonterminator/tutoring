@@ -1,1 +1,16 @@
-{}
+{
+  "wavelength": { "en": "wavelength", "fi": "aallonpituus" },
+  "period": { "en": "period", "fi": "jaksonaika" },
+  "frequency": { "en": "frequency", "fi": "taajuus" },
+  "wave-speed": { "en": "wave speed", "fi": "etenemisnopeus" },
+  "amplitude": { "en": "amplitude", "fi": "amplitudi" },
+  "angular-frequency": { "en": "angular frequency", "fi": "kulmataajuus" },
+  "wave-number": { "en": "wave number", "fi": "aaltoluku" },
+  "transverse-wave": { "en": "transverse wave", "fi": "poikittainen aaltoliike" },
+  "longitudinal-wave": { "en": "longitudinal wave", "fi": "pitkittäinen aaltoliike" },
+  "partial-derivative": { "en": "partial derivative", "fi": "osittaisderivaatta" },
+  "pressure": { "en": "pressure", "fi": "paine" },
+  "infrasound": { "en": "infrasound", "fi": "infraääni" },
+  "ultrasound": { "en": "ultrasound", "fi": "ultraääni" },
+  "wave-equation": { "en": "wave equation", "fi": "aaltoyhtälö" }
+}
