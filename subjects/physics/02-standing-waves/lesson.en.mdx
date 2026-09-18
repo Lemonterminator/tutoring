@@ -1,3 +1,195 @@
-## 1. Placeholder
+import { ImpedanceReflection } from './ImpedanceReflection';
+import { ResonanceLab } from './ResonanceLab';
 
-The lesson body is written in task 12.
+Every wind instrument, every guitar string and every room you have ever spoken in works on one idea: a wave that is trapped between two boundaries can only survive at certain frequencies. This lesson gets those frequencies out of a simulation before it writes down a single formula.
+
+## 1. What happens at a boundary
+
+Your textbook opens this topic with a question. In an ultrasound scan the skin is smeared with gel, and the probe is pushed through the gel rather than held in the air above it. Why bother?
+
+Because of what a wave does when it arrives at a change of medium. Part of it carries on, part of it comes back, and the split is decided by a single property of each medium — its <Term id="acoustic-impedance">acoustic impedance</Term>. When the two media are similar the boundary is almost invisible. When they are very different, almost everything bounces.
+
+<Figure id="impedance">
+  <ImpedanceReflection />
+</Figure>
+
+Drag the slider to the extremes. On the far right the second medium is so heavy that the end cannot move at all, and the <Term id="reflection">reflection</Term> comes back upside down — a **fixed end**. On the far left the second medium offers no resistance, and the reflection comes back the same way up — a **free end**.
+
+<Syllabus>
+At a fixed end the reflected displacement is inverted; at a free end it is not. In between, the larger the mismatch between the two media, the more of the wave is reflected.
+</Syllabus>
+
+<Beyond>
+For sound, $Z = \rho v$. Air is about 400 in SI units and soft tissue about 1.6 million, a ratio of roughly 4000 — press the "air to tissue" button and read off how much comes back. The gel has nearly the same impedance as tissue, so it removes the air gap and lets the sound in. The same idea is why a loudspeaker needs a cone and why a stethoscope works.
+</Beyond>
+
+<ChoiceQuiz correct={2}>
+Why does an ultrasound scan need gel between the probe and the skin?
+
+<Choice>To keep the probe cool while it works</Choice>
+<Choice>To make the probe slide more easily</Choice>
+<Choice>Because an air gap would reflect almost all of the sound back</Choice>
+<Choice>To slow the sound down so the echoes arrive later</Choice>
+
+<Hint>
+Set the figure to "air to tissue" and read the reflected percentage.
+</Hint>
+
+<Solution>
+Air and tissue are mismatched by a factor of about 4000, so about 99.9 % of the sound would be reflected at an air gap and essentially nothing would reach the tissue underneath. The gel matches the impedances, and the boundary nearly disappears.
+</Solution>
+</ChoiceQuiz>
+
+<NumericQuiz answer={90} unit="m" rel={0.02}>
+An <Term id="echo-sounder">echo sounder</Term> sends a pulse straight down and receives the echo 0.12 s later. Sound travels at 1500 m/s in sea water. How deep is the water?
+
+<Hint>
+Two traps in one question. The pulse goes down **and** comes back, and the speed of sound in water is not the 340 m/s you use for air.
+</Hint>
+
+<Solution>
+The pulse covers $1500 \cdot 0.12 = 180$ m in total, so the depth is half of that: 90 m. Using 340 m/s would have given 20 m, and forgetting the factor of two would have given 180 m.
+</Solution>
+</NumericQuiz>
+
+## 2. Two waves, one pattern that goes nowhere
+
+Now trap the wave. Send it down a string that is held at both ends: it reflects, comes back, and adds to itself. Section 1 already told you what the reflection looks like at a fixed end — the same wave, inverted, running the other way. So add those two:
+
+$$
+\cos(\omega t - kx) - \cos(\omega t + kx) = 2\sin(kx)\sin(\omega t)
+$$
+
+and the right-hand side is a different kind of animal. The $x$ part and the $t$ part have come apart. The shape $\sin(kx)$ never moves; all that changes is how strongly it is expressed, through $\sin(\omega t)$. That is a <Term id="standing-wave">standing wave</Term>.
+
+Notice that the shape came out as $\sin(kx)$, which is zero at $x = 0$, entirely because the reflection was inverted. Change the boundary and you change the shape — which is the whole of the next section.
+
+<Syllabus>
+In a standing wave the points where $\sin(kx) = 0$ never move at all — these are the <Term id="node">nodes</Term>. Halfway between them the medium swings hardest — these are the <Term id="antinode">antinodes</Term>. Neighbouring nodes are half a wavelength apart. Averaged over a cycle, a standing wave transports no energy along the medium.
+</Syllabus>
+
+## 3. The boundary conditions decide everything
+
+Here is the part that is usually memorised and should not be.
+
+<Figure id="resonance">
+  <ResonanceLab />
+</Figure>
+
+The figure is solving the wave equation step by step — the same equation from lesson 1, on a grid, with nothing in it about wavelengths or harmonics. Pick a case, stay in **Sweep**, and drag the frequency slider slowly. Almost everywhere nothing happens. At a few special frequencies the amplitude climbs and a clean pattern appears: <Term id="resonance">resonance</Term>. The readouts count the nodes **from the picture**, by finding where the medium never moves.
+
+Now do the counting yourself, and notice that all three cases use the same two questions: what must the displacement do at each end, and what is the shortest wave that can do it?
+
+- **String, both ends fixed.** The displacement must be zero at both ends, so both ends are nodes. Whole half-waves fit: $L = n\lambda/2$, giving $\lambda_n = 2L/n$. The nodes sit at $x = mL/n$, so two are at the ends and $n - 1$ are strictly inside.
+- **Pipe, both ends open.** The air at an open end is free to move, so both ends are displacement antinodes. Again $L = n\lambda/2$ and $\lambda_n = 2L/n$ — but now there are $n + 1$ antinodes and the $n$ nodes are all inside.
+- **Pipe, one end closed.** A node at the closed end, an antinode at the open end. The shortest fit is a **quarter** wave, and after that every odd quarter: $\lambda_n = 4L/(2n-1)$. So the frequencies go $f_1, 3f_1, 5f_1, \ldots$ — the even harmonics simply do not exist.
+
+<ExamTip>
+Never recall "n antinodes and n − 1 nodes". It is true for a string and wrong for a pipe open at both ends. Draw the ends first, fit the shortest wave that satisfies them, then count what you drew. It takes ten seconds and it cannot go wrong.
+</ExamTip>
+
+<NumericQuiz answer={200} unit="Hz" rel={0.02}>
+A guitar string is 0.65 m long and waves travel along it at 260 m/s. What is its <Term id="fundamental-frequency">fundamental frequency</Term>?
+
+<Hint>
+Both ends are fixed, so the longest wave that fits has $\lambda_1 = 2L$.
+</Hint>
+
+<Solution>
+$\lambda_1 = 2 \cdot 0.65 = 1.3$ m, so $f_1 = 260/1.3 = 200$ Hz.
+</Solution>
+</NumericQuiz>
+
+<NumericQuiz answer={600} unit="Hz" rel={0.02}>
+What is the frequency of the third <Term id="harmonic">harmonic</Term> of that same string?
+
+<Hint>
+On a string every whole multiple of the fundamental is allowed.
+</Hint>
+
+<Solution>
+$f_3 = 3f_1 = 600$ Hz.
+</Solution>
+</NumericQuiz>
+
+<NumericQuiz answer={500} unit="Hz" rel={0.02}>
+A pipe closed at one end is 0.17 m long, in air at 340 m/s. What is its fundamental frequency?
+
+<Hint>
+Node at the closed end, antinode at the open end. That is a quarter of a wave, so $\lambda_1 = 4L$.
+</Hint>
+
+<Solution>
+$\lambda_1 = 4 \cdot 0.17 = 0.68$ m, so $f_1 = 340/0.68 = 500$ Hz.
+</Solution>
+</NumericQuiz>
+
+<ChoiceQuiz correct={1}>
+That same closed pipe has $f_1 = 500$ Hz. Which of these can it **not** resonate at?
+
+<Choice>500 Hz</Choice>
+<Choice>1000 Hz</Choice>
+<Choice>1500 Hz</Choice>
+<Choice>2500 Hz</Choice>
+
+<Hint>
+Set the figure to "pipe, one end closed" and sweep. Which peaks are missing?
+</Hint>
+
+<Solution>
+1000 Hz, because it is the second harmonic and a pipe closed at one end has only odd ones: 500, 1500, 2500 Hz and so on.
+</Solution>
+</ChoiceQuiz>
+
+<NumericQuiz answer={3} rel={0}>
+A string fixed at both ends is vibrating in its fourth harmonic. How many nodes are there strictly between the two ends?
+
+<Hint>
+$\lambda_4 = 2L/4 = L/2$, so draw four half-waves along the string and count the zeros that are not at an end. You can also set the figure to the string, sweep up to the fourth peak and read the measured count.
+</Hint>
+
+<Solution>
+Three. The nodes are at $L/4$, $L/2$ and $3L/4$; the ones at 0 and $L$ are the fixed ends. In general a string in its $n$th harmonic has $n - 1$ interior nodes — but check that against a pipe open at both ends before you trust it anywhere else.
+</Solution>
+</NumericQuiz>
+
+## 4. Displacement or pressure? They swap
+
+<ExamTip>
+For a pipe, "node" is ambiguous until you say node of **what**. A displacement node is a pressure antinode, and a displacement antinode is a pressure node. Exam questions move between the two on purpose.
+</ExamTip>
+
+Lesson 1 already gave the reason: $p = -B\,\partial\xi/\partial x$. Where the air is not moving at all but the air on either side is moving towards it, the <Term id="pressure">pressure</Term> swings hardest. Where the air swings hardest, neighbouring slices move together and the pressure barely changes.
+
+An open end is the clearest case. The air there is free to move, so it is a displacement antinode. It is also open to the atmosphere, so its pressure cannot change — a pressure node. Both statements describe the same end of the same pipe.
+
+<ChoiceQuiz correct={0}>
+At the open end of a pipe, the air is:
+
+<Choice>a displacement antinode and a pressure node</Choice>
+<Choice>a displacement node and a pressure antinode</Choice>
+<Choice>a node of both</Choice>
+<Choice>an antinode of both</Choice>
+
+<Hint>
+Can the air at the open end move? Can its pressure differ from the atmosphere outside?
+</Hint>
+
+<Solution>
+A displacement antinode and a pressure node. It is free to move, and it is open to the air outside, so its pressure is pinned at atmospheric.
+</Solution>
+</ChoiceQuiz>
+
+## 5. What the simulation is still not telling you
+
+<Beyond>
+Two honest caveats about the figure.
+
+First, the open end of a real pipe is not exactly an antinode. The air just outside is dragged along too, so the pipe behaves as though it were slightly longer — an **end correction** of roughly $0.6r$ for a pipe of radius $r$. Instrument makers tune around it; the syllabus ignores it.
+
+Second, the peaks in the sweep have width because the simulation is damped. Without damping they would be infinitely sharp and infinitely tall, which is both unphysical and impossible to find with a slider.
+</Beyond>
+
+Switch the figure to **Pluck** and move the pluck point. The medium sorts itself into the same harmonics on its own, but their *weights* change — and pluck exactly at the middle and the even harmonics vanish, because the middle is a node of every one of them.
+
+That is the whole of timbre. A clarinet and a flute playing the same note have the same <Term id="fundamental-frequency">fundamental frequency</Term> and completely different recipes above it. Which is where lesson 3 starts.

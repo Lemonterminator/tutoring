@@ -1,1 +1,15 @@
-{}
+{
+  "standing-wave": { "en": "standing wave", "fi": "seisova aalto" },
+  "node": { "en": "node", "fi": "solmu" },
+  "antinode": { "en": "antinode", "fi": "kupu" },
+  "harmonic": { "en": "harmonic", "fi": "harmoninen" },
+  "fundamental-frequency": { "en": "fundamental frequency", "fi": "perustaajuus" },
+  "reflection": { "en": "reflection", "fi": "heijastuminen" },
+  "boundary-condition": { "en": "boundary condition", "fi": "reunaehto" },
+  "resonance": { "en": "resonance", "fi": "resonanssi" },
+  "acoustic-impedance": { "en": "acoustic impedance", "fi": "akustinen impedanssi" },
+  "wavelength": { "en": "wavelength", "fi": "aallonpituus" },
+  "pressure": { "en": "pressure", "fi": "paine" },
+  "ultrasound": { "en": "ultrasound", "fi": "ultraääni" },
+  "echo-sounder": { "en": "echo sounder", "fi": "kaikuluotain" }
+}
