@@ -286,14 +286,22 @@ test('it labels syllabus material, university material and exam technique', () =
   expect(container.querySelectorAll('article .box--exam').length).toBeGreaterThanOrEqual(2);
 });
 
-test('every Term resolves and shows the other language', () => {
+test('every Term resolves and the glossary lists them all', () => {
   const { container } = renderLesson();
   expect(container.querySelector('.term--missing')).toBeNull();
   expect(container.querySelector('[data-term="node"] .term__alt')?.textContent).toBe(' (solmu)');
+  // The Finnish body is still the task 8 placeholder, so nothing here may depend on it.
+  // The glossary is built from terms.json and renders in either language; task 13 adds the
+  // assertions that need real Finnish prose.
   act(() => setLang('fi'));
-  expect(container.querySelector('[data-term="node"] .term__alt')?.textContent).toBe(' (node)');
+  expect(container.querySelectorAll('.glossary__row')).toHaveLength(13);
 });
 ```
+
+**Do not assert anything about the article body after `setLang('fi')` in this task.**
+`Lesson` renders `Fi` *instead of* `En`, and `lesson.fi.mdx` is still the task 8
+placeholder, which contains no `Term` tags and no figures. Any such assertion cannot pass
+until task 13 has run.
 
 - [ ] **Step 4: Run the test to confirm it passes**
 

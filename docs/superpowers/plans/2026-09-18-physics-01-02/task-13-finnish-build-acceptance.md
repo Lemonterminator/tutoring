@@ -32,6 +32,7 @@ test('the Finnish body is really Finnish and keeps the same structure', () => {
   expect(finnish[0]).not.toBe(english[0]);
   expect(container.querySelectorAll('article figure.figure')).toHaveLength(2);
   expect(container.querySelectorAll('article .quiz')).toHaveLength(8);
+  expect(container.querySelector('[data-term="node"] .term__alt')?.textContent).toBe(' (node)');
 });
 ```
 
