@@ -1,3 +1,211 @@
-## 1. Paikanvaraus
+import { StringElement } from './StringElement';
+import { TransverseVsLongitudinal } from './TransverseVsLongitudinal';
+import { WaveCalipers } from './WaveCalipers';
 
-Oppitunnin sisältö kirjoitetaan tehtävässä 6.
+Moduuli 0 antoi sinulle kolme työkalua: derivaatan, <Term id="partial-derivative">osittaisderivaatan</Term> ja logaritmin. Tässä oppitunnissa käytämme näitä kahta asiaan, johon ne on suunniteltu — muotoon, joka liikkuu aineen läpi ilman, että se kuljettaa ainetta mukanaan.
+
+## 1. Mitä oikeasti liikkuu?
+
+<Syllabus>
+Aalto kuljettaa energiaa paikasta toiseen ilman aineen siirtymistä. Väliaineen hiukkaset värähtelevät omien kiinteiden paikkojensa ympäri.
+</Syllabus>
+
+Pidä kiinni köyden toisesta päästä ja heilauta sitä kerran. Köyteen syntyy pullistuma, joka etenee kädestäsi köyden loppupäähän. Maalaa nyt yksi piste köyteen ja seuraa vain pistettä: se nousee ylös, palaa alas ja päättyy täsmälleen sinne, mistä aloitti. Pullistuma kulki koko köyden matkan. Piste ei liikkunut ollenkaan.
+
+Tämä on koko idea, ja sen voi sanoa suorasanaisesti: **kuva liikkuu, aine pysyy paikallaan.** Energia liikkuu kuvan mukana. Aine jää kotiin.
+
+<ChoiceQuiz correct={1}>
+Korkki kelluu lampessa, kun aalto kulkee sen alapuolella. Kun aalto on ohittanut, missä korkki on?
+
+<Choice>Kauempana siitä suunnasta, josta aalto tuli</Choice>
+<Choice>Takaisin sinne, mistä se aloitti</Choice>
+<Choice>Painettuna alaspäin alkuperäisen paikkansa alapuolelle</Choice>
+<Choice>Se riippuu amplitudista</Choice>
+
+<Hint>
+Seuraa yhtä väliaineen hiukkasta, ei muotoa.
+</Hint>
+
+<Solution>
+Takaisin sinne, mistä se aloitti. Korkki liikkuu ylös ja alas jokaisen harjan ja laakson saapuessa, mutta vesi — ja korkki sen mukana — ei ole siirtynyt kokonaisliikkeellä aallon etenemissuunnassa.
+</Solution>
+</ChoiceQuiz>
+
+## 2. Aallon kirjoittaminen alas
+
+<Syllabus>
+Aallolle $v = f\lambda$. <Term id="wavelength">aallonpituus</Term> $\lambda$ on etäisyys kahden vierekkäisen harjan välillä ja <Term id="period">jaksonaika</Term> $T$ on aika, jonka yksi hiukkanen tarvitsee yhden värähdyskierron suorittamiseen, jolloin $f = 1/T$.
+</Syllabus>
+
+Väliaineen siirtymä riippuu kahdesta asiasta yhtä aikaa: **mistä** katsoo ja **milloin** katsoo. Siksi se on kahden muuttujan funktio, $y(x, t)$, ja koko kurssi kirjoittaa sen muodossa
+
+$$
+y(x, t) = A\cos(\omega t - kx + \varphi)
+$$
+
+missä <Term id="amplitude">amplitudi</Term> on $A$, <Term id="angular-frequency">kulmataajuus</Term> $\omega = 2\pi f$ ja <Term id="wave-number">aaltoluku</Term> $k = 2\pi/\lambda$. Jakamalla toinen toisella saadaan <Term id="wave-speed">etenemisnopeus</Term>:
+
+$$
+v = \frac{\omega}{k} = \frac{2\pi f}{2\pi/\lambda} = f\lambda
+$$
+
+Koska kahden muuttujan funktiota ei voi piirtää yhdelle akseliparille, oppikirja piirtää kaksi eri kaaviota, ja niiden sekoittaminen on yleisin tapa menettää pisteitä tässä.
+
+- **Hetkikuva** jäädyttää ajan ja piirtää $y$:n riippuvuudeksi $x$:stä. Siltä voi mitata $\lambda$:n. Siltä ei voi mitata $T$:tä.
+- **Historia** seisoo yhdessä paikassa ja piirtää $y$:n riippuvuudeksi $t$:stä. Siltä voi mitata $T$:n. Siltä ei voi mitata $\lambda$:ta.
+
+<Figure id="calipers">
+  <WaveCalipers />
+</Figure>
+
+Vedä oransseja merkkejä, kunnes yläpari kattaa yhden kokonaisen aallon ja alaparin kattaa yhden kokonaisen jakson. Lukema jakaa mittaamasi arvon. Kun $\Delta x / \Delta t$ vastaa todellista nopeutta, olet löytänyt $\lambda$:n ja $T$:n oikein.
+
+<Syllabus>
+Ihmisen kuuloalue on noin 20 Hz – 20 000 Hz. Ilmassa äänen nopeuden ollessa 340 m/s tämä vastaa aallonpituutta 17 m alareunassa ja 0.017 m yläreunassa. Alle 20 Hz on <Term id="infrasound">infraääntä</Term>; yli 20 kHz on <Term id="ultrasound">ultraääni</Term>.
+</Syllabus>
+
+<NumericQuiz answer={340} unit="m/s">
+Äänellä, jonka <Term id="frequency">taajuus</Term> on 500 Hz, on ilmassa aallonpituus 0.68 m. Mikä on äänen nopeus?
+
+<Hint>
+$v = f\lambda$. Kiinnitä huomiota yksiköihin: hertsi on 1/s.
+</Hint>
+
+<Solution>
+$v = 500 \cdot 0.68 = 340$ m/s.
+</Solution>
+</NumericQuiz>
+
+<ChoiceQuiz correct={2}>
+Sinulle annetaan kaavio yhden hiukkasen $y$:n riippuvuudesta ajasta $t$, jossa aika-akseli on merkitty millisekunneissa. Mitkä suureet voit lukea suoraan siitä?
+
+<Choice>Aallonpituus ja etenemisnopeus</Choice>
+<Choice>Aallonpituus ja jaksonaika</Choice>
+<Choice>Amplitudi ja jaksonaika</Choice>
+<Choice>Amplitudi ja aallonpituus</Choice>
+
+<Hint>
+Vaaka-akseli on aika. Mikään tässä kaaviossa ei tiedä etäisyydestä.
+</Hint>
+
+<Solution>
+Amplitudi ja jaksonaika. Aallonpituuden saamiseksi tarvitset myös aallon nopeuden, kaavan $\lambda = v/f$ kautta — sitä ei ole kaaviossa.
+</Solution>
+</ChoiceQuiz>
+
+<NumericQuiz answer={400} unit="m/s" rel={0.02}>
+Hetkikuvasta mitatun yhden kokonaisen aallon pituus on 1.2 m. Saman aallon historiasta mitattu yhden kokonaisen jakson aika on 3.0 ms. Kuinka nopeasti aalto etenee?
+
+<Hint>
+Yksi aallonpituus kulkee minkä tahansa kiinteän pisteen ohi tasan yhden jakson aikana.
+</Hint>
+
+<Solution>
+$v = \lambda/T = 1.2 / 0.0030 = 400$ m/s.
+</Solution>
+</NumericQuiz>
+
+## 3. Kaksi nopeutta, joita on helppo sekoittaa
+
+<ExamTip>
+Aaltokysymyksessä on lähes aina kaksi eri nopeutta. <Term id="wave-speed">Etenemisnopeus</Term> $v$ kertoo, kuinka nopeasti aaltomuoto etenee, ja se määräytyy väliaineen mukaan. Hiukkasen nopeus $\partial y/\partial t$ kertoo, kuinka nopeasti yksi väliaineen osa liikkuu, ja se määräytyy amplitudin ja taajuuden perusteella. Niillä on sama yksikkö, mutta muuta yhteistä ei ole.
+</ExamTip>
+
+Kun derivaatta $y(x,t)$:stä lasketaan muuttujan $t$ suhteen siten, että $x$ pidetään vakiona — aivan kuten <Term id="partial-derivative">osittaisderivaatta</Term> Moduulissa 0 — saadaan hiukkasen nopeus:
+
+$$
+\frac{\partial y}{\partial t} = -A\omega\sin(\omega t - kx + \varphi)
+$$
+
+eli hiukkasen suurin mahdollinen nopeus on $A\omega$. Tavallisessa äänessä tämä luku on hyvin pieni verrattuna arvoon 340 m/s, ja tämän huomaaminen voi usein tuottaa pisteen yksistään.
+
+<NumericQuiz answer={0.53} unit="m/s" rel={0.03}>
+170 Hz:n ääniaalto saa ilman hiukkaset liikkumaan edestakaisin amplitudilla 0.5 mm. Mikä on suurin nopeus, minkä mikä tahansa hiukkanen saavuttaa?
+
+<Hint>
+Suurin arvo lausekkeelle $A\omega$, ja $\omega = 2\pi f$. Muunna amplitudi metreiksi ensin.
+</Hint>
+
+<Solution>
+$A\omega = 0.0005 \cdot 2\pi \cdot 170 \approx 0.53$ m/s. Aalto itsessään etenee nopeudella 340 m/s — noin 600 kertaa nopeammin kuin ilma koskaan liikkuu.
+</Solution>
+</NumericQuiz>
+
+## 4. Ääni on pitkittäinen aaltoliike
+
+<Syllabus>
+Ääni ilmassa on <Term id="longitudinal-wave">pitkittäinen aaltoliike</Term>: väliaine värähtelee aallon etenemissuunnan suuntaisesti. Köydessä tai narussa etenevä aalto on <Term id="transverse-wave">poikittainen aaltoliike</Term>, joka värähtelee sen poikki.
+</Syllabus>
+
+Kaikki tähän mennessä olleet kuvat ovat esittäneet köyttä, koska köysi on helppo piirtää. Ääni ei ole tällainen, ja kahden välillä oleva silta kannattaa tehdä eksplisiittiseksi, jotta kokeen kysymykset eivät näytä kuvilta.
+
+Käytetään samaa funktiota, mutta anna sen kuvailla, kuinka kauas ohut ilmankerros on siirtynyt **etenemissuunnan** suuntaisesti. Kutsutaan tätä siirtymää $\xi$:ksi. Kun vierekkäiset kerrokset siirtyvät toisiaan kohti, ilma tiivistyy ja <Term id="pressure">paine</Term> nousee; kun ne siirtyvät poispäin toisistaan, se laskee. "Nopeus, jolla siirtymä muuttuu paikasta toiseen" on jälleen osittaisderivaatta, joten
+
+$$
+p = -B\,\frac{\partial \xi}{\partial x}
+$$
+
+missä $B$ on ilman ominaisuus. Miinusmerkki kertoo sen, mitä intuitiosi jo sanoi: puristaminen nostaa painetta.
+
+<Figure id="longitudinal">
+  <TransverseVsLongitudinal />
+</Figure>
+
+Vaihda pitkittäiseen aaltoliikkeeseen ja seuraa kahta käyrää pisteiden alapuolella. Paineen huippu on täsmälleen siellä, missä siirtymä on nolla, ja paine on nolla täsmälleen siellä, missä siirtymä on huipussaan. Ne ovat neljännesjakson päässä toisistaan — mikä on sama asia kuin "toinen on toisen derivaatta".
+
+<ExamTip>
+Kun tehtävässä sanotaan äänestä "solmu" tai "kupu", kysy itseltäsi: siirtymän vai paineen? Ne vaihtavat paikkaa. Oppitunnilla 2 tämä on erittäin tärkeä asia.
+</ExamTip>
+
+<Beyond>
+Poikittaiselle aallolle $\partial y/\partial x$ on hetkikuvan **kulmakerroin**, ei venymä — köyden sivuttainen venyttäminen muuttaa sen pituutta vain toisen kertaluvun suuruusluokassa, karkeasti $\tfrac{1}{2}(\partial y/\partial x)^2$. Pitkittäiselle aallolle $\partial \xi/\partial x$ on todella venymä, minkä vuoksi paineen kaava yllä on niin yksinkertainen.
+</Beyond>
+
+## 5. Miksi aalto liikkuu ylipäätään?
+
+<Beyond>
+Mikään tähän mennessä ei selitä, miksi kohouma etenee. Se johtuu Newtonin toisesta laista, jota sovelletaan yhteen janan lyhyeen osaan, ja se tuottaa <Term id="wave-equation">aaltoyhtälön</Term> — fysiikassa ja tekniikassa eniten käytetyn kaavan.
+</Beyond>
+
+Tarkastellaan venyneen janan lyhyttä alkiota. Jännitys vetää janaa pitkin sen kummassakin päässä. Jos tämä janan osa on suora, nuo kaksi vetoa ovat täsmälleen vastakkaisia ja kumoavat toisensa: ei nettovoimaa, ei kiihtyvyyttä, ei tapahdu mitään. Jos osa on **kaareva**, nuo kaksi vetoa eivät enää ole yhdensuuntaisia, ja jäljelle jäävä osa osoittaa koveran puolen suuntaan.
+
+<Figure id="element">
+  <StringElement />
+</Figure>
+
+Niinpä kaarevuus tuottaa voiman, ja voima tuottaa kiihtyvyyden. Kirjoittamalla "kaarevuus" muodossa $\partial^2 y/\partial x^2$ ja "kiihtyvyys" muodossa $\partial^2 y/\partial t^2$ muuttaa tämän lauseen muotoon
+
+$$
+\frac{\partial^2 y}{\partial t^2} = v^2\,\frac{\partial^2 y}{\partial x^2}
+$$
+
+ja sijoittamalla siihen $y = A\cos(\omega t - kx)$ palauttaa kaavan muotoon $v = \omega/k$ — etenevä aalto on ratkaisu, ei oletus.
+
+<ChoiceQuiz correct={0}>
+Piste värähtelevällä janalla on juuri nyt uoman pohjalla. Mihin suuntaan nettovoima siihen vaikuttaa?
+
+<Choice>Ylöspäin, takaisin suoraa viivaa kohti</Choice>
+<Choice>Alaspäin, poispäin suorasta viivasta</Choice>
+<Choice>Janaa pitkin, etenemissuunnassa</Choice>
+<Choice>Nettovoimaa ei ole, koska piste on hetkellisesti levossa</Choice>
+
+<Hint>
+Uoman pohjassa jana on ylöspäin kovera. Käytä yllä olevaa kuvaa ja muista, että hetkellinen lepo ei kerro mitään voimasta.
+</Hint>
+
+<Solution>
+Ylöspäin. Uoman pohjassa kaarevuus on positiivinen, joten kahden jännityksen resultantti osoittaa ylöspäin. Piste on hetkellisesti levossa, mutta sillä on suurin kiihtyvyys juuri siellä — aivan kuten massa jousessa matkan päätepisteessä.
+</Solution>
+</ChoiceQuiz>
+
+<NumericQuiz answer={0.62} unit="mm" rel={0.04}>
+Lääketieteellinen <Term id="ultrasound">ultraääni</Term> käyttää taajuutta 2.5 MHz, ja ääni etenee pehmeässä kudoksessa noin nopeudella 1540 m/s. Mikä on aallonpituus millimetreinä?
+
+<Hint>
+$\lambda = v/f$, sitten muunnetaan metreistä millimetreiksi.
+</Hint>
+
+<Solution>
+$\lambda = 1540 / (2.5 \cdot 10^{6}) = 6.16 \cdot 10^{-4}$ m, noin 0.62 mm. Rakenteet, jotka ovat paljon pienempiä kuin aallonpituus, eivät erottu, mikä on suuruusluokan syy sille, miksi lääketieteelliset skannaustyökalut toimivat megahertseissä kilohertzien sijaan — taajuudella 20 kHz aallonpituus olisi noin 8 cm.
+</Solution>
+</NumericQuiz>
