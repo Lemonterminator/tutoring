@@ -1,0 +1,58 @@
+## 在定价路线中的位置
+
+四门课中的第 1 门。先学这门，再重构 Black–Scholes 库。目标是分清数学问题本身的病态与算法引入的误差。贯穿案例取作业中的 $S=K=100$、$r=q=0$，分别比较 $(\sigma,T)=(0.20,1)$ 与 $(0.01,1/365)$。
+
+## 浮点数与条件数
+
+IEEE 754 binary64 中，`std::numeric_limits<double>::epsilon()` 是 $2^{-52}\approx2.22\times10^{-16}$，即 $1$ 与下一个可表示数的间距。最近舍入的 unit roundoff 则是 $u=2^{-53}\approx1.11\times10^{-16}$。写 $\epsilon$ 时应先说明采用哪一种定义。
+
+模型 $\operatorname{fl}(a\circ b)=(a\circ b)(1+\delta)$、$|\delta|\lesssim u$ 适合描述一般有限运算；但两个近似相等的计算结果相减，**相对**误差可能很大。在通常的 IEEE 设置下，$0/0$ 得到 NaN，非零数除以零得到无穷；API 应先验证定义域，而不是靠这些结果表达业务语义。
+
+病态问题会放大小的输入扰动，即使算法很好也一样。不稳定算法则给本可准确求解的问题额外制造误差。IV 的局部逆条件数由 $d\sigma/dC=1/\mathrm{Vega}$ 表示；FD Gamma 分子中的相消是算法问题。
+
+## 有限差分与步长权衡
+
+Taylor 展开给出前向 Delta 的截断误差 $O(h)$，中心 Delta 是 $O(h^2)$。若每次定价的绝对误差约为 $u|C|$，舍入项大约随 $u|C|/h$ 增长。平衡两项后，前向 Delta 的步长尺度是 $h_*\propto u^{1/2}$，中心 Delta 是 $h_*\propto u^{1/3}$；这里还必须选定价格和 spot 的尺度。
+
+作业使用的前向三点 Gamma 是
+
+$$D^2_{+,h}C=\frac{C(S+2h)-2C(S+h)+C(S)}{h^2}=\Gamma+hC^{(3)}(S)+O(h^2).$$
+
+它的舍入项约为 $u|C|/h^2$，所以 $h_*\propto u^{1/3}$ 只是尺度律。中心二阶差分的截断误差为 $O(h^2)$，对应 $u^{1/4}$ 尺度。常数取决于高阶导数、价格大小及实现；把 $h$ 改写为 $h_{\rm rel}=h/S$ 也不会让这些依赖消失。
+
+当 $h$ 极小时，浮点加法甚至会得到 `S + h == S`。作业从 $h_{\rm rel}=10^{-16}$ 开始扫，故意进入这个区域。应把这些点标为无法分辨，不能把表面上的零误差当成高精度。
+
+## Complex-step：一阶与二阶
+
+若实函数 $f$ 在该点附近解析，且计算过程完整保留复扰动，则
+
+$$\frac{\operatorname{Im}f(x+ih)}{h}=f'(x)-\frac{h^2}{6}f^{(3)}(x)+O(h^4).$$
+
+一阶导的分子没有对两个近似相等的实数作减法。但这不表示任意复数程序都解析：`abs`、比较、只处理实数的分支、丢弃虚部都可能让方法失效。实部二阶公式 $-2[\operatorname{Re}f(x+ih)-f(x)]/h^2$ **仍然**会做近似实数的相减。
+
+作业的 45° 公式对于精确解析延拓是正确的。设 $\omega=(1+i)/\sqrt2$。因为 $(\! -h\omega)^2=(h\omega)^2$，而 $\omega^2=i$、$\omega^4=-1$、$\omega^6=-i$，所以
+
+$$\frac{\operatorname{Im}\{f(x+h\omega)+f(x-h\omega)\}}{h^2}=f''(x)-\frac{h^4}{360}f^{(6)}(x)+O(h^8).$$
+
+之前对 PDF 的审查误把 $(-\omega)^2$ 写成 $\omega^{-2}$。原估计式不缺因子 2。**当被计算的确实是解析函数 $f$ 时**，截断误差为 $O(h^4)$；极小 $h$ 下，相反方向的虚部相加仍可能损失精度。
+
+但作业把复数正态 CDF 近似为 $\Phi(a+ib)\approx\Phi(a)+ib\phi(a)$。纯虚步长的一阶导仍有 $O(h^2)$ 误差；45° 二阶导则遗漏解析延拓里的 $-b^2\phi'(a)/2$ 等项。以 $f=\Phi$ 为反例，用该近似在 $x\pm h\omega$ 计算，得到 $\phi'(x)+h^2\phi'''(x)/12+O(h^4)$，所以原公式的 $O(h^4)$ 不能直接继承。若要验证四阶行为，需要完整复数 `erfc`/Faddeeva，或推导并实现误差受控的高阶延拓。
+
+## 稳定原语与正态尾部
+
+实数正态 CDF 可写成 $\Phi(z)=\tfrac12\operatorname{erfc}(-z/\sqrt2)$。$z$ 很大且为正时，直接算 $\Phi(-z)$ 比 `1 - Phi(z)` 更能保留小尾概率。Cody 的误差函数近似和 NIST 定义提供了依据。
+
+远期价格接近 ATM 时，令 $x=(F-K)/K$。如果 $x$ 本身算得准确，可用 `log1p(x)` 求 $\log(F/K)=\log(1+x)$。固定的 $10^{-12}$ 切换阈值是经验选择。`log1p` 无法找回形成 $F/K$ 或 $F-K$ 时已丢失的信息。$\log\phi(d)=-d^2/2-\log\sqrt{2\pi}$ 可以减少中间计算的数值问题；真正极小的 PDF 转回 `double` 时仍可能下溢。
+
+## 与仓库绑定的练习
+
+1. 对两个作业场景，画 Gamma 绝对/相对误差随 $h_{\rm rel}$ 变化的图。补上中心 Gamma，并标出首次出现 `S + h == S` 的网格点。
+2. 将 45° Taylor 展开推到 $f^{(6)}$，再用作业中的近似复数 CDF 重跑扫步长。舍入主导前，估计 log-log 误差斜率。
+3. 让 $x=(F-K)/K$ 按十的幂次靠近零。用高精度参考比较 `log(F/K)` 与 `log1p(x)`，再把 log 误差除以 $\sigma\sqrt T$，观察对 $d_1$ 的影响。
+
+## 阅读顺序
+
+1. David Goldberg（1991），“What Every Computer Scientist Should Know About Floating-Point Arithmetic”，*ACM Computing Surveys* 23(1)，5–48，[DOI](https://doi.org/10.1145/103162.103163)。读舍入、相对误差与消减；全文可能需要机构访问。
+2. Nicholas J. Higham（2002），*Accuracy and Stability of Numerical Algorithms*，第 2 版，SIAM，[出版社](https://epubs.siam.org/doi/10.1137/1.9780898718027)。按主题读浮点模型、条件数、稳定性；具体章节按手头版本核对。付费参考书。
+3. William Squire 与 George Trapp（1998），“Using Complex Variables to Estimate Derivatives of Real Functions”，*SIAM Review* 40(1)，110–112，[DOI](https://doi.org/10.1137/S003614459631241X)；Joaquim R. R. A. Martins、Peter Sturdza 与 Juan J. Alonso（2003），“The Complex-Step Derivative Approximation”，*ACM Transactions on Mathematical Software* 29(3)，245–262，[DOI](https://doi.org/10.1145/838250.838251)。读推导与实现限制；可能需要机构访问。
+4. NIST DLMF 的[正态概率与 `erfc` 定义](https://dlmf.nist.gov/7.1)；W. J. Cody（1969），“Rational Chebyshev Approximations for the Error Function”，*Mathematics of Computation* 23(107)，631–637，[AMS DOI](https://doi.org/10.1090/S0025-5718-1969-0247736-4)。定义免费可读；Cody 论文适合深入实现。

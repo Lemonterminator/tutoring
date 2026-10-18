@@ -1,0 +1,39 @@
+.mit-la { min-width: 0; }
+.mit-la__summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.mit-la__summary span, .mit-la__eyebrow, .mit-la__note, .mit-la__sources small { color: var(--muted); font-size: .85rem; }
+.mit-la__select, .mit-la__filters label { display: grid; gap: .4rem; margin-block: 1rem; }
+.mit-la select, .mit-la input[type="search"] { width: 100%; min-width: 0; padding: .7rem; border: 1px solid var(--border); border-radius: .6rem; color: var(--text); background: var(--surface); font: inherit; }
+.mit-la__play { scroll-margin-top: 5rem; padding-block: 1rem; }
+.mit-la__sources { padding: 1rem; border: 1px solid var(--border); border-left: .25rem solid var(--accent); border-radius: var(--radius); background: var(--surface); }
+.mit-la__psets { margin-block: .75rem 1rem; }
+.mit-la__sources small { display: block; margin-top: .6rem; }
+.mit-la__sources details { margin-top: .6rem; overflow-wrap: anywhere; }
+.mit-la__links, .mit-la__pager { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: .6rem; }
+.mit-la__pager { justify-content: space-between; }
+.mit-la__filters { display: flex; flex-wrap: wrap; gap: 1rem; }
+.mit-la__filters label { flex: 1 1 14rem; }
+.mit-la__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: .8rem; padding: 0; list-style: none; }
+.mit-la__grid li { margin: 0; min-width: 0; }
+.mit-la__grid a { display: grid; gap: .6rem; height: 100%; box-sizing: border-box; padding: 1rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; overflow-wrap: anywhere; }
+.mit-la__grid a:hover, .mit-la__grid a[aria-current="page"] { border-color: var(--accent); }
+.mit-la__grid a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.mit-la__grid a > span:last-child { color: var(--accent); font-size: .85rem; }
+.mit-la__sources a { overflow-wrap: anywhere; }
+.mit-la__progress { margin-block: .5rem 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.mit-la__progress-head { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; }
+.mit-la__progress-head span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.mit-la__progress-track { display: flex; gap: 3px; height: .75rem; margin-block: .7rem .5rem; }
+.mit-la__progress-unit { flex-basis: 0; min-width: 0; overflow: hidden; border-radius: 999px; background: var(--border); }
+.mit-la__progress-fill { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width .6s ease; }
+.mit-la__progress-units { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: .8rem; }
+.mit-la__progress-units b { color: var(--text); font-variant-numeric: tabular-nums; }
+.mit-la__progress-news:empty { display: none; }
+.mit-la__progress-news { margin: .7rem 0 0; color: var(--accent); font-weight: 600; }
+.mit-la__progress-next { margin: .6rem 0 0; font-size: .9rem; }
+.mit-la__grid a.mit-la__card--done { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.mit-la__grid a.mit-la__card--next { border-style: dashed; border-color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .mit-la__progress-fill { transition: none; } }
+.mit-la .practice-game__prompt, .mit-la .practice-game__lines { white-space: pre-line; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .mit-la__pager .btn { flex: 1 1 100%; } .mit-la .dot-game__number { flex-wrap: wrap; } }
+.mit-la__loading, .mit-la__loadfail { margin-block: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.mit-la__loadfail { border-left: .25rem solid var(--accent); }

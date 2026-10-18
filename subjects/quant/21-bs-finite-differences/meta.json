@@ -1,0 +1,52 @@
+{
+  "id": "QUANT-BS3",
+  "subject": "quant",
+  "module": "BS paper · Numerical differentiation (03/08)",
+  "title": {
+    "en": "Finite differences, floating-point error and PDE grids",
+    "zh": "有限差分、浮点误差与 PDE 网格"
+  },
+  "prereqs": [
+    "QUANT-BS2"
+  ],
+  "estimatedHours": 1.5,
+  "spine": {
+    "en": {
+      "a": "Rebuild the derivation with paper and pencil.",
+      "b": "Compare assumptions, formulas and the supplied numerical evidence."
+    },
+    "zh": {
+      "a": "用纸笔重建每步推导，先尝试再打开答案。",
+      "b": "对照假设、公式、图片与提供的数值证据。"
+    }
+  },
+  "assignment": "Paper pauses · chapter 03",
+  "references": [
+    "Quant_interview BS assignment (5 pages)",
+    "Original corrected paper-workbook derivations"
+  ],
+  "navigation": {
+    "previous": {
+      "id": "QUANT-BS2",
+      "title": {
+        "en": "Delta and Gamma: slope and curvature",
+        "zh": "Delta、Gamma：斜率与曲率"
+      },
+      "devHref": "/subjects/quant/20-bs-delta-gamma/index.html",
+      "buildHref": "/quant-20-bs-delta-gamma.html"
+    },
+    "indexHref": {
+      "dev": "/subjects/quant/18-bs-paper-course/index.html",
+      "build": "/quant-18-bs-paper-course.html"
+    },
+    "next": {
+      "id": "QUANT-BS4",
+      "title": {
+        "en": "Complex-step and the 45-degree Gamma formula",
+        "zh": "Complex-step 与 45° Gamma"
+      },
+      "devHref": "/subjects/quant/22-bs-complex-step/index.html",
+      "buildHref": "/quant-22-bs-complex-step.html"
+    }
+  }
+}

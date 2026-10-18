@@ -1,0 +1,136 @@
+import { BSMaterials, bsMaterialHref } from "../../../framework/quant/BSPaperCourse";
+import bsFigure0 from "../../../content/bs-math/assets/gamma_width.png";
+
+<div class="bs-paper-content">
+
+Goal: Derive analytical Delta/Gamma by hand and understand why numerical differentiation is particularly sensitive for short-dated ATM options. Duration: approximately 60 minutes. Prerequisite: Part 01.
+
+## 1. Prove a cancellation identity before differentiating
+
+The price is $C=A\Phi(d_1)-B\Phi(d_2)$, $A=Se^{-qT},B=Ke^{-rT}$. A long list of terms appears when differentiating, but not all of them remain. The key is
+
+$$
+A\phi(d_1)=B\phi(d_2).
+$$
+
+Why? Because $d_2=d_1-\tau$, $d_1\tau=m+\tau^2/2$, therefore
+
+$$
+d_1^2-d_2^2=2d_1\tau-\tau^2=2m.
+$$
+
+The density ratio is thus $\phi(d_1)/\phi(d_2)=e^{-m}=K/F$. And $A/B=F/K$, their product is 1.
+
+**Paper pause A:** Without looking at the final result, expand $(d_1-\tau)^2$ and calculate the density ratio. Write the negative sign in the exponent clearly.
+
+<details class="bs-paper-answer">
+<summary>Pause A answer</summary>
+
+
+$\phi(d_1)/\phi(d_2)=\exp(-(d_1^2-d_2^2)/2)=e^{-m}$, so $A\phi(d_1)=B\phi(d_2)$. This is a tool repeatedly used in the derivations of Delta, Vega, and Rho.
+
+
+</details>
+
+## 2. Delta: How do terms in the product rule vanish?
+
+Take the partial derivative with respect to $S$, holding $K,r,q,\sigma,T$ fixed. $m_S=1/S$, $\tau_S=0$, so
+
+$$
+(d_1)_S=(d_2)_S=\frac1{S\tau}.
+$$
+
+Use $\Phi'=\phi$ and the product rule:
+
+$$
+C_S=e^{-qT}\Phi(d_1)+A\phi(d_1)(d_1)_S-B\phi(d_2)(d_2)_S.
+$$
+
+The density factors of the last two terms are equal, and the $S$ derivative of $d_1,d_2$ is also equal, hence
+
+$$
+\Delta_C=e^{-qT}\Phi(d_1).
+$$
+
+This is the first-order local slope. For a small price change $s$, $C(S+s)-C(S)\approx\Delta s$; it is not the exact payoff for a finite change, nor a direct prediction of the probability of future real gains or losses.
+
+## 3. Gamma: Take the derivative again
+
+$e^{-qT}$ is constant with respect to $S$, so we only need to differentiate the CDF:
+
+$$
+\Gamma_C=\Delta_S=e^{-qT}\phi(d_1)(d_1)_S=\frac{e^{-qT}\phi(d_1)}{S\sigma\sqrt{T}}.
+$$
+
+Gamma is positive, so the European Call is a convex function of $S$. Retain one more term in the Taylor price change:
+
+$$
+C(S+s)-C(S)=\Delta s+\frac12\Gamma s^2+O(s^3).
+$$
+
+If you short $\Delta$ units of the underlying to offset the linear term, what remains is the curvature term and changes in other factors. In the diffusion process $(dS)^2=\sigma^2S^2dt$, which exactly produces the $\sigma^2S^2\Gamma/2$ in the PDE.
+
+**Paper pause B:** Use scenario 1 to calculate $\Delta,\Gamma$, then predict the price change when $S$ increases by 1. Write the linear and quadratic terms separately.
+
+<details class="bs-paper-answer">
+<summary>Pause B answer</summary>
+
+
+$\phi(0.1)\approx0.3969525475$，$\Phi(0.1)\approx0.5398278373$：
+
+$$
+\Delta\approx0.5398278373,\quad\Gamma\approx0.01984762737.
+$$
+
+The linear approximation is 0.53982784, and the second-order approximation is $0.53982784+0.00992381=0.54975165$. The exact price difference is slightly different because third-order and higher terms also exist; Part 08 studies these terms.
+
+
+</details>
+
+## 4. Why is the second scenario dangerous?
+
+Original assignment scenario 2: $S=K=100,r=q=0,\sigma=0.01,T=1/365$. Here $\tau\approx0.0005234239$, $d_1=\tau/2$, Gamma is approximately 7.6218, which is hundreds of times larger than in scenario 1.
+
+At the zero carry ATM point, when $\tau\to0$, $d_1\to0$, therefore
+
+$$
+\Gamma\sim\frac1{S\tau\sqrt{2\pi}}.
+$$
+
+The width of the price smooth kink is approximately $L=S\tau$: about 20 in scenario 1, and about 0.05234 in scenario 2. The same absolute step size $h$ is larger relative to the local width in the second scenario, making higher-order Taylor terms harder to ignore.
+
+This explosion conclusion is limited to the vicinity of the exercise boundary. With fixed $S/K\ne1$ and letting $T\to0$, $|d_1|$ typically tends to infinity, as the exponential decay of the density can overcome $1/\sqrt{T}$; Gamma does not explode simultaneously at all price locations.
+
+<Figure id="bs-02-figure-0">
+
+<img class="bs-paper-image" src={bsFigure0} alt="Gamma becomes narrower and taller near expiration" />
+
+<figcaption>Gamma becomes narrower and taller near expiration</figcaption>
+
+</Figure>
+
+The vertical and horizontal axes of the plot illustrate the same phenomenon: curvature is concentrated in an increasingly narrow region. $S\to0$ or $\sigma\sqrt T\to0$ can also make the denominator in the formula dangerous; do not rely on blind division to handle boundaries.
+
+## 5. To what extent does 'log-density to prevent underflow' go?
+
+The original assignment suggested $\log\phi(d_1)=-d_1^2/2-\log\sqrt{2\pi}$. This helps compute the density and the proportionality factor together:
+
+$$
+\log\Gamma=-qT-\frac12d_1^2-\frac12\log(2\pi)-\log S-\log\sigma-\frac12\log T.
+$$
+
+Performing exp one final time avoids the intermediate loss caused by first computing the density as 0 and then multiplying by a large factor. However, if the final Gamma itself is too small to be represented in floating-point format, exp will still underflow; the logarithmic domain does not offer infinite precision.
+
+Analytic closed-form formulas must also contend with CDF precision, exponential range, and cancellation issues. Therefore, when using them as a reference in experiments, it should be explicitly stated as a closed-form float64 comparison; estimating the error of the reference itself requires an independent high-precision implementation.
+
+## 6. Paper pause and repository comparison
+
+1. Re-derive Delta using the identity, without skipping the product rule terms.
+2. Under zero carry and ATM $T=1,1/4,1/16$, predict how Gamma scales approximately. Answer: for small $\tau$, it scales approximately by $1/\sqrt T$.
+3. Explain why the units of Gamma are "option price / underlying price squared". If both price and underlying are denominated in dollars, this is equivalent to per dollar; it should not be treated as a dimensionless number.
+
+Corresponds to existing `delta_call`, `Gamma`, `evaluate_call(...).delta/.gamma`. Low-level functions and validated batch interfaces may have different historical behaviors regarding boundaries; for engineering use, the batch interface with explicit contracts is authoritative.
+
+</div>
+
+<BSMaterials lang="en" lesson={2} />

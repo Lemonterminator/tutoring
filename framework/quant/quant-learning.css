@@ -1,0 +1,29 @@
+.quant-reader { min-width: 0; }
+.quant-reader__controls { display: flex; align-items: end; flex-wrap: wrap; gap: 0.8rem; margin: 1rem 0; }
+.quant-reader__controls label { flex: 1 1 18rem; font-size: 0.85rem; }
+.quant-reader__controls select { display: block; width: 100%; margin-top: 0.3rem; padding: 0.55rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font: inherit; }
+.quant-reader__controls a { padding-bottom: 0.5rem; font-size: 0.85rem; }
+.quant-reader__note { color: var(--muted); font-size: 0.82rem; }
+.quant-reader iframe { display: block; width: 100%; height: max(36rem, 78vh); border: 1px solid var(--border); border-radius: var(--radius); background: white; }
+.quant-reader__links { display: flex; gap: 0.65rem; flex-wrap: wrap; font-size: 0.8rem; }
+.quant-roadmap { display: grid; gap: 0.85rem; }
+.quant-roadmap__course { padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.quant-roadmap__course h3 { margin-top: 0; }
+.quant-roadmap__status { color: var(--muted); font-size: 0.8rem; }
+.quant-roadmap__links { display: flex; flex-wrap: wrap; gap: 0.65rem; font-size: 0.85rem; }
+@supports selector(.page:has(.quant-reader)) {
+  .page:has(.quant-reader) { grid-template-columns: 13rem minmax(0, 80rem); width: min(110rem, 100%); margin-inline: auto; }
+}
+@media (max-width: 900px) {
+  @supports selector(.page:has(.quant-reader)) { .page:has(.quant-reader) { grid-template-columns: minmax(0, 1fr); } }
+  .quant-reader iframe { height: 75vh; min-height: 28rem; }
+}
+.open-course-card { border: 1px solid var(--border); border-radius: 1rem; padding: 1.25rem; margin-block: 1.5rem; scroll-margin-top: 5rem; }
+.open-course-card h3 { margin-top: 0; }
+.open-course-card details { margin-block: 1rem; }
+.open-course-card summary { cursor: pointer; font-weight: 600; }
+.open-course-files, .open-course-topics { overflow-wrap: anywhere; }
+.open-course-files li, .open-course-topics li { margin-block: .55rem; }
+.open-course-filters { display: flex; flex-wrap: wrap; gap: 1rem; margin-block: 1.5rem; }
+.open-course-filters label { display: grid; gap: .35rem; flex: 1 1 14rem; }
+.open-course-filters input, .open-course-filters select { width: 100%; min-width: 0; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: .6rem; color: var(--text); background: var(--surface); }

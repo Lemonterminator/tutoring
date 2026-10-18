@@ -1,0 +1,17 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { elboCards } from '../../../framework/games/variational-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## 开始练习
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+先用两个潜在状态修补下界，再切到一维高斯模型做导数、梯度上升和重参数化。离散段用 log₂（bit），高斯段用自然对数（nat）。
+
+<PracticeGame generate={elboCards} lang="zh" />
+
+## 边界与原始课程
+
+离散例子固定模型后只改 q；高斯例子固定 q 的方差为 1，因此最优均值不代表完全匹配真实后验。单次采样的估计也不等于精确 ELBO。
+
+公式依据 [Auto-Encoding Variational Bayes，第 2 节及高斯附录](https://arxiv.org/html/1312.6114v11)。

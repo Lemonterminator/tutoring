@@ -1,0 +1,42 @@
+{
+  "subject": "llm",
+  "id": "M5.2",
+  "module": "M5",
+  "title": {
+    "en": "Architecture case cards",
+    "zh": "架构案例卡片"
+  },
+  "prereqs": [
+    "M5.1"
+  ],
+  "estimatedHours": 8,
+  "spine": {
+    "en": {
+      "a": "The same six M4 axes combine into very different serving paths: latent cache, sparse routing, local windows, learned sinks, or a recurrent state.",
+      "b": "Every case remains a prefix-conditioned next-token predictor. The architectural difference is the representation and transport of the prefix, not the prediction interface."
+    },
+    "zh": {
+      "a": "相同的六个 M4 轴组合成截然不同的服务路径：潜在缓存、稀疏路由、局部窗口、学习到的 sink，或循环状态。",
+      "b": "每个案例仍然是前缀条件化的下一个 token 预测器。架构差异在于前缀的表示和传输，而非预测接口。"
+    }
+  },
+  "derivations": [],
+  "visualizations": [
+    "V-M5-b",
+    "V-M5-c"
+  ],
+  "assignment": "A-M5",
+  "references": [
+    "deepseekv2",
+    "deepseekv3",
+    "deepseekv32",
+    "deepseekv4",
+    "qwen3",
+    "gptoss",
+    "gemma3",
+    "glm45",
+    "kimiK3",
+    "llama4",
+    "dao2024"
+  ]
+}

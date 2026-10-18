@@ -1,0 +1,52 @@
+{
+  "id": "QUANT-BS4",
+  "subject": "quant",
+  "module": "BS paper · Numerical differentiation (04/08)",
+  "title": {
+    "en": "Complex-step and the 45-degree Gamma formula",
+    "zh": "Complex-step 与 45° Gamma"
+  },
+  "prereqs": [
+    "QUANT-BS3"
+  ],
+  "estimatedHours": 1,
+  "spine": {
+    "en": {
+      "a": "Rebuild the derivation with paper and pencil.",
+      "b": "Compare assumptions, formulas and the supplied numerical evidence."
+    },
+    "zh": {
+      "a": "用纸笔重建每步推导，先尝试再打开答案。",
+      "b": "对照假设、公式、图片与提供的数值证据。"
+    }
+  },
+  "assignment": "Paper pauses · chapter 04",
+  "references": [
+    "Quant_interview BS assignment (5 pages)",
+    "Original corrected paper-workbook derivations"
+  ],
+  "navigation": {
+    "previous": {
+      "id": "QUANT-BS3",
+      "title": {
+        "en": "Finite differences, floating-point error and PDE grids",
+        "zh": "有限差分、浮点误差与 PDE 网格"
+      },
+      "devHref": "/subjects/quant/21-bs-finite-differences/index.html",
+      "buildHref": "/quant-21-bs-finite-differences.html"
+    },
+    "indexHref": {
+      "dev": "/subjects/quant/18-bs-paper-course/index.html",
+      "build": "/quant-18-bs-paper-course.html"
+    },
+    "next": {
+      "id": "QUANT-BS5",
+      "title": {
+        "en": "Complex CDF, Hermite polynomials and P3",
+        "zh": "复数 CDF、Hermite 多项式与 P3"
+      },
+      "devHref": "/subjects/quant/23-bs-cdf-hermite/index.html",
+      "buildHref": "/quant-23-bs-cdf-hermite.html"
+    }
+  }
+}

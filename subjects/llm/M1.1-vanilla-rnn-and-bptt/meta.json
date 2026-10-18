@@ -1,0 +1,42 @@
+{
+  "subject": "llm",
+  "id": "M1.1",
+  "module": "M1",
+  "title": {
+    "en": "Vanilla RNN and backpropagation through time",
+    "zh": "标准 RNN 与随时间反向传播"
+  },
+  "prereqs": [
+    "M0.5.8"
+  ],
+  "estimatedHours": 8,
+  "spine": {
+    "en": {
+      "a": "Track how a recurrent hidden-state Jacobian carries or loses information across time.",
+      "b": "Derive BPTT, weight-sharing gradients, truncation bias, and clipping from one unrolled computation graph."
+    },
+    "zh": {
+      "a": "追踪循环隐藏状态雅可比矩阵如何在时间维度上传递或丢失信息。",
+      "b": "从一个展开的计算图推导 BPTT、权重共享梯度、截断偏差和梯度裁剪。"
+    }
+  },
+  "derivations": [
+    "D-M1.1-01",
+    "D-M1.1-02",
+    "D-M1.1-03",
+    "D-M1.1-04",
+    "D-M1.1-05",
+    "D-M1.1-06",
+    "D-M1.1-07"
+  ],
+  "visualizations": [
+    "V-M1-a",
+    "V-M1-b",
+    "V-M1-c"
+  ],
+  "assignment": "A-M1",
+  "references": [
+    "pascanu2013",
+    "ross2010"
+  ]
+}

@@ -1,0 +1,18 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { normCards } from '../../../framework/games/llm-foundations-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+
+## 开始练习
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+先算中心化，再拼归一化导数，比较均值方向、径向方向与仿射参数。对应 D-M0.1-03 与 D-M0.1-04，保留 ε>0 的真实影响。
+
+<PracticeGame generate={normCards} lang="zh" />
+
+## 边界与原始课程
+
+给出的尺度或局部值帮助心算，不能取代一般推导。ε>0 时径向残差通常非零；LayerNorm 仍精确消去常数平移方向。
+
+<SourceLessonLink source="llm:M0.1" lang="zh" />

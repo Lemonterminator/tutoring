@@ -1,0 +1,17 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { klCards } from '../../../framework/games/variational-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## Start practicing
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to game library</a>
+
+Allocate probability, assemble KL, and use two states to inspect direction, asymmetry and zero probabilities. Discrete stages use log₂, measured in bits.
+
+<PracticeGame generate={klCards} lang="en" />
+
+## Limits and source lesson
+
+Finite enumeration does not establish mastery of continuous distributions or measure theory. KL is nonnegative as a whole; an individual weighted log term can be negative.
+
+Formulas follow [Auto-Encoding Variational Bayes, Section 2 and the Gaussian appendix](https://arxiv.org/html/1312.6114v11).

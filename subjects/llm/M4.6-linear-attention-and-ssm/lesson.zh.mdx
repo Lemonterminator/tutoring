@@ -1,0 +1,450 @@
+## 1. 动机
+
+M4.2 消除了注意力机制的 $n\times n$ 内存流量。剩余的成本在于查询-键交互的二次方数量。M4.6 回归到循环结构，但使用的是学习到的矩阵状态，而不仅仅是标量隐藏状态。
+
+核线性注意力存储特征-键/值统计信息。Delta 规则写入一个修正项，使当前键更接近其对应的值。门控 DeltaNet 先衰减旧状态，然后应用该修正。状态空间模型对连续线性动力系统进行了离散化，而选择性 SSM 则使更新参数依赖于当前输入。
+
+本课中的精确恒等式是代数的。关于检索、训练行为和架构质量的声明被标记为解释或源自模型的声明。
+
+## 2。前向定义
+
+设 $\phi(q),\phi(k)\in\mathbb{R}^{m}$ 为特征映射，取值为 $v_t\in\mathbb{R}^{d_v}$，且特征核为
+
+$$
+\kappa(q,k)=\phi(q)^\top\phi(k)\in\mathbb{R}.
+$$
+
+对于因果序列，定义矩阵状态和归一化状态
+
+$$
+S_t=\sum_{s\le t}\phi(k_s)v_s^\top\in\mathbb{R}^{m\times d_v},
+\qquad
+z_t=\sum_{s\le t}\phi(k_s)\in\mathbb{R}^{m}.
+$$
+
+归一化的线性注意力输出为
+
+$$
+y_t
+=\frac{\phi(q_t)^\top S_t}
+{\phi(q_t)^\top z_t}
+\in\mathbb{R}^{d_v}.
+$$
+
+当键（keys）为 $S_t\in\mathbb{R}^{d_v\times d_k}$ 时，delta-rule 状态的形状为 $k_t\in\mathbb{R}^{d_k}$：
+
+$$
+S_t
+=S_{t-1}-\beta_t(S_{t-1}k_t-v_t)k_t^\top,
+\qquad
+v_t\in\mathbb{R}^{d_v},\quad
+\beta_t\in\mathbb{R}_{\ge0}.
+$$
+
+其门控版本为
+
+$$
+S_t
+=\alpha_tS_{t-1}(I-\beta_tk_tk_t^\top)
++\beta_tv_tk_t^\top,
+\qquad
+\alpha_t,\beta_t\in\mathbb{R}.
+$$
+
+连续状态空间模型（SSM）使用状态 $x(t)\in\mathbb{R}^{n}$、输入 $u(t)\in\mathbb{R}^{m}$、输出 $y(t)\in\mathbb{R}^{p}$ 以及矩阵
+
+$$
+\dot x(t)=Ax(t)+Bu(t),
+\qquad
+y(t)=Cx(t),
+\qquad
+A\in\mathbb{R}^{n\times n},\ B\in\mathbb{R}^{n\times m},\ C\in\mathbb{R}^{p\times n}.
+$$
+
+**参考文献。** 核线性注意力出自 Katharopoulos 等人，[Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention](https://arxiv.org/abs/2006.16236)。快速权重与 delta-rule 的联系由 Schlag 等人讨论，[Linear Transformers Are Secretly Fast Weight Programmers](https://arxiv.org/abs/2102.11174)。门控 DeltaNet 出自 Yang 等人，[Gated Delta Networks: Improving Mamba2 with Delta Rule](https://arxiv.org/abs/2412.06464)。S4 出自 Gu 等人，[Efficiently Modeling Long Sequences with Structured State Spaces](https://arxiv.org/abs/2111.00396)。Mamba 出自 Gu 和 Dao，[Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/abs/2312.00752)。Mamba-2 及结构化状态空间对偶性出自 Dao 和 Gu，[Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality](https://arxiv.org/abs/2405.21060)。
+
+## 3. 推导过程
+
+### D-M4.6-01 · 核特征映射与循环/分块形式
+
+**定理。** 若 $\kappa(q,k)=\phi(q)^\top\phi(k)$，因果核注意力具有矩阵状态递推关系：
+
+$$
+S_t=S_{t-1}+\phi(k_t)v_t^\top\in\mathbb{R}^{m\times d_v},
+\qquad
+z_t=z_{t-1}+\phi(k_t)\in\mathbb{R}^{m},
+$$
+
+以及输出：
+
+$$
+y_t=\frac{\phi(q_t)^\top S_t}{\phi(q_t)^\top z_t}\in\mathbb{R}^{d_v}.
+$$
+
+对于固定的 $m,d_v$，循环更新的每个 token 成本是恒定的。分块并行形式计算相同的状态及块内因果乘积。
+
+**步骤。**
+
+1. 从因果归一化核注意力开始：
+   $$
+   y_t
+   =\frac{\sum_{s\le t}\kappa(q_t,k_s)v_s}
+   {\sum_{s\le t}\kappa(q_t,k_s)}
+   \in\mathbb{R}^{d_v}.
+   $$
+2. 代入特征分解：
+   $$
+   \sum_{s\le t}\kappa(q_t,k_s)v_s
+   =\sum_{s\le t}\phi(q_t)^\top\phi(k_s)v_s.
+   $$
+   标量 $\phi(q_t)^\top$ 不依赖于 $s$，因此将其提取到左侧：
+   $$
+   \sum_{s\le t}\phi(q_t)^\top\phi(k_s)v_s
+   =\phi(q_t)^\top
+   \left(\sum_{s\le t}\phi(k_s)v_s^\top\right)
+   =\phi(q_t)^\top S_t.
+   $$
+   括号内的形状为 $\mathbb{R}^{m\times d_v}$。
+3. 以相同方式分解分母：
+   $$
+   \sum_{s\le t}\kappa(q_t,k_s)
+   =\sum_{s\le t}\phi(q_t)^\top\phi(k_s)
+   =\phi(q_t)^\top
+   \left(\sum_{s\le t}\phi(k_s)\right)
+   =\phi(q_t)^\top z_t.
+   $$
+4. 添加一个新 token 得到：
+   $$
+   S_t=S_{t-1}+\phi(k_t)v_t^\top,
+   \qquad
+   z_t=z_{t-1}+\phi(k_t).
+   $$
+   外积的形状为 $\mathbb{R}^{m\times d_v}$，向量加法的形状为 $\mathbb{R}^{m}$。
+5. 对于包含 $r$ 个 token 的块，将特征键收集在 $\Phi_K\in\mathbb{R}^{r\times m}$ 中，查询收集在 $\Phi_Q\in\mathbb{R}^{r\times m}$ 中，值收集在 $V\in\mathbb{R}^{r\times d_v}$ 中。该块的状态增量为：
+   $$
+   \Delta S=\Phi_K^\top V\in\mathbb{R}^{m\times d_v},
+   \qquad
+   \Delta z=\Phi_K^\top\mathbf{1}_r\in\mathbb{R}^{m}.
+   $$
+6. 在块内，定义下三角核矩阵：
+   $$
+   L=\operatorname{tril}(\Phi_Q\Phi_K^\top)\in\mathbb{R}^{r\times r}.
+   $$
+   若 $S_{\mathrm{in}}\in\mathbb{R}^{m\times d_v}$ 和 $z_{\mathrm{in}}\in\mathbb{R}^{m}$ 是块之前的状态，则块的输出为：
+   $$
+   Y_{\mathrm{num}}
+   =\Phi_QS_{\mathrm{in}}+LV\in\mathbb{R}^{r\times d_v},
+   $$
+   $$
+   Y_{\mathrm{den}}
+   =\Phi_Qz_{\mathrm{in}}+L\mathbf{1}_r\in\mathbb{R}^{r},
+   \qquad
+   Y=Y_{\mathrm{num}}\oslash Y_{\mathrm{den}}\in\mathbb{R}^{r\times d_v}.
+   $$
+   块之后的状态为 $S_{\mathrm{in}}+\Delta S$ 和 $z_{\mathrm{in}}+\Delta z$。
+7. 该检查在相同的 float64 序列上比较循环、分块和稠密因果形式。循环/分块的最大误差为 $0$，循环/稠密的最大误差为 $2.220446049250313\times10^{-16}$。
+
+**检查。** checks/M4/D-M4.6-01.py 验证了三种形式及状态形状；输出 passed: True。
+
+**正确限定范围的断言。** 该递推关系在特征宽度固定时具有恒定的每 token 成本。它并未声称特定的特征映射对所有任务都能同样好地近似指数 Softmax 核。
+
+**直观理解。** 状态是分解后核的累积充分统计量。它用一个矩阵和一个向量替换了过去键的列表。
+
+### D-M4.6-02 · Delta 规则与门控 DeltaNet
+
+**定理。** Delta 规则更新恰好是在以下目标函数上的一步梯度下降：
+
+$$
+\mathcal{L}_t(S)
+=\frac12\lVert Sk_t-v_t\rVert_2^2,
+\qquad
+\mathcal{L}_t\in\mathbb{R}_{\ge0},
+$$
+
+学习率为 $\beta_t$，在 $S=S_{t-1}$ 处评估。门控 DeltaNet 恰好是对旧状态进行衰减后，在该衰减状态下执行一步普通 Delta 更新。当 $\alpha_t\ne1$ 时，它并不完全等同于标准 L2 正则化梯度下降的一步。
+
+**步骤。**
+
+1. 设 $e=Sk_t-v_t\in\mathbb{R}^{d_v}$。标量损失为：
+   $$
+   \mathcal{L}_t(S)=\frac12e^\top e.
+   $$
+2. 对预测求导：
+   $$
+   d(Sk_t-v_t)=dS\,k_t\in\mathbb{R}^{d_v}.
+   $$
+   应用平方范数的微分：
+   $$
+   d\mathcal{L}_t
+   =e^\top(dS\,k_t).
+   $$
+3. 转换为 Frobenius 内积。由于 $e^\top dS k_t$ 是标量，
+   $$
+   e^\top dS k_t
+   =\operatorname{tr}(e^\top dS k_t)
+   =\operatorname{tr}(k_te^\top dS)
+   =\langle ek_t^\top,dS\rangle_F.
+   $$
+   因此
+   $$
+   \nabla_S\mathcal{L}_t=(Sk_t-v_t)k_t^\top\in\mathbb{R}^{d_v\times d_k}.
+   $$
+4. 在 $S=S_{t-1}$ 处的一步梯度更新为：
+   $$
+   S_t
+   =S_{t-1}-\beta_t\nabla_S\mathcal{L}_t(S_{t-1})
+   =S_{t-1}-\beta_t(S_{t-1}k_t-v_t)k_t^\top.
+   $$
+5. 对于门控 DeltaNet，记作 $\widetilde S_{t-1}=\alpha_tS_{t-1}\in\mathbb{R}^{d_v\times d_k}$。代入普通 Delta 步骤：
+   $$
+   S_t
+   =\widetilde S_{t-1}
+   -\beta_t(\widetilde S_{t-1}k_t-v_t)k_t^\top.
+   $$
+   展开 $\widetilde S_{t-1}$：
+   $$
+   S_t
+   =\alpha_tS_{t-1}
+   -\alpha_t\beta_tS_{t-1}k_tk_t^\top
+   +\beta_tv_tk_t^\top.
+   $$
+   这恰好等于
+   $$
+   S_t
+   =\alpha_tS_{t-1}(I-\beta_tk_tk_t^\top)
+   +\beta_tv_tk_t^\top.
+   $$
+6. 与标准 L2 正则化损失的一步进行比较：
+   $$
+   \mathcal{L}_{\mathrm{reg}}(S)
+   =\frac12\lVert Sk_t-v_t\rVert_2^2
+   +\frac{\lambda_t}{2}\lVert S\rVert_F^2.
+   $$
+   其梯度为
+   $$
+   \nabla_S\mathcal{L}_{\mathrm{reg}}
+   =(Sk_t-v_t)k_t^\top+\lambda_tS.
+   $$
+   步长为 $\beta_t$ 的更新为
+   $$
+   S_t^{\mathrm{reg}}
+   =(1-\beta_t\lambda_t)S_{t-1}
+   -\beta_tS_{t-1}k_tk_t^\top
+   +\beta_tv_tk_t^\top.
+   $$
+7. 将 $S_{t-1}$ 的系数与门控 DeltaNet 匹配，强制要求：
+   $$
+   \lambda_t=\frac{1-\alpha_t}{\beta_t}.
+   $$
+   代入该值后，留下确切的差异项：
+   $$
+   S_t^{\mathrm{GDN}}-S_t^{\mathrm{reg}}
+   =\beta_t(1-\alpha_t)S_{t-1}k_tk_t^\top.
+   $$
+   仅当 $\alpha_t=1$ 或显示的外积为零时，该项才消失。
+8. 当 $\lambda_t=(1-\alpha_t)/\beta_t$ 时，
+   $$
+   \beta_t(1-\alpha_t)
+   =\beta_t^2\lambda_t.
+   $$
+   因此，当 $O(\beta_t^2)$ 且状态因子保持在相关尺度时，差异为 $\lambda_t$。这两种更新仅在步长的二阶项上一致。这是一种算子分裂关系，而非精确相等。
+9. 该检查将解析梯度与 float64 有限差分进行比较，精确验证衰减状态恒等式，并验证差异公式。最大梯度误差为 $1.3614180893739558\times10^{-9}$，GDN 恒等式误差为 $0$。
+
+**检查。** checks/M4/D-M4.6-02.py 验证了矩阵微分、门控 DeltaNet 恒等式以及精确的正则化 GD 差异；输出 passed: True。
+
+**正确限定范围的断言。** 此处的“权重衰减”指门控 DeltaNet 描述中使用的自适应状态衰减机制。它与教科书中的 L2 正则化 SGD 步骤并非同一操作。
+
+**直观理解。** Delta 更新写入当前键/值对所需的修正。门控首先遗忘部分旧映射，然后将该修正应用于衰减后的映射。
+
+### D-M4.6-03 · 连续 SSM 与鲁棒 ZOH 离散化
+
+**定理（限定于 ZOH 形式）。** 对于
+
+$$
+\dot x(t)=Ax(t)+Bu(t),
+\qquad
+x(t)\in\mathbb{R}^{n},\ u(t)\in\mathbb{R}^{m},
+$$
+
+解为
+
+$$
+x(t)
+=e^{At}x(0)+\int_0^t e^{A(t-s)}Bu(s)\,ds.
+$$
+
+无需 $A$ 的逆。在步长 $\Delta>0$ 下的零阶保持（ZOH）下，
+
+$$
+\overline A=e^{\Delta A}\in\mathbb{R}^{n\times n},
+\qquad
+\overline B=\Delta\phi_1(A\Delta)B\in\mathbb{R}^{n\times m},
+$$
+
+其中
+
+$$
+\phi_1(M)=\sum_{j\ge0}\frac{M^j}{(j+1)!}.
+$$
+
+对于可逆的 $A$，这简化为 $\overline B=A^{-1}(e^{A\Delta}-I)B$；级数形式在零特征值处仍有定义。
+
+**步骤。**
+
+1. 将微分方程乘以积分因子 $e^{-At}$：
+   $$
+   e^{-At}\dot x(t)=e^{-At}Ax(t)+e^{-At}Bu(t).
+   $$
+2. 乘积的导数为
+   $$
+   \frac{d}{dt}\left(e^{-At}x(t)\right)
+   =-Ae^{-At}x(t)+e^{-At}\dot x(t).
+   $$
+   由于 $A$ 与其指数可交换，代入 ODE：
+   $$
+   \frac{d}{dt}\left(e^{-At}x(t)\right)
+   =e^{-At}Bu(t).
+   $$
+3. 从 $0$ 到 $t$ 积分：
+   $$
+   e^{-At}x(t)-x(0)
+   =\int_0^t e^{-As}Bu(s)\,ds.
+   $$
+   乘以 $e^{At}$：
+   $$
+   x(t)
+   =e^{At}x(0)+\int_0^t e^{A(t-s)}Bu(s)\,ds.
+   $$
+   此处仅使用了 $e^{At}$ 和 $e^{-At}$。矩阵指数总是可逆的，其逆为 $e^{-At}$，即使 $A$ 本身是奇异的。
+4. 对于在 $u(s)=u_k\in\mathbb{R}^{m}$ 上零阶保持的输入 $s\in[k\Delta,(k+1)\Delta)$，设 $\tau=(k+1)\Delta-s$。输入项为：
+   $$
+   \int_{0}^{\Delta}e^{A\tau}B\,d\tau\;u_k.
+   $$
+   定义
+   $$
+   \overline A=e^{A\Delta},
+   \qquad
+   \overline B=\left(\int_0^\Delta e^{A\tau}\,d\tau\right)B.
+   $$
+5. 若 $A$ 可逆，使用 $Ae^{A\tau}=\frac{d}{d\tau}e^{A\tau}$：
+   $$
+   \int_0^\Delta e^{A\tau}\,d\tau
+   =A^{-1}(e^{A\Delta}-I).
+   $$
+   因此
+   $$
+   \overline B=A^{-1}(e^{A\Delta}-I)B
+   =(\Delta A)^{-1}(e^{\Delta A}-I)\Delta B.
+   $$
+6. 为避免构造 $A^{-1}$，展开指数：
+   $$
+   e^M-I=\sum_{j\ge1}\frac{M^j}{j!}
+   =M\sum_{j\ge0}\frac{M^j}{(j+1)!}
+   =M\phi_1(M).
+   $$
+   设 $M=A\Delta$。由于 $\int_0^\Delta e^{A\tau}d\tau=\Delta\phi_1(A\Delta)$，
+   $$
+   \overline B=\Delta\phi_1(A\Delta)B.
+   $$
+   该级数具有无限收敛半径，对于奇异或近奇异的 $A$ 仍有良好定义。
+7. 当 $x_0=0$ 时，离散系统是一个卷积：
+   $$
+   \overline K_k=C\overline A^k\overline B\in\mathbb{R}^{p\times m},
+   \qquad
+   y_t=\sum_{s\le t}\overline K_{t-s}u_s\in\mathbb{R}^{p}.
+   $$
+8. 该检查使用具有一个零特征值的对角 $A$，通过级数计算 ZOH 矩阵，并比较递推与显式卷积。循环/稠密的最大误差为 $5.551115123125783\times10^{-17}$。
+
+**检查。** checks/M4/D-M4.6-03.py 验证了兼容积分因子的 ZOH 形式、零特征值处的有限 $\phi_1$，以及循环/稠密卷积等价性；输出 passed: True。
+
+**正确限定范围的断言。** 当 $A,B,C$ 时不变时，卷积是可用的。鲁棒的 $\phi_1$ 形式是数值实现的要求，而非当 $A$ 可能奇异时的可选代数装饰。
+
+### D-M4.6-04 · 选择性 SSM 与扫描
+
+**有来源且限定范围的断言。** Mamba 使选定的 SSM 参数成为输入的函数，以便状态可以选择性地传播或遗忘信息。这消除了固定的卷积视角，并需要递推扫描。状态更新对状态而言仍是线性的，但学习到的转移矩阵的乘积仍可能缩小或放大梯度；此处未声称通用的无消失定理。
+
+**步骤。**
+
+1. 设当前输入为 $u_t\in\mathbb{R}^{m}$。选择性参数化产生：
+   $$
+   \Delta_t=f_\Delta(u_t)\in\mathbb{R}_{>0},
+   \qquad
+   B_t=f_B(u_t)\in\mathbb{R}^{n\times m},
+   \qquad
+   C_t=f_C(u_t)\in\mathbb{R}^{p\times n}.
+   $$
+2. 对该 token 的转移进行离散化：
+   $$
+   \overline A_t=e^{\Delta_t A}\in\mathbb{R}^{n\times n}.
+   $$
+   递推关系为
+   $$
+   x_t=\overline A_tx_{t-1}+B_tu_t\in\mathbb{R}^{n},
+   \qquad
+   y_t=C_tx_t\in\mathbb{R}^{p}.
+   $$
+3. 由于 $\overline A_t,B_t,C_t$ 依赖于 $u_t$，从 $u_s$ 到 $y_t$ 的系数取决于中间的 token 序列：
+   $$
+   y_t
+   =C_t\overline A_t\cdots\overline A_{s+1}B_su_s+\cdots.
+   $$
+   不存在仅依赖于滞后时间的单一时不变核 $\overline K_{t-s}$。稠密卷积无法一次性预计算。
+4. 扫描评估关联的仿射状态转移。每个 token 贡献一个映射：
+   $$
+   x\mapsto \overline A_tx+b_t,
+   \qquad
+   b_t=B_tu_t\in\mathbb{R}^{n}.
+   $$
+   组合两个映射得到
+   $$
+   (\overline A_2,b_2)\circ(\overline A_1,b_1)
+   =(\overline A_2\overline A_1,\ \overline A_2b_1+b_2),
+   $$
+   这是可结合的，因此支持并行扫描调度。
+5. 状态路径对 $x_{t-1}$ 是线性的；它不会像 D-M1.1-05 中的普通 RNN 路径那样，在每一步递推中将反向传播的状态梯度乘以 tanh 或 sigmoid 的导数。这消除了该特定的饱和非线性因子，但转移乘积仍决定梯度尺度。
+6. 该检查使用依赖于 token 的 $A_t,B_t,C_t$，验证输出和状态形状，并检查零输入与零初始状态是否产生零状态。它获得输出形状 $[7,1]$ 和状态形状 $[7,3]$。
+
+**检查。** checks/M4/D-M4.6-04.py 验证了依赖于 token 的选择性扫描及线性状态路径；输出 passed: True。
+
+**有来源且限定范围的断言。** Mamba 的选择性扫描是依赖于 token 的递推关系的硬件感知实现。此处的代码是最小化的数学扫描，而非生产级 Mamba 内核的复现。
+
+## 4. 数值验证
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M4.6-01 | recurrent/chunked 误差 $0$; recurrent/dense 误差 $2.220446049250313\times10^{-16}$ | pass |
+| D-M4.6-02 | delta gradient 误差 $1.3614180893739558\times10^{-9}$; GDN identity 误差 $0$ | pass |
+| D-M4.6-03 | recurrent/dense ZOH 误差 $5.551115123125783\times10^{-17}$; zero-eigenvalue $\phi_1$ finite | pass |
+| D-M4.6-04 | selective output shape $[7,1]$; state shape $[7,3]$; zero-input state norm $0$ | pass |
+
+从 course/ 目录运行 python checks/M4/D-M4.6-01.py 至 python checks/M4/D-M4.6-04.py。V-M4-f 对其三种模式使用相同的状态更新方程。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M4-f" />
+
+**V-M4-f —— 线性注意力状态矩阵。** 规范位于 viz/specs/V-M4-f.yaml，纯计算模块为 viz/compute/linear_state.ts。流式传输键值对，并切换 Hebbian 累积、delta 修正和门控 delta。该组件在每次更新前显示每个 token 后的 $S_t$ 以及当前预测 $S_{t-1}k_t$。
+
+相关公式为 D-M4.6-01 和 D-M4.6-02。可见的洞察表明，Hebbian 写入每个键值外积，delta 修正当前映射，而 Gated DeltaNet 在修正前衰减旧状态。现有的前端可以使用 Canvas2D 或 SVG 将每个 $S_t$ 渲染为小型热图。
+
+## 6。结语
+
+**反直觉的问题。** 线性注意力机制如何既能作为 RNN，又具备并行训练形式？
+
+**解答示例。** D-M4.6-01 将状态更新写为加法外积形式：
+
+$$
+S_t=S_{t-1}+\phi(k_t)v_t^\top.
+$$
+
+该递推关系在因果推理中是顺序执行的。但一组外积可以被分组处理：
+
+$$
+\Delta S=\Phi_K^\top V.
+$$
+
+矩阵乘法和加法的结合律使得一个块（chunk）可以并行计算其状态增量，同时前缀状态在块之间传递。稠密因果注意力与循环线性注意力之所以一致，是因为两者评估的是相同的因子化核求和；它们的区别在于实例化的顺序和内存路径。
+
+**作业 A-M4。** 实现核线性注意力、Delta 规则、门控 DeltaNet（Gated DeltaNet）、鲁棒零阶保持 SSM（ZOH SSM）以及最小选择扫描（selective scan）。运行循环/分块/稠密等价性测试，导出 V-M4-f 轨迹，并记录 GDN 与 L2 之间的确切差异，而非简单地将这两种更新视为相同。
+
+**核心检查。** 从架构上看，模型仍然将前缀映射到下一个 token 的分布。前缀摘要现在是一个循环状态：一个矩阵统计量、一个纠错映射，或一个选择性动态状态。效率源于状态更新和扫描过程，而表达能力则取决于该状态能够保留和修正的内容。

@@ -1,0 +1,26 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { jacobianCards } from '../../../framework/games/jacobian-cards';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## 开始练习
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+14 步串起偏导、矩阵形状、小扰动、链式法则和最小二乘优化。约定：输出为行、输入为列，梯度为列向量。先备知识为平方与乘积的求导规则；提示可以随时查看。
+
+本轮坐标与系数为小整数；最大的整数梯度不超过 14。小数题只需处理十分之一、百分之一和四分之一，可以直接填写分数。每轮重新抽取参数。
+
+<PracticeGame generate={jacobianCards} lang="zh" />
+
+## 为什么优化需要它
+
+向量残差 r(x) 的雅各比 J 描述每个参数如何影响每个残差。最小二乘损失 L=½‖r‖² 的梯度为 Jᵀr；Gauss–Newton 则利用 JᵀJ 近似 Hessian，求解 (JᵀJ)Δ=−Jᵀr。题目也检查这个系统何时不能直接求逆。
+
+## 练习边界与继续学习
+
+填空正确不代表已掌握几何直觉、可微性证明或真实优化器。固定步长没有普遍的下降保证；Gauss–Newton 也不保证全局收敛。建议随后换一个没见过的残差函数，自己求 J 并检查下降方向。
+
+<a href={quantLessonHref('GAME-M0-SHAPES')}>继续：LLM 第一课的形状与转置</a>
+
+<SourceLessonLink source="llm:M0.1" lang="zh" />

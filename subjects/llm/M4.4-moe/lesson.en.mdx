@@ -1,0 +1,308 @@
+## 1. Motivation
+
+An MoE layer replaces one dense FFN with a bank of experts and a router. Total parameters increase with the number of experts, but per-token compute can remain near the cost of a few experts. The defect is no longer only arithmetic. A router can overload one expert, drop tokens at capacity, or require an all-to-all dispatch.
+
+This lesson derives the top-k mixture, the Switch load-balancing term, capacity, and the bias-based mechanism used in the DeepSeek family. The uniform-minimum statement is deliberately scoped: it is true for the soft relaxation $f=P=q$, not for the actual hard top-1 objective.
+
+## 2. Forward definition
+
+Let token hidden states be $x_t\in\mathbb{R}^{d}$ for $t=1,\ldots,B$, router matrix $W_g\in\mathbb{R}^{N\times d}$, and $N$ expert functions $E_i:\mathbb{R}^{d}\to\mathbb{R}^{d_{\mathrm{out}}}$. Router logits and probabilities are
+
+$$
+z_t=W_gx_t\in\mathbb{R}^{N},
+\qquad
+p_t=\operatorname{softmax}(z_t)\in\mathbb{R}^{N}.
+$$
+
+For top-$k$ routing, let $I_t\subseteq\{1,\ldots,N\}$ contain the $k$ selected experts. The normalized selected weights are
+
+$$
+g_{i,t}
+=\frac{p_{i,t}}{\sum_{j\in I_t}p_{j,t}}
+\quad(i\in I_t),
+\qquad
+g_{i,t}=0\quad(i\notin I_t),
+\qquad
+g_t\in\mathbb{R}^{N}.
+$$
+
+The MoE output is
+
+$$
+y_t=\sum_{i\in I_t}g_{i,t}E_i(x_t)\in\mathbb{R}^{d_{\mathrm{out}}}.
+$$
+
+If each expert is a two-matrix FFN with hidden width $d_e$, its weight count is approximately $2dd_e$. The total and active per-token FFN counts are
+
+$$
+N_{\mathrm{total}}=2Ndd_e\in\mathbb{N},
+\qquad
+N_{\mathrm{active}}=2kdd_e\in\mathbb{N}.
+$$
+
+For top-1 routing, define $f_i$ as the fraction of tokens whose argmax route is expert $i$, and $P_i$ as the mean router probability:
+
+$$
+f_i=\frac{1}{B}\sum_{t=1}^{B}\mathbf{1}\{\operatorname*{argmax}_j p_{j,t}=i\}\in[0,1],
+\qquad
+P_i=\frac{1}{B}\sum_{t=1}^{B}p_{i,t}\in[0,1].
+$$
+
+The Switch-style auxiliary loss is
+
+$$
+L_{\mathrm{aux}}
+=\alpha N\sum_{i=1}^{N}f_iP_i\in\mathbb{R}_{\ge0}.
+$$
+
+**Sources.** Switch Transformer is Fedus et al., [Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity](https://arxiv.org/abs/2101.03961). DeepSeekMoE is DeepSeek-AI, [DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models](https://arxiv.org/abs/2401.06066). DeepSeek-V3 is DeepSeek-AI, [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437).
+
+## 3. Derivations
+
+### D-M4.4-01 · Top-k routing and active parameters
+
+**Theorem, scoped to the displayed router.** Given router probabilities and selected experts, the normalized top-k mixture is a convex combination of the selected expert outputs. Total expert parameters scale with $N$; per-token active expert parameters scale with $k$.
+
+**Steps.**
+
+1. The router maps one token $x_t\in\mathbb{R}^{d}$ to logits:
+   $$
+   z_t=W_gx_t\in\mathbb{R}^{N},
+   \qquad
+   W_g\in\mathbb{R}^{N\times d}.
+   $$
+2. Apply softmax:
+   $$
+   p_{i,t}
+   =\frac{e^{z_{i,t}}}{\sum_{j=1}^{N}e^{z_{j,t}}},
+   \qquad
+   p_t\in\mathbb{R}^{N},
+   \qquad
+   \sum_{i=1}^{N}p_{i,t}=1.
+   $$
+3. Select $I_t$ as the indices of the $k$ largest probabilities. For the selected vector, the denominator
+   $$
+   Z_t=\sum_{j\in I_t}p_{j,t}\in\mathbb{R}_{>0}
+   $$
+   is positive. Define $g_{i,t}=p_{i,t}/Z_t$ on $I_t$ and zero outside.
+4. The selected weights sum to one:
+   $$
+   \sum_{i=1}^{N}g_{i,t}
+   =\sum_{i\in I_t}\frac{p_{i,t}}{Z_t}
+   =\frac{Z_t}{Z_t}
+   =1.
+   $$
+   Since $g_{i,t}\ge0$, the output
+   $$
+   y_t=\sum_{i\in I_t}g_{i,t}E_i(x_t)\in\mathbb{R}^{d_{\mathrm{out}}}
+   $$
+   is a convex combination of selected outputs.
+5. A two-matrix expert with $W_i^{(1)}\in\mathbb{R}^{d_e\times d}$ and $W_i^{(2)}\in\mathbb{R}^{d_{\mathrm{out}}\times d_e}$ has $dd_e+d_ed_{\mathrm{out}}$ weights. Under $d_{\mathrm{out}}=d$, this is $2dd_e$. Across $N$ experts:
+   $$
+   N_{\mathrm{total}}=N(2dd_e)=2Ndd_e.
+   $$
+6. Only $k$ experts execute for one token:
+   $$
+   N_{\mathrm{active}}=k(2dd_e)=2kdd_e.
+   $$
+   The ratio of total to active expert weights is $N/k$, ignoring router and communication weights.
+7. The check uses $N=3,k=2,d=16,d_e=32$ and obtains total expert parameters $8192$ and active parameters $2048$. It also checks that every selected weight row sums to one.
+
+**Check.** checks/M4/D-M4.4-01.py verifies top-k normalization, expert mixing, and total-versus-active counts; it prints passed: True.
+
+**Approximation, labeled.** Counting only the two expert matrices ignores router weights, biases, activation functions, dispatch, combine, and communication. It is the intended leading FFN comparison.
+
+### D-M4.4-02 · Load balancing: soft minimum and hard objective
+
+**Theorem, scoped to the soft relaxation.** If $f_i=P_i=q_i$ for a probability vector $q\in\mathbb{R}^{N}$, then
+
+$$
+L_{\mathrm{aux}}
+=\alpha N\sum_iq_i^2
+\ge\alpha,
+$$
+
+with equality exactly at $q_i=1/N$. This uniform-minimum statement does not hold for the actual hard top-1 objective where $f$ and $P$ differ.
+
+**Steps.**
+
+1. In the soft relaxation set $f=P=q$, with
+   $$
+   q_i\ge0,\qquad
+   \sum_{i=1}^{N}q_i=1,
+   \qquad
+   q\in\mathbb{R}^{N}.
+   $$
+   The loss becomes
+   $$
+   L_{\mathrm{aux}}=\alpha N\sum_{i=1}^{N}q_i^2.
+   $$
+2. Cauchy–Schwarz gives
+   $$
+   \left(\sum_{i=1}^{N}q_i\right)^2
+   \le
+   \left(\sum_{i=1}^{N}1^2\right)
+   \left(\sum_{i=1}^{N}q_i^2\right)
+   =N\sum_{i=1}^{N}q_i^2.
+   $$
+   Since the left side is $1$, $\sum_iq_i^2\ge1/N$, hence
+   $$
+   L_{\mathrm{aux}}\ge\alpha.
+   $$
+3. Equality in Cauchy–Schwarz requires $q$ proportional to the all-ones vector. The simplex constraint fixes $q_i=1/N$. Equivalently, the Hessian of $\sum_iq_i^2$ is $2I_N\succ0$, so the constrained stationary point is the unique global minimum.
+4. The hard top-1 objective does not identify $f$ and $P$. Use four tokens and two experts. Let the first three probability rows be $(0.51,0.49)$ and the last row be $(0.01,0.99)$. Argmax routing gives
+   $$
+   f=(0.75,0.25)\in\mathbb{R}^{2},
+   \qquad
+   P=(0.385,0.615)\in\mathbb{R}^{2}.
+   $$
+   Therefore
+   $$
+   L_{\mathrm{aux}}/\alpha
+   =2(0.75\cdot0.385+0.25\cdot0.615)
+   =0.885<1.
+   $$
+   Thus $\alpha$ is not a global lower bound for all achievable hard $(f,P)$ pairs.
+5. The useful hard-routing statement is about the gradient signal with $f$ held fixed through argmax. Since
+   $$
+   P_i=\frac{1}{B}\sum_{t=1}^{B}p_{i,t},
+   $$
+   the derivative with respect to one probability row is
+   $$
+   \frac{\partial L_{\mathrm{aux}}}{\partial p_{i,t}}
+   =\frac{\alpha N}{B}f_i.
+   $$
+6. For softmax,
+   $$
+   \frac{\partial p_{i,t}}{\partial z_{j,t}}
+   =p_{i,t}(\mathbf{1}_{i=j}-p_{j,t}).
+   $$
+   Apply the chain rule:
+   $$
+   \frac{\partial L_{\mathrm{aux}}}{\partial z_{j,t}}
+   =\frac{\alpha N}{B}
+   \sum_i f_i p_{i,t}(\mathbf{1}_{i=j}-p_{j,t}).
+   $$
+   Expand the indicator term:
+   $$
+   \frac{\partial L_{\mathrm{aux}}}{\partial z_{j,t}}
+   =\frac{\alpha N}{B}
+   \left[
+   f_jp_{j,t}
+   -p_{j,t}\sum_i f_ip_{i,t}
+   \right].
+   $$
+   Factor $p_{j,t}$:
+   $$
+   \boxed{
+   \frac{\partial L_{\mathrm{aux}}}{\partial z_{j,t}}
+   =\frac{\alpha N}{B}p_{j,t}
+   \left(f_j-\sum_i f_ip_{i,t}\right)
+   }.
+   $$
+   If $f_j$ is larger than the probability-weighted average, gradient descent lowers its router logit; if it is smaller, the direction is upward.
+7. The check verifies the soft uniform value, the hard counterexample $0.885\alpha$, and the boxed gradient against float64 finite differences.
+
+**Check.** checks/M4/D-M4.4-02.py verifies both the scoped minimum claim and the training-signal gradient; it prints passed: True.
+
+**Claim, correctly scoped.** The auxiliary loss is justified as a differentiable signal that reacts to overload. It is not justified by a global-minimum theorem for the hard argmax objective.
+
+### D-M4.4-03 · Capacity, dropping, and expert parallelism
+
+**Approximation, labeled.** Capacity and communication formulas below are simple token-count conventions. A production implementation also depends on padding, packing, device topology, datatype, and all-to-all scheduling.
+
+**Steps.**
+
+1. Let $a_t\in\{1,\ldots,N\}$ be the top-1 assignment for token $t$. With batch token count $B$ and capacity factor $\rho>0$, define per-expert capacity
+   $$
+   C_{\mathrm{expert}}
+   =\max\left(1,\left\lceil\frac{\rho B}{N}\right\rceil\right)\in\mathbb{N}.
+   $$
+2. Process tokens in a deterministic order. For expert $i$, accept the first $C_{\mathrm{expert}}$ tokens with $a_t=i$. If more arrive, set their dispatch mask to zero. The accepted mask is
+   $$
+   r_t\in\{0,1\},
+   \qquad
+   r_t=1\ \text{iff token }t\text{ is within capacity}.
+   $$
+3. In the fixture $a=(0,0,0,0,1,1,2)$ with $B=7,N=3,\rho=1$, the capacity is $\lceil7/3\rceil=3$. Expert 0 receives four tokens, so one is dropped; experts 1 and 2 remain below capacity. The accepted count is 6.
+4. In expert parallelism, tokens are dispatched to the devices owning their experts. Under the reference convention, sending and returning $B k$ token representations of width $d$ with $b_e$ bytes costs
+   $$
+   M_{\mathrm{all\text{-}to\text{-}all}}
+   =2Bkd b_e\ \mathrm{bytes}.
+   $$
+   The factor 2 labels one dispatch and one combine return. This is communication volume, not a latency theorem.
+5. The check uses $B=128,k=2,d=16,b_e=2$ and obtains $16384$ bytes under this send-plus-return convention.
+
+**Check.** checks/M4/D-M4.4-03.py verifies capacity, deterministic token dropping, and the stated all-to-all byte convention; it prints passed: True.
+
+**Intuition.** Sparse compute does not remove coordination. It moves the bottleneck from every expert's arithmetic to the router's assignment, packing, and communication schedule.
+
+### D-M4.4-04 · DeepSeekMoE and auxiliary-loss-free bias control
+
+**Claim, sourced and scoped.** DeepSeekMoE uses more fine-grained experts plus always-on shared experts. DeepSeek-V3 uses an auxiliary-loss-free balancing mechanism in which an external expert bias affects selection, while the selected gate weight is based on sigmoid affinity and is normalized over the selected set. These model-specific facts are sourced from the DeepSeek technical reports linked in Section 2.
+
+**Steps.**
+
+1. Let token latent $u_t\in\mathbb{R}^{d}$ and expert latent $e_i\in\mathbb{R}^{d}$. The affinity is
+   $$
+   s_{i,t}=\sigma(u_t^\top e_i)\in(0,1),
+   \qquad
+   s_t\in\mathbb{R}^{N}.
+   $$
+2. Let $b_i\in\mathbb{R}$ be an external bias and select the top-$K$ experts using $s_{i,t}+b_i$. The bias is used for selection only. If $I_t$ is the selected set, the forward mixture weights are
+   $$
+   w_{i,t}
+   =\frac{s_{i,t}}{\sum_{j\in I_t}s_{j,t}}
+   \quad(i\in I_t),
+   \qquad
+   w_{i,t}=0\quad(i\notin I_t).
+   $$
+   This is not a softmax over all experts, and $b_i$ is not inserted into this normalization.
+3. If $c_i$ is observed load and $\bar c$ is the target load, the external controller updates
+   $$
+   b_i\leftarrow b_i+\gamma\cdot\operatorname{sign}(\bar c-c_i),
+   \qquad
+   b\in\mathbb{R}^{N}.
+   $$
+   This is a control update, not a gradient step.
+4. Fix a selected mask $I_t$. In backpropagation, the discrete top-$K$ selection is treated as constant. The forward mixture weight depends on $s_t$:
+   $$
+   \frac{\partial w_{i,t}}{\partial b_j}=0
+   \quad\text{for a fixed }I_t.
+   $$
+   Therefore no term $\nabla_\theta L_{\mathrm{balance}}$ is added to $\nabla_\theta L_{\mathrm{LM}}$ by this primary controller. Bias affects the LM loss only by changing which experts execute on a later selection decision.
+5. The phrase auxiliary-loss-free must be kept precise. It describes the primary balancing mechanism. The published DeepSeek-V3 objective retains a very small sequence-wise auxiliary loss with coefficient approximately $10^{-4}$ as a safeguard against extreme within-sequence imbalance. Therefore it is inaccurate to say that the complete V3 objective has literally zero balancing-loss gradient; the correct statement is that the primary bias-controller mechanism introduces none.
+6. The check computes sigmoid affinities, selects with $s+b$, normalizes selected affinities only, and applies the external update. With a fixed mask, adding a common bias offset leaves the normalized selected weights unchanged.
+
+**Check.** checks/M4/D-M4.4-04.py verifies selected-set normalization, external bias updates, and fixed-mask weight independence from the bias; it prints passed: True.
+
+**Claim, correctly scoped.** Bias control removes gradient interference from the primary balancing path, but it does not make expert selection differentiable, and it does not erase every auxiliary term from the published training objective.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M4.4-01 | total expert parameters $8192$; active parameters $2048$; top-k rows sum to one | pass |
+| D-M4.4-02 | soft uniform minimum $\alpha=0.1$; hard counterexample $0.885\alpha$; finite-difference gradient | pass |
+| D-M4.4-03 | capacity 3; accepted 6; dropped 1; dispatch volume $16384$ bytes | pass |
+| D-M4.4-04 | selected-set weights sum to one; controller bias update; fixed-mask weights unchanged | pass |
+
+Run python checks/M4/D-M4.4-01.py through python checks/M4/D-M4.4-04.py from course/. The V-M4-d test exercises both auxiliary-loss and bias-controller modes.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M4-d" />
+
+**V-M4-d — MoE routing and load balancing.** The specification is viz/specs/V-M4-d.yaml and the pure compute module is viz/compute/moe_routing.ts. The widget draws token-to-expert flows, shows hard load $f$ beside mean probability $P$, exposes an $\alpha$ slider for $L_{\mathrm{aux}}$, and toggles between the auxiliary-loss and external-bias modes.
+
+The equation is D-M4.4-02. When bias mode is selected, the visible insight must state that the primary bias controller has no added balancing-loss gradient, while the published V3 objective still retains a very small sequence-wise safeguard term. The existing frontend can render the flows as Sankey-like SVG/canvas paths and the loads as histograms.
+
+## 6. Closing
+
+**Counterintuitive question.** Why does making the router more balanced not mean that the hard top-1 auxiliary loss has a universal minimum at uniform routing?
+
+**Worked answer.** D-M4.4-02 separates two objects. In the soft relaxation $f=P=q$, Cauchy–Schwarz gives $\alpha N\sum_iq_i^2\ge\alpha$. In hard routing, $f$ is produced by argmax while $P$ is a mean probability. They can point in different directions. The explicit four-token example has $f=(0.75,0.25)$ and $P=(0.385,0.615)$ but $L_{\mathrm{aux}}=0.885\alpha<\alpha$. The useful hard-routing argument is the gradient direction: overloaded experts receive a downward logit gradient when $f_j$ exceeds the probability-weighted average.
+
+**Assignment A-M4.** Add top-k experts, the Switch auxiliary signal, capacity/token dropping, expert-parallel dispatch accounting, fine-grained/shared experts, and the external bias-controller route. Export V-M4-d data for both balancing modes. Cite the Switch, DeepSeekMoE, and DeepSeek-V3 reports in the assignment report.
+
+**Spine check.** Architecturally, an MoE layer is still a conditional transformation inside the prefix-conditioned next-token model. Sparse routing changes active computation and communication; balancing changes either a differentiable training signal or an external selection controller.

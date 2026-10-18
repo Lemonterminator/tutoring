@@ -1,0 +1,450 @@
+## 1. Motivation
+
+M4.2 removed attention's $n\times n$ memory traffic. The remaining cost is the quadratic number of query-key interactions. M4.6 returns to recurrence, but with a learned matrix state rather than a scalar hidden state alone.
+
+Kernel linear attention stores feature-key/value statistics. The delta rule writes a correction that makes the current key map closer to its value. Gated DeltaNet decays the old state and then applies that correction. State-space models discretize a continuous linear dynamical system, and selective SSMs make the update parameters depend on the current input.
+
+The exact identities in this lesson are algebraic. The claims about retrieval, training behavior, and architecture quality are labeled as interpretations or sourced model claims.
+
+## 2. Forward definition
+
+Let $\phi(q),\phi(k)\in\mathbb{R}^{m}$ be a feature map, values $v_t\in\mathbb{R}^{d_v}$, and feature kernel
+
+$$
+\kappa(q,k)=\phi(q)^\top\phi(k)\in\mathbb{R}.
+$$
+
+For a causal sequence, define the matrix state and normalizer state
+
+$$
+S_t=\sum_{s\le t}\phi(k_s)v_s^\top\in\mathbb{R}^{m\times d_v},
+\qquad
+z_t=\sum_{s\le t}\phi(k_s)\in\mathbb{R}^{m}.
+$$
+
+The normalized linear-attention output is
+
+$$
+y_t
+=\frac{\phi(q_t)^\top S_t}
+{\phi(q_t)^\top z_t}
+\in\mathbb{R}^{d_v}.
+$$
+
+The delta-rule state has shape $S_t\in\mathbb{R}^{d_v\times d_k}$ when keys are $k_t\in\mathbb{R}^{d_k}$:
+
+$$
+S_t
+=S_{t-1}-\beta_t(S_{t-1}k_t-v_t)k_t^\top,
+\qquad
+v_t\in\mathbb{R}^{d_v},\quad
+\beta_t\in\mathbb{R}_{\ge0}.
+$$
+
+The gated version is
+
+$$
+S_t
+=\alpha_tS_{t-1}(I-\beta_tk_tk_t^\top)
++\beta_tv_tk_t^\top,
+\qquad
+\alpha_t,\beta_t\in\mathbb{R}.
+$$
+
+A continuous SSM uses state $x(t)\in\mathbb{R}^{n}$, input $u(t)\in\mathbb{R}^{m}$, output $y(t)\in\mathbb{R}^{p}$, and matrices
+
+$$
+\dot x(t)=Ax(t)+Bu(t),
+\qquad
+y(t)=Cx(t),
+\qquad
+A\in\mathbb{R}^{n\times n},\ B\in\mathbb{R}^{n\times m},\ C\in\mathbb{R}^{p\times n}.
+$$
+
+**Sources.** Kernel linear attention is Katharopoulos et al., [Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention](https://arxiv.org/abs/2006.16236). The fast-weight and delta-rule connection is discussed by Schlag et al., [Linear Transformers Are Secretly Fast Weight Programmers](https://arxiv.org/abs/2102.11174). Gated DeltaNet is Yang et al., [Gated Delta Networks: Improving Mamba2 with Delta Rule](https://arxiv.org/abs/2412.06464). S4 is Gu et al., [Efficiently Modeling Long Sequences with Structured State Spaces](https://arxiv.org/abs/2111.00396). Mamba is Gu and Dao, [Mamba: Linear-Time Sequence Modeling with Selective State Spaces](https://arxiv.org/abs/2312.00752). Mamba-2 and structured state-space duality are Dao and Gu, [Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality](https://arxiv.org/abs/2405.21060).
+
+## 3. Derivations
+
+### D-M4.6-01 · Kernel feature maps and the recurrent/chunked form
+
+**Theorem.** If $\kappa(q,k)=\phi(q)^\top\phi(k)$, causal kernel attention has the matrix-state recurrence
+
+$$
+S_t=S_{t-1}+\phi(k_t)v_t^\top\in\mathbb{R}^{m\times d_v},
+\qquad
+z_t=z_{t-1}+\phi(k_t)\in\mathbb{R}^{m},
+$$
+
+and output
+
+$$
+y_t=\frac{\phi(q_t)^\top S_t}{\phi(q_t)^\top z_t}\in\mathbb{R}^{d_v}.
+$$
+
+The recurrent update is constant-cost per token for fixed $m,d_v$. A chunked parallel form computes the same state and within-chunk causal products.
+
+**Steps.**
+
+1. Start with causal normalized kernel attention:
+   $$
+   y_t
+   =\frac{\sum_{s\le t}\kappa(q_t,k_s)v_s}
+   {\sum_{s\le t}\kappa(q_t,k_s)}
+   \in\mathbb{R}^{d_v}.
+   $$
+2. Substitute the feature factorization:
+   $$
+   \sum_{s\le t}\kappa(q_t,k_s)v_s
+   =\sum_{s\le t}\phi(q_t)^\top\phi(k_s)v_s.
+   $$
+   The scalar $\phi(q_t)^\top$ does not depend on $s$, so factor it to the left:
+   $$
+   \sum_{s\le t}\phi(q_t)^\top\phi(k_s)v_s
+   =\phi(q_t)^\top
+   \left(\sum_{s\le t}\phi(k_s)v_s^\top\right)
+   =\phi(q_t)^\top S_t.
+   $$
+   The bracket has shape $\mathbb{R}^{m\times d_v}$.
+3. Factor the denominator in the same way:
+   $$
+   \sum_{s\le t}\kappa(q_t,k_s)
+   =\sum_{s\le t}\phi(q_t)^\top\phi(k_s)
+   =\phi(q_t)^\top
+   \left(\sum_{s\le t}\phi(k_s)\right)
+   =\phi(q_t)^\top z_t.
+   $$
+4. Adding one new token gives
+   $$
+   S_t=S_{t-1}+\phi(k_t)v_t^\top,
+   \qquad
+   z_t=z_{t-1}+\phi(k_t).
+   $$
+   The outer product has shape $\mathbb{R}^{m\times d_v}$, and the vector addition has shape $\mathbb{R}^{m}$.
+5. For a chunk of $r$ tokens, collect feature keys in $\Phi_K\in\mathbb{R}^{r\times m}$, queries in $\Phi_Q\in\mathbb{R}^{r\times m}$, and values in $V\in\mathbb{R}^{r\times d_v}$. The chunk's state increment is
+   $$
+   \Delta S=\Phi_K^\top V\in\mathbb{R}^{m\times d_v},
+   \qquad
+   \Delta z=\Phi_K^\top\mathbf{1}_r\in\mathbb{R}^{m}.
+   $$
+6. Within the chunk, define the lower-triangular kernel matrix
+   $$
+   L=\operatorname{tril}(\Phi_Q\Phi_K^\top)\in\mathbb{R}^{r\times r}.
+   $$
+   If $S_{\mathrm{in}}\in\mathbb{R}^{m\times d_v}$ and $z_{\mathrm{in}}\in\mathbb{R}^{m}$ are the states before the chunk, the chunk outputs are
+   $$
+   Y_{\mathrm{num}}
+   =\Phi_QS_{\mathrm{in}}+LV\in\mathbb{R}^{r\times d_v},
+   $$
+   $$
+   Y_{\mathrm{den}}
+   =\Phi_Qz_{\mathrm{in}}+L\mathbf{1}_r\in\mathbb{R}^{r},
+   \qquad
+   Y=Y_{\mathrm{num}}\oslash Y_{\mathrm{den}}\in\mathbb{R}^{r\times d_v}.
+   $$
+   The state after the chunk is $S_{\mathrm{in}}+\Delta S$ and $z_{\mathrm{in}}+\Delta z$.
+7. The check compares recurrent, chunked, and dense causal forms on the same float64 sequence. The recurrent/chunked maximum error is $0$ and recurrent/dense maximum error is $2.220446049250313\times10^{-16}$.
+
+**Check.** checks/M4/D-M4.6-01.py verifies the three forms and the state shapes; it prints passed: True.
+
+**Claim, correctly scoped.** The recurrence has constant per-token cost for fixed feature width. It does not claim that a particular feature map approximates the exponential softmax kernel equally well for every task.
+
+**Intuition.** The state is a running sufficient statistic for the factorized kernel. It replaces a list of past keys with one matrix and one vector.
+
+### D-M4.6-02 · Delta rule and Gated DeltaNet
+
+**Theorem.** The delta-rule update is exactly one gradient-descent step on
+
+$$
+\mathcal{L}_t(S)
+=\frac12\lVert Sk_t-v_t\rVert_2^2,
+\qquad
+\mathcal{L}_t\in\mathbb{R}_{\ge0},
+$$
+
+with learning rate $\beta_t$ evaluated at $S=S_{t-1}$. Gated DeltaNet is exactly a decay of the old state followed by one ordinary delta step at that decayed state. It is not exactly one step of standard L2-regularized gradient descent when $\alpha_t\ne1$.
+
+**Steps.**
+
+1. Let $e=Sk_t-v_t\in\mathbb{R}^{d_v}$. The scalar loss is
+   $$
+   \mathcal{L}_t(S)=\frac12e^\top e.
+   $$
+2. Differentiate the prediction:
+   $$
+   d(Sk_t-v_t)=dS\,k_t\in\mathbb{R}^{d_v}.
+   $$
+   Apply the differential of the squared norm:
+   $$
+   d\mathcal{L}_t
+   =e^\top(dS\,k_t).
+   $$
+3. Convert to the Frobenius inner product. Since $e^\top dS k_t$ is a scalar,
+   $$
+   e^\top dS k_t
+   =\operatorname{tr}(e^\top dS k_t)
+   =\operatorname{tr}(k_te^\top dS)
+   =\langle ek_t^\top,dS\rangle_F.
+   $$
+   Therefore
+   $$
+   \nabla_S\mathcal{L}_t=(Sk_t-v_t)k_t^\top\in\mathbb{R}^{d_v\times d_k}.
+   $$
+4. One gradient step at $S=S_{t-1}$ is
+   $$
+   S_t
+   =S_{t-1}-\beta_t\nabla_S\mathcal{L}_t(S_{t-1})
+   =S_{t-1}-\beta_t(S_{t-1}k_t-v_t)k_t^\top.
+   $$
+5. For Gated DeltaNet, write $\widetilde S_{t-1}=\alpha_tS_{t-1}\in\mathbb{R}^{d_v\times d_k}$. Substitute into the ordinary delta step:
+   $$
+   S_t
+   =\widetilde S_{t-1}
+   -\beta_t(\widetilde S_{t-1}k_t-v_t)k_t^\top.
+   $$
+   Expand $\widetilde S_{t-1}$:
+   $$
+   S_t
+   =\alpha_tS_{t-1}
+   -\alpha_t\beta_tS_{t-1}k_tk_t^\top
+   +\beta_tv_tk_t^\top.
+   $$
+   This is exactly
+   $$
+   S_t
+   =\alpha_tS_{t-1}(I-\beta_tk_tk_t^\top)
+   +\beta_tv_tk_t^\top.
+   $$
+6. Compare with one step on the standard L2-regularized loss
+   $$
+   \mathcal{L}_{\mathrm{reg}}(S)
+   =\frac12\lVert Sk_t-v_t\rVert_2^2
+   +\frac{\lambda_t}{2}\lVert S\rVert_F^2.
+   $$
+   Its gradient is
+   $$
+   \nabla_S\mathcal{L}_{\mathrm{reg}}
+   =(Sk_t-v_t)k_t^\top+\lambda_tS.
+   $$
+   A step of size $\beta_t$ is
+   $$
+   S_t^{\mathrm{reg}}
+   =(1-\beta_t\lambda_t)S_{t-1}
+   -\beta_tS_{t-1}k_tk_t^\top
+   +\beta_tv_tk_t^\top.
+   $$
+7. Matching the coefficient of $S_{t-1}$ to Gated DeltaNet forces
+   $$
+   \lambda_t=\frac{1-\alpha_t}{\beta_t}.
+   $$
+   Substituting this value leaves the exact discrepancy
+   $$
+   S_t^{\mathrm{GDN}}-S_t^{\mathrm{reg}}
+   =\beta_t(1-\alpha_t)S_{t-1}k_tk_t^\top.
+   $$
+   It vanishes only when $\alpha_t=1$ or the displayed outer product is zero.
+8. With $\lambda_t=(1-\alpha_t)/\beta_t$,
+   $$
+   \beta_t(1-\alpha_t)
+   =\beta_t^2\lambda_t.
+   $$
+   Thus the discrepancy is $O(\beta_t^2)$ when $\lambda_t$ and the state factors are held at the relevant scale. The two updates agree only to second order in step size. This is an operator-splitting relationship, not exact equality.
+9. The check compares the analytic gradient with float64 finite differences, verifies the decayed-state identity exactly, and verifies the discrepancy formula. The maximum gradient error is $1.3614180893739558\times10^{-9}$ and the GDN identity error is $0$.
+
+**Check.** checks/M4/D-M4.6-02.py verifies the matrix differential, Gated DeltaNet identity, and exact regularized-GD discrepancy; it prints passed: True.
+
+**Claim, correctly scoped.** “Weight decay” here names the adaptive state-decay mechanism used in the Gated DeltaNet description. It is not the same operation as a textbook L2-regularized SGD step.
+
+**Intuition.** A delta update writes the correction needed by the current key/value pair. Gating first forgets part of the old mapping, then applies that correction to the decayed mapping.
+
+### D-M4.6-03 · Continuous SSM and robust ZOH discretization
+
+**Theorem, scoped to the ZOH form.** For
+
+$$
+\dot x(t)=Ax(t)+Bu(t),
+\qquad
+x(t)\in\mathbb{R}^{n},\ u(t)\in\mathbb{R}^{m},
+$$
+
+the solution is
+
+$$
+x(t)
+=e^{At}x(0)+\int_0^t e^{A(t-s)}Bu(s)\,ds.
+$$
+
+No inverse of $A$ is needed. Under zero-order hold over step $\Delta>0$,
+
+$$
+\overline A=e^{\Delta A}\in\mathbb{R}^{n\times n},
+\qquad
+\overline B=\Delta\phi_1(A\Delta)B\in\mathbb{R}^{n\times m},
+$$
+
+where
+
+$$
+\phi_1(M)=\sum_{j\ge0}\frac{M^j}{(j+1)!}.
+$$
+
+For invertible $A$, this reduces to $\overline B=A^{-1}(e^{A\Delta}-I)B$; the series form remains defined at zero eigenvalues.
+
+**Steps.**
+
+1. Multiply the differential equation by the integrating factor $e^{-At}$:
+   $$
+   e^{-At}\dot x(t)=e^{-At}Ax(t)+e^{-At}Bu(t).
+   $$
+2. The derivative of the product is
+   $$
+   \frac{d}{dt}\left(e^{-At}x(t)\right)
+   =-Ae^{-At}x(t)+e^{-At}\dot x(t).
+   $$
+   Since $A$ commutes with its exponential, substitute the ODE:
+   $$
+   \frac{d}{dt}\left(e^{-At}x(t)\right)
+   =e^{-At}Bu(t).
+   $$
+3. Integrate from $0$ to $t$:
+   $$
+   e^{-At}x(t)-x(0)
+   =\int_0^t e^{-As}Bu(s)\,ds.
+   $$
+   Multiply by $e^{At}$:
+   $$
+   x(t)
+   =e^{At}x(0)+\int_0^t e^{A(t-s)}Bu(s)\,ds.
+   $$
+   This used only $e^{At}$ and $e^{-At}$. The matrix exponential is always invertible with inverse $e^{-At}$, even when $A$ itself is singular.
+4. For a zero-order-held input $u(s)=u_k\in\mathbb{R}^{m}$ on $s\in[k\Delta,(k+1)\Delta)$, set $\tau=(k+1)\Delta-s$. The input term is
+   $$
+   \int_{0}^{\Delta}e^{A\tau}B\,d\tau\;u_k.
+   $$
+   Define
+   $$
+   \overline A=e^{A\Delta},
+   \qquad
+   \overline B=\left(\int_0^\Delta e^{A\tau}\,d\tau\right)B.
+   $$
+5. If $A$ is invertible, use $Ae^{A\tau}=\frac{d}{d\tau}e^{A\tau}$:
+   $$
+   \int_0^\Delta e^{A\tau}\,d\tau
+   =A^{-1}(e^{A\Delta}-I).
+   $$
+   Hence
+   $$
+   \overline B=A^{-1}(e^{A\Delta}-I)B
+   =(\Delta A)^{-1}(e^{\Delta A}-I)\Delta B.
+   $$
+6. To avoid forming $A^{-1}$, expand the exponential:
+   $$
+   e^M-I=\sum_{j\ge1}\frac{M^j}{j!}
+   =M\sum_{j\ge0}\frac{M^j}{(j+1)!}
+   =M\phi_1(M).
+   $$
+   Put $M=A\Delta$. Since $\int_0^\Delta e^{A\tau}d\tau=\Delta\phi_1(A\Delta)$,
+   $$
+   \overline B=\Delta\phi_1(A\Delta)B.
+   $$
+   The series has infinite radius of convergence and remains well-defined for singular or near-singular $A$.
+7. With $x_0=0$, the discrete system is a convolution:
+   $$
+   \overline K_k=C\overline A^k\overline B\in\mathbb{R}^{p\times m},
+   \qquad
+   y_t=\sum_{s\le t}\overline K_{t-s}u_s\in\mathbb{R}^{p}.
+   $$
+8. The check uses a diagonal $A$ with one zero eigenvalue, computes ZOH matrices with the series, and compares recurrence with materialized convolution. The recurrent/dense maximum error is $5.551115123125783\times10^{-17}$.
+
+**Check.** checks/M4/D-M4.6-03.py verifies the integrating-factor-compatible ZOH form, finite $\phi_1$ at a zero eigenvalue, and recurrent/dense convolution equivalence; it prints passed: True.
+
+**Claim, correctly scoped.** The convolution is available when $A,B,C$ are time-invariant. The robust $\phi_1$ form is a numerical implementation requirement, not an optional algebraic decoration when $A$ may be singular.
+
+### D-M4.6-04 · Selective SSM and the scan
+
+**Claim, sourced and scoped.** Mamba makes selected SSM parameters functions of the input so the state can selectively propagate or forget information. This removes the fixed convolution view and requires a recurrence scan. The state update remains linear in the state, but products of learned transition matrices can still shrink or amplify gradients; no blanket no-vanishing theorem is claimed.
+
+**Steps.**
+
+1. Let the current input be $u_t\in\mathbb{R}^{m}$. A selective parameterization produces
+   $$
+   \Delta_t=f_\Delta(u_t)\in\mathbb{R}_{>0},
+   \qquad
+   B_t=f_B(u_t)\in\mathbb{R}^{n\times m},
+   \qquad
+   C_t=f_C(u_t)\in\mathbb{R}^{p\times n}.
+   $$
+2. Discretize the transition for that token:
+   $$
+   \overline A_t=e^{\Delta_t A}\in\mathbb{R}^{n\times n}.
+   $$
+   The recurrence is
+   $$
+   x_t=\overline A_tx_{t-1}+B_tu_t\in\mathbb{R}^{n},
+   \qquad
+   y_t=C_tx_t\in\mathbb{R}^{p}.
+   $$
+3. Because $\overline A_t,B_t,C_t$ depend on $u_t$, the coefficient from $u_s$ to $y_t$ depends on the intervening token sequence:
+   $$
+   y_t
+   =C_t\overline A_t\cdots\overline A_{s+1}B_su_s+\cdots.
+   $$
+   There is no one time-invariant kernel $\overline K_{t-s}$ that depends only on the lag. A dense convolution cannot be precomputed once.
+4. A scan evaluates the associative affine state transitions. Each token contributes a map
+   $$
+   x\mapsto \overline A_tx+b_t,
+   \qquad
+   b_t=B_tu_t\in\mathbb{R}^{n}.
+   $$
+   Composing two maps gives
+   $$
+   (\overline A_2,b_2)\circ(\overline A_1,b_1)
+   =(\overline A_2\overline A_1,\ \overline A_2b_1+b_2),
+   $$
+   which is associative and therefore admits parallel-scan scheduling.
+5. The state path is linear in $x_{t-1}$; it does not multiply the backpropagated state gradient by a tanh or sigmoid derivative at every recurrence step as the vanilla RNN path in D-M1.1-05 does. This removes that particular saturating-nonlinearity factor, but the transition products still determine gradient scale.
+6. The check uses token-dependent $A_t,B_t,C_t$, verifies output and state shapes, and checks that zero input with zero initial state produces zero state. It obtains output shape $[7,1]$ and state shape $[7,3]$.
+
+**Check.** checks/M4/D-M4.6-04.py verifies token-dependent selective scanning and the linear state path; it prints passed: True.
+
+**Claim, sourced and scoped.** Mamba's selective scan is a hardware-aware implementation of a token-dependent recurrence. The code here is a minimal mathematical scan, not a reproduction of a production Mamba kernel.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M4.6-01 | recurrent/chunked error $0$; recurrent/dense error $2.220446049250313\times10^{-16}$ | pass |
+| D-M4.6-02 | delta gradient error $1.3614180893739558\times10^{-9}$; GDN identity error $0$ | pass |
+| D-M4.6-03 | recurrent/dense ZOH error $5.551115123125783\times10^{-17}$; zero-eigenvalue $\phi_1$ finite | pass |
+| D-M4.6-04 | selective output shape $[7,1]$; state shape $[7,3]$; zero-input state norm $0$ | pass |
+
+Run python checks/M4/D-M4.6-01.py through python checks/M4/D-M4.6-04.py from course/. V-M4-f uses the same state-update equations for its three modes.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M4-f" />
+
+**V-M4-f — Linear-attention state matrix.** The specification is viz/specs/V-M4-f.yaml and the pure compute module is viz/compute/linear_state.ts. Stream key/value pairs and toggle Hebbian accumulation, delta correction, and gated delta. The widget displays $S_t$ after each token and the current prediction $S_{t-1}k_t$ before the update.
+
+The equations are D-M4.6-01 and D-M4.6-02. The visible insight says that Hebbian writes every key-value outer product, delta corrects the current mapping, and Gated DeltaNet decays the old state before correction. The existing frontend can render each $S_t$ as a small heatmap with Canvas2D or SVG.
+
+## 6. Closing
+
+**Counterintuitive question.** How can linear attention be an RNN and still have a parallel training form?
+
+**Worked answer.** D-M4.6-01 writes the state update as an additive outer product:
+
+$$
+S_t=S_{t-1}+\phi(k_t)v_t^\top.
+$$
+
+The recurrence is sequential for causal inference. But a chunk of outer products can be grouped:
+
+$$
+\Delta S=\Phi_K^\top V.
+$$
+
+The associative matrix multiplication and addition let a chunk compute its state increment in parallel, while a prefix state is carried between chunks. Dense causal attention and recurrent linear attention agree because both evaluate the same factorized kernel sum; they differ in materialization order and memory path.
+
+**Assignment A-M4.** Add kernel linear attention, delta rule, Gated DeltaNet, robust ZOH SSM, and a minimal selective scan. Run recurrent/chunked/dense equivalence tests, export V-M4-f trajectories, and record the exact GDN-versus-L2 discrepancy rather than calling the two updates identical.
+
+**Spine check.** Architecturally, the model still maps a prefix to a next-token distribution. The prefix summary is now a recurrent state: a matrix statistic, an error-corrected mapping, or a selective dynamical state. Efficiency comes from the state update and scan, while expressivity depends on what the state can retain and revise.

@@ -1,0 +1,19 @@
+{
+  "id": "GAME-GP-FINANCE",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "gp-finance",
+  "module": "Gaussian processes and portfolios · Bridge",
+  "title": { "en": "Gaussian processes and portfolios: bridge games", "zh": "高斯过程与投资组合：桥接小游戏" },
+  "prereqs": ["GAME-AALTO-GP", "QUANT-2"],
+  "spine": {
+    "en": { "a": "A portfolio's covariance matrix and a GP's kernel matrix are the same object: portfolio variance, factor models, minimum-variance weights, shrinkage and Black–Litterman translate into GP conditioning.", "b": "An extension written for this site, not part of the Aalto course." },
+    "zh": { "a": "投资组合的协方差矩阵和 GP 的核矩阵是同一种对象：组合方差、因子模型、最小方差权重、收缩和 Black–Litterman 都可以翻译成 GP 条件化。", "b": "本站补充的扩展内容，不属于 Aalto 课程。" }
+  },
+  "references": [
+    "C. E. Rasmussen and C. K. I. Williams, Gaussian Processes for Machine Learning, MIT Press 2006, §2.2, §5.4.2, A.2",
+    "F. Black and R. Litterman, Global Portfolio Optimization, Financial Analysts Journal 48(5), 1992",
+    "O. Ledoit and M. Wolf, Honey, I Shrunk the Sample Covariance Matrix, Journal of Portfolio Management 30(4), 2004",
+    "G. V. G. Stevens, On the Inverse of the Covariance Matrix in Portfolio Analysis, Journal of Finance 53(5), 1998"
+  ]
+}

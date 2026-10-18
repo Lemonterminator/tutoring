@@ -1,0 +1,289 @@
+## 1. 动机
+
+M3.5 将 KV cache 计为 $2Lnh_{\mathrm{kv}}d_hb_e$ 字节。剩余的缺陷在于谱系：缓存的是哪种表示，有多少个头生成它，以及在解码前是否可以吸收一个投影？答案决定了内存流量和参数量。
+
+MHA → MQA → GQA → MLA 的序列并非一系列无关的名称。它是解码器重读的 K/V 状态的一系列变更。对于仅内容的 MLA 吸收，代数关系是精确的。标准 RoPE 引入了查询-键对索引并破坏了一个全局吸收的查询；一个独立的解耦旋转分量恢复了可压缩的内容路径。
+
+## 2。前向定义
+
+设模型宽度为 $d\in\mathbb{N}$，查询头（query-head）数量为 $h\in\mathbb{N}$，键值头（KV-head）数量为 $h_{\mathrm{kv}}\in\mathbb{N}$，头维度为 $d_h\in\mathbb{N}$，层数为 $L\in\mathbb{N}$，上下文长度为 $n\in\mathbb{N}$，元素大小为 $b_e\in\mathbb{N}$ 字节。缓存存储
+
+$$
+K_{\mathrm{cache}},V_{\mathrm{cache}}
+\in\mathbb{R}^{L\times n\times h_{\mathrm{kv}}\times d_h}.
+$$
+
+两个张量给出
+
+$$
+\operatorname{bytes}_{\mathrm{KV}}
+=2Lnh_{\mathrm{kv}}d_hb_e\ \mathrm{bytes}.
+$$
+
+MHA 使用 $h_{\mathrm{kv}}=h$。MQA 使用 $h_{\mathrm{kv}}=1$。GQA 使用中间数量的 KV 头，其中查询头被划分为共享一个 KV 头的组。K/V 投影参数数量（不含偏置）为
+
+$$
+N_{\mathrm{KV\;proj}}
+=2dh_{\mathrm{kv}}d_h,
+\qquad
+N_{\mathrm{KV\;proj}}\in\mathbb{N}.
+$$
+
+对于 MLA，设压缩的 KV 潜在变量为 $c_t^{KV}\in\mathbb{R}^{d_c}$，并设独立的旋转键组件宽度为 $d_R\in\mathbb{N}$。压缩缓存的形状为
+
+$$
+c^{KV}_{1:n}\in\mathbb{R}^{n\times d_c},
+\qquad
+k^R_{1:n}\in\mathbb{R}^{n\times d_R},
+$$
+
+因此缓存估计值为
+
+$$
+\operatorname{bytes}_{\mathrm{MLA}}
+=Ln(d_c+d_R)b_e\ \mathrm{bytes}.
+$$
+
+内容路径为
+
+$$
+c_t^{KV}=W^{DKV}h_t\in\mathbb{R}^{d_c},
+\qquad
+k_t^C=W^{UK}c_t^{KV}\in\mathbb{R}^{d_k},
+\qquad
+v_t^C=W^{UV}c_t^{KV}\in\mathbb{R}^{d_v}.
+$$
+
+对于查询 $q_i\in\mathbb{R}^{d_k}$ 和缓存的潜在变量 $c_j^{KV}\in\mathbb{R}^{d_c}$，
+
+$$
+q_i^\top k_j^C
+=q_i^\top W^{UK}c_j^{KV}
+=(W^{UK\top}q_i)^\top c_j^{KV}\in\mathbb{R}.
+$$
+
+**来源。** MQA 由 Shazeer 提出，[Fast Transformer Decoding: One Write-Head is All You Need](https://arxiv.org/abs/1911.02150)。GQA 由 Ainslie 等人描述，[GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245)。MLA 及其解耦的旋转组件源自 DeepSeek-AI，[DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model](https://arxiv.org/abs/2405.04434)。
+
+## 3. 推导过程
+
+### D-M4.3-01 · MHA、MQA 和 GQA 的缓存谱系
+
+**定理，范围限定于缓存张量。** 固定 $L,n,d_h,b_e$，将 KV 头数从 $h$ 更改为 $h_{\mathrm{kv}}$，会使缓存字节数变化一个因子：
+
+$$
+\frac{\operatorname{bytes}_{\mathrm{MHA}}}
+{\operatorname{bytes}_{\mathrm{GQA}}}
+=\frac{h}{h_{\mathrm{kv}}}.
+$$
+
+相同的因子也适用于 K/V 投影参数，而查询（Query）投影不受 KV 共享选择的影响。
+
+**步骤。**
+
+1. 在 MHA 中，每个查询头都有自己独立的键（Key）和值（Value）头。键张量的形状为 $[L,n,h,d_h]$，值张量具有相同的形状。因此
+   $$
+   \operatorname{bytes}_{\mathrm{MHA}}
+   =2Lnhd_hb_e\ \mathrm{bytes}.
+   $$
+2. 在 MQA 中，所有查询头共享一个 K/V 头。缓存张量的形状为 $[L,n,1,d_h]$，所以
+   $$
+   \operatorname{bytes}_{\mathrm{MQA}}
+   =2Ln d_hb_e\ \mathrm{bytes}.
+   $$
+   相除得到
+   $$
+   \frac{\operatorname{bytes}_{\mathrm{MHA}}}
+   {\operatorname{bytes}_{\mathrm{MQA}}}
+   =\frac{2Lnhd_hb_e}{2Lnd_hb_e}
+   =h.
+   $$
+3. 在 GQA 中，一组查询头共享每个 KV 头。缓存张量的形状为 $[L,n,h_{\mathrm{kv}},d_h]$，所以
+   $$
+   \operatorname{bytes}_{\mathrm{GQA}}
+   =2Lnh_{\mathrm{kv}}d_hb_e\ \mathrm{bytes}.
+   $$
+   因此
+   $$
+   \frac{\operatorname{bytes}_{\mathrm{MHA}}}
+   {\operatorname{bytes}_{\mathrm{GQA}}}
+   =\frac{2Lnhd_hb_e}{2Lnh_{\mathrm{kv}}d_hb_e}
+   =\frac{h}{h_{\mathrm{kv}}}.
+   $$
+4. K/V 投影将宽度 $d$ 映射到每个 $h_{\mathrm{kv}}d_h$ 坐标。一个投影包含 $dh_{\mathrm{kv}}d_h$ 个权重，K 加 V 给出
+   $$
+   N_{\mathrm{KV\;proj}}
+   =dh_{\mathrm{kv}}d_h+dh_{\mathrm{kv}}d_h
+   =2dh_{\mathrm{kv}}d_h.
+   $$
+   因此，从 MHA 到 GQA 的 K/V 投影参数减少因子也是 $h/h_{\mathrm{kv}}$。查询投影权重的形状仍为 $[d,hd_h]$ 且保持不变。
+5. 共享 K/V 并不会消除 $h$ 个查询头的分数乘积。它减少了缓存的 K/V 状态和 K/V 投影参数；随后的分数和值计算则围绕共享的 K/V 表示进行组织。
+6. 使用 $L=32,n=2048,h=32,h_{\mathrm{kv}}=8,d_h=128,b_e=2$，检查得到 MHA 为 $1073741824$ 字节，GQA 为 $268435456$ 字节，MQA 为 $33554432$ 字节。从 MHA 到 GQA 的缓存和投影减少因子均为 4。
+
+**检查。** checks/M4/D-M4.3-01.py 验证了缓存字节数、K/V 投影参数以及减少因子；它输出 passed: True。
+
+**断言，范围正确限定。** 因子 $h/h_{\mathrm{kv}}$ 是针对这些张量的核算结果。端到端吞吐量还取决于内核（kernels）、批处理、通信以及查询头路径的成本。
+
+### D-M4.3-02 · 不含 RoPE 的 MLA 吸收
+
+**定理。** 对于仅包含内容的 MLA，键投影可以被吸收到查询中，而值/输出投影可以按头进行吸收。对于单个头：
+
+$$
+q_i^\top W^{UK}c_j^{KV}
+=(W^{UK\top}q_i)^\top c_j^{KV},
+$$
+
+且当 $B=W^OW^{UV}\in\mathbb{R}^{d_{\mathrm{out}}\times d_c}$ 时，
+
+$$
+y_i
+=W^O\sum_j\alpha_{ij}W^{UV}c_j^{KV}
+=B\sum_j\alpha_{ij}c_j^{KV}
+\in\mathbb{R}^{d_{\mathrm{out}}}.
+$$
+
+对于多头情况，值侧的吸收是按头进行的：$B_h=W_h^OW_h^{UV}$。
+
+**步骤。**
+
+1. 令 $C\in\mathbb{R}^{n\times d_c}$ 按行收集缓存的压缩潜在变量（latents），令 $W^{UK}\in\mathbb{R}^{d_k\times d_c}$，并令 $q_i\in\mathbb{R}^{d_k}$。位置 $j$ 的重建键为
+   $$
+   k_j^C=W^{UK}c_j^{KV}\in\mathbb{R}^{d_k}.
+   $$
+2. 未吸收的分数为
+   $$
+   q_i^\top k_j^C
+   =q_i^\top W^{UK}c_j^{KV}.
+   $$
+   根据转置规则 $(AB)^\top=B^\top A^\top$，
+   $$
+   q_i^\top W^{UK}c_j^{KV}
+   =(W^{UK\top}q_i)^\top c_j^{KV}.
+   $$
+3. 定义吸收后的查询为
+   $$
+   \widetilde q_i=W^{UK\top}q_i\in\mathbb{R}^{d_c}.
+   $$
+   那么所有分数都可以计算为 $C\widetilde q_i\in\mathbb{R}^{n}$，而无需重建和缓存每一个 $k_j^C$。
+4. 令 $W^{UV}\in\mathbb{R}^{d_v\times d_c}$ 且 $W^O\in\mathbb{R}^{d_{\mathrm{out}}\times d_v}$。显式的值路径为
+   $$
+   y_i
+   =W^O\left(\sum_{j=1}^{n}\alpha_{ij}W^{UV}c_j^{KV}\right),
+   \qquad
+   \alpha_i\in\mathbb{R}^{n},\quad y_i\in\mathbb{R}^{d_{\mathrm{out}}}.
+   $$
+5. 分配有限和与矩阵乘积：
+   $$
+   y_i
+   =W^OW^{UV}\left(\sum_{j=1}^{n}\alpha_{ij}c_j^{KV}\right).
+   $$
+   定义
+   $$
+   B=W^OW^{UV}\in\mathbb{R}^{d_{\mathrm{out}}\times d_c}.
+   $$
+   那么
+   $$
+   y_i=B\left(\alpha_i^\top C\right)\in\mathbb{R}^{d_{\mathrm{out}}},
+   \qquad
+   \alpha_i^\top C\in\mathbb{R}^{d_c}.
+   $$
+6. 对于头 $h$，使用 $W_h^{UV}\in\mathbb{R}^{d_{v,h}\times d_c}$ 和 $W_h^O\in\mathbb{R}^{d_{\mathrm{out}}\times d_{v,h}}$。正确的按头吸收为
+   $$
+   B_h=W_h^OW_h^{UV}\in\mathbb{R}^{d_{\mathrm{out}}\times d_c},
+   $$
+   $$
+   y_i=\sum_hB_h\left(\sum_j\alpha_{ij,h}c_j^{KV}\right)
+   \in\mathbb{R}^{d_{\mathrm{out}}}.
+   $$
+   当每个头拥有自己的 $W^OW^{UV}$ 时，单个全局 $\alpha_{ij,h}$ 是无效的。
+7. 检查程序计算显式的键和值，然后计算吸收后的查询和按头的值乘积。使用随机 float64 张量时，最大输出差异为 $2.220446049250313\times10^{-15}$，最大注意力权重差异为 $2.220446049250313\times10^{-16}$。
+
+**检查。** checks/M4/D-M4.3-02.py 比较了不含 RoPE 的吸收与未吸收的 MLA 输出及注意力权重；它输出 passed: True。
+
+**直观理解。** 内容潜在变量是缓存的对象。吸收操作将固定的线性映射移动到当前查询或输出可用的计算侧，因此缓存无需存储展开的键和值。
+
+### D-M4.3-03 · 为什么标准 RoPE 破坏了单一全局吸收
+
+**定理，范围限定于标准 RoPE。** 在存在位置依赖旋转的情况下，有效的吸收查询同时依赖于查询位置 $i$ 和键位置 $j$。因此，无法为每个查询预计算一个向量并与所有缓存的 $c_j^{KV}$ 进行点积。
+
+**步骤。**
+
+1. 令 $R_t\in\mathbb{R}^{d_k\times d_k}$ 为位置 $t$ 处的块对角 RoPE 旋转矩阵。标准 RoPE 产生
+   $$
+   q_i^{R}=R_iq_i\in\mathbb{R}^{d_k},
+   \qquad
+   k_j^{R}=R_jW^{UK}c_j^{KV}\in\mathbb{R}^{d_k}.
+   $$
+2. 旋转后的分数为
+   $$
+   (q_i^{R})^\top k_j^{R}
+   =q_i^\top R_i^\top R_jW^{UK}c_j^{KV}.
+   $$
+   对于标准的相对旋转约定，$R_i^\top R_j=R_{j-i}$，因此
+   $$
+   (q_i^{R})^\top k_j^{R}
+   =q_i^\top R_{j-i}W^{UK}c_j^{KV}.
+   $$
+3. 转置标量积以暴露潜在变量侧的向量：
+   $$
+   q_i^\top R_{j-i}W^{UK}c_j^{KV}
+   =\left(W^{UK\top}R_{j-i}^\top q_i\right)^\top c_j^{KV}.
+   $$
+   有效查询为
+   $$
+   q'_{i,j}=W^{UK\top}R_{j-i}^\top q_i\in\mathbb{R}^{d_c}.
+   $$
+   它同时依赖于 $i$ 和 $j$。这种成对索引依赖性，而非模糊的交换律口号，才是实际的障碍。
+4. 仅使用 $i$ 的全局吸收尝试忽略了 $R_{j-i}^\top$ 因子。数值检查将该尝试与显式旋转键进行比较，得到了非零的输出差距 $7.142153873371237$。
+5. 交换子（commutant）刻画是一个范围正确的旁注。对于一个 2 维旋转 $R(\theta)$，与其可交换的实矩阵形式为
+   $$
+   aI+bJ,\qquad
+   I,J\in\mathbb{R}^{2\times2},
+   \quad
+   J=\begin{bmatrix}0&-1\\1&0\end{bmatrix}.
+   $$
+   这是一个缩放旋转族。$O(2)$ 中的反射通常不与旋转交换；它将 $R(\theta)$ 共轭为 $R(-\theta)$。对于具有通用不同频率的块对角 RoPE 矩阵，其交换子是每平面一个此类缩放旋转块的直和。通用的密集训练 $W^{UK}$ 没有理由位于这个受限子集中。此旁注对于主要的成对索引证明并非必需。
+6. 修复方案使用一个独立的、较小的旋转组件：
+   $$
+   k_j^R=\operatorname{RoPE}(W^{KR}h_j)\in\mathbb{R}^{d_R},
+   $$
+   配合匹配的旋转查询。内容键保持无 RoPE 且可压缩。在 DeepSeek-V2 中，旋转查询是从压缩的查询潜在变量计算的，而不是直接从 $h_t$ 计算；这一特定于模型的陈述源自其技术报告。
+7. 缓存必须在写入时存储已经旋转过的 $k_j^R$。它不应存储未旋转的 $W^{KR}h_j$ 并在每次读取步骤时进行旋转，因为那样会导致在每次解码步骤中重新计算每个缓存令牌的旋转。
+8. 检查程序确认成对吸收与显式 RoPE 输出在 $1.3322676295501878\times10^{-15}$ 精度内一致，而全局尝试则不一致。它还确认位置零保持不变，且非零位置的键在缓存前已旋转。
+
+**检查。** checks/M4/D-M4.3-03.py 比较了含 RoPE 的吸收与未吸收的 MLA，演示了失败的全局吸收，并检查了解耦的旋转缓存写入；它输出 passed: True。
+
+**断言，范围正确限定。** 解耦的 RoPE 通过将位置从可压缩的内容路径中分离出来，恢复了实用的缓存设计。代数上的成对重写是精确的，但由于它依赖于 $j$，因此与单一缓存友好的吸收查询并不相同。
+
+## 4. 数值验证
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M4.3-01 | MHA/GQA/MQA 缓存字节 $1073741824/268435456/33554432$；MHA 转 GQA 因子 4 | pass |
+| D-M4.3-02 | 吸收输出误差 $2.220446049250313\times10^{-15}$；注意力误差 $2.220446049250313\times10^{-16}$ | pass |
+| D-M4.3-03 | 成对输出误差 $1.3322676295501878\times10^{-15}$；全局尝试输出差距 $7.142153873371237$ | pass |
+
+从 course/目录运行 python checks/M4/D-M4.3-01.py、python checks/M4/D-M4.3-02.py 和 python checks/M4/D-M4.3-03.py。V-M4-c 纯计算测试使用相同的缓存公式。
+
+## 5. 交互式可视化
+
+<CourseWidget id="V-M4-c" />
+
+**V-M4-c — KV-cache lineage。**规范位于 viz/specs/V-M4-c.yaml，纯计算模块为 viz/compute/kv_cache_lineage.ts。调整 $L$、$n$、$h$、$h_{\mathrm{kv}}$、$d_h$、$d_c$、$d_R$ 以及 dtype。该组件报告 MHA、MQA、GQA 和 MLA 的缓存字节数及缩减因子。
+
+公式为 D-M4.3-01，结合 D-M4.3-02/03 中的 MLA 缓存表达式。可见的洞察表明，共享或压缩 K/V 状态会线性改变缓存字节数，而查询头（query-head）的工作量则是另一个独立的维度。现有的前端可以将这四个系列渲染为数字卡片和缓存与上下文的关系曲线。
+
+## 6。结束
+
+**反直觉的问题。** 为什么“吸收”投影并不意味着 RoPE 总能被移入同一个投影中？
+
+**解答过程。** 在没有 RoPE 的情况下，D-M4.3-02 为所有缓存位置提供一个被吸收的查询 $\widetilde q_i=W^{UK\top}q_i$。而在有 RoPE 时，D-M4.3-03 给出
+
+$$
+q'_{i,j}=W^{UK\top}R_{j-i}^\top q_i.
+$$
+
+旋转取决于键的位置 $j$。为查询位置 $i$ 计算一次的向量，除非满足高度受限的特殊结构，否则不可能等于所有不同的 $q'_{i,j}$ 值。实际的解决方案不是假装存在一个全局吸收项，而是保持内容路径的可压缩性，并缓存一个单独的、已旋转的较小旋转键组件。
+
+**作业 A-M4。** 在 code/minilm/ 或 code/efficiency/ 中添加 MQA/GQA 缓存核算、仅内容的 MLA 吸收、成对 RoPE 等价性以及解耦的旋转缓存路径。导出至少一组 MHA/GQA/MLA 比较的 V-M4-c 输入和输出。记录 DeepSeek-V2 的主张源自其技术报告。
+
+**核心检查。** 从架构上看，所有变体仍然产生前缀条件化的注意力分布。高效推理改变了缓存哪个 K/V 表示以及在读取时评估哪些线性映射；概率分解保持不变。

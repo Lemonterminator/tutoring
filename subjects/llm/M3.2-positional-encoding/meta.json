@@ -1,0 +1,40 @@
+{
+  "subject": "llm",
+  "id": "M3.2",
+  "module": "M3",
+  "title": {
+    "en": "Positional encoding: from sinusoidal features to RoPE",
+    "zh": "位置编码：从正弦特征到 RoPE"
+  },
+  "prereqs": [
+    "M3.1"
+  ],
+  "estimatedHours": 6,
+  "spine": {
+    "en": {
+      "a": "Position mechanisms turn the attention read into a sequence-aware operator, either by rotating Q/K or by biasing the causal score geometry.",
+      "b": "The positional mechanism changes which conditional distribution each query row can represent while the causal factorization remains over the same prefix."
+    },
+    "zh": {
+      "a": "位置机制将注意力读取转换为序列感知算子，通过旋转 Q/K 或偏置因果得分几何结构实现。",
+      "b": "位置机制改变了每个查询行可表示的条件分布，而因果分解仍基于相同的前缀。"
+    }
+  },
+  "derivations": [
+    "D-M3.2-01",
+    "D-M3.2-02",
+    "D-M3.2-03",
+    "D-M3.2-04"
+  ],
+  "visualizations": [
+    "V-M3-c"
+  ],
+  "assignment": "A-M3",
+  "references": [
+    "vaswani2017",
+    "su2021",
+    "press2022",
+    "haviv2022",
+    "men2024"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "subject": "llm",
+  "id": "M2.1",
+  "module": "M2",
+  "title": {
+    "en": "Gated cells: LSTM and GRU",
+    "zh": "门控单元：LSTM 和 GRU"
+  },
+  "prereqs": [
+    "M1.1"
+  ],
+  "estimatedHours": 10,
+  "spine": {
+    "en": {
+      "a": "Separate the additive memory path from the saturating gate paths and track which Jacobian is being discussed.",
+      "b": "Derive complete LSTM and GRU reverse passes, then connect their carry terms to retention, writing, and computational cost."
+    },
+    "zh": {
+      "a": "将加法记忆路径与饱和门控路径区分开来，并追踪正在讨论的雅可比矩阵。",
+      "b": "推导完整的 LSTM 和 GRU 反向传播过程，然后将它们的携带项与保留、写入及计算成本联系起来。"
+    }
+  },
+  "derivations": [
+    "D-M2.1-01",
+    "D-M2.1-02",
+    "D-M2.1-03",
+    "D-M2.1-04",
+    "D-M2.1-05"
+  ],
+  "visualizations": [
+    "V-M2-a",
+    "V-M2-b"
+  ],
+  "assignment": "A-M2",
+  "references": [
+    "hochreiter1997",
+    "cho2014",
+    "jozefowicz2015"
+  ]
+}

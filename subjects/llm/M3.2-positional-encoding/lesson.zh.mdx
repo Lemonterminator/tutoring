@@ -1,0 +1,360 @@
+## 1. 动机
+
+自注意力机制本身对未掩码的令牌向量集没有首选顺序。解码器的因果掩码已经暴露了前缀边界，但一个有用的模型也可以在其分数几何中直接编码相对偏移。本课比较了四种选择：添加到流中的正弦特征、应用于查询和键的旋转位置嵌入（RoPE）、ALiBi 的加性距离偏置，以及仅使用因果掩码的 NoPE。
+
+核心原则是将精确代数与经验故事区分开来。正弦位移和 RoPE 的相对位置恒等式是精确的。RoPE 常被提及的“长期衰减”故事需要修正后的 Abel 界，且对于有限的原始分数没有单调衰减定理。ALiBi 和 NoPE 以不同方式改变分数或支持结构；两者都不应被描述为仅仅是另一种旋转。
+
+## 2. 前向定义
+
+设 $d$ 为偶数，且令 $M=d/2$。对于频率索引 $i\in\{0,\ldots,M-1\}$，设定
+
+$$
+\theta_i=\operatorname{base}^{-2i/d}.
+$$
+
+Vaswani 风格的正弦特征使用如下对：
+
+$$
+\operatorname{PE}(p)_{2i}=\sin(p\theta_i),\qquad
+\operatorname{PE}(p)_{2i+1}=\cos(p\theta_i),
+\qquad
+\operatorname{PE}(p)\in\mathbb{R}^{d}.
+$$
+
+RoPE 则保持 token 表示不变，直到注意力投影生成 $q,k\in\mathbb{R}^{d}$。定义
+
+$$
+R(\phi)=
+\begin{bmatrix}
+\cos\phi&-\sin\phi\\
+\sin\phi&\cos\phi
+\end{bmatrix},
+\qquad
+R_m=\operatorname{blockdiag}\bigl(R(m\theta_0),\ldots,R(m\theta_{M-1})\bigr)
+\in\mathbb{R}^{d\times d}.
+$$
+
+在位置 $m$，于 QK 分数中使用 $R_mq$ 和 $R_mk$。不要旋转 $v$：值路径承载内容，而查询/键路径提供相对位置相位。
+
+ALiBi 向缩放后的分数添加特定于头的 Toeplitz 偏置：
+
+$$
+\widetilde S^{(h)}_{ij}
+=\frac{(q_i^{(h)})^\top k_j^{(h)}}{\sqrt{d_h}}
+-m_h|i-j|,
+\qquad m_h\ge 0,
+$$
+
+随后应用因果掩码。NoPE 将显式位置信号设为零，但保留因果支持 $j\le i$。此时可见源位置的数量为 $i+1$，这本身已具有位置依赖性。
+
+**参考文献。** 正弦特征及与 Transformer 的比较遵循 Vaswani 等人 (https://arxiv.org/abs/1706.03762)。RoPE 的构建来自 Su 等人 (https://arxiv.org/abs/2104.09864)。ALiBi 出自 Press、Smith 和 Lewis (https://arxiv.org/abs/2108.12409)。关于 NoPE 因果掩码的观察来自 Haviv 等人 (https://arxiv.org/abs/2203.16634)。D-M3.2-03 中关于源限定相关查询/键的讨论参考了 Men 等人 (https://arxiv.org/abs/2405.14591)。
+
+## 3. 推导过程
+
+### D-M3.2-01 · 正弦相对位置性质
+
+**定理。** 对于任意整数位移 $k$，存在一个与位置无关的分块对角矩阵 $M_k\in\mathbb{R}^{d\times d}$，使得
+
+$$
+\operatorname{PE}(p+k)=M_k\operatorname{PE}(p).
+$$
+
+**设定。** 对于频率对 $i$，令
+
+$$
+u_i(p)=
+\begin{bmatrix}
+\sin(p\theta_i)\\
+\cos(p\theta_i)
+\end{bmatrix}
+\in\mathbb{R}^{2},
+\qquad
+M_{k,i}=
+\begin{bmatrix}
+\cos(k\theta_i)&\sin(k\theta_i)\\
+-\sin(k\theta_i)&\cos(k\theta_i)
+\end{bmatrix}
+\in\mathbb{R}^{2\times2}.
+$$
+
+定义 $M_k=\operatorname{blockdiag}(M_{k,0},\ldots,M_{k,M-1})$。
+
+**步骤。**
+
+1. 乘以第一个坐标：
+   $$
+   \bigl[M_{k,i}u_i(p)\bigr]_1
+   =\cos(k\theta_i)\sin(p\theta_i)+\sin(k\theta_i)\cos(p\theta_i).
+   $$
+   正弦加法公式将其转化为 $\sin((p+k)\theta_i)$。
+2. 乘以第二个坐标：
+   $$
+   \bigl[M_{k,i}u_i(p)\bigr]_2
+   =-\sin(k\theta_i)\sin(p\theta_i)+\cos(k\theta_i)\cos(p\theta_i).
+   $$
+   余弦减法公式将其转化为 $\cos((p+k)\theta_i)$。
+3. 因此，对于任意 $M_{k,i}u_i(p)=u_i(p+k)$，有 $i$。堆叠 $M$ 个独立对得到 $M_k\operatorname{PE}(p)=\operatorname{PE}(p+k)$。
+4. 该矩阵依赖于 $k$ 和固定的频率调度，但不依赖于 $p$。因此，尽管特征向量由绝对位置索引，它仍然是一个相对位移算子。
+
+**结果。**
+
+$$
+\boxed{\operatorname{PE}(p+k)=M_k\operatorname{PE}(p)}
+$$
+
+float64 检查评估了负位置和正位置及位移，得到的最大误差为 $3.566591466608315\times10^{-15}$。
+
+**检查。** checks/M3/D-M3.2-01.py —— 确定性的 float64 位置、位移和分块矩阵；它断言最大绝对误差低于 $10^{-12}$ 并打印 passed = True。
+
+**直觉。** 每个频率对都像是一个微小的时钟指针。推进位置会对该对应用相同的二维旋转，因此固定的偏移量可以通过固定的线性映射来识别。
+
+### D-M3.2-02 · RoPE 相对位置恒等式
+
+**定理。** 对于分块对角二维旋转，
+
+$$
+\left\langle R_mq,R_nk\right\rangle
+=q^\top R_{n-m}k.
+$$
+
+**设定。** 第 2 节中的矩阵满足 $R(\phi)^\top=R(-\phi)$ 和 $R(a)R(b)=R(a+b)$。它们的分块对角堆叠具有相同的恒等式。在复数表示中，一对 $(x_{2i},x_{2i+1})$ 由 $x_i=x_{2i}+\mathrm{i}x_{2i+1}$ 表示，旋转即为乘以 $e^{\mathrm{i}m\theta_i}$。
+
+**步骤。**
+
+1. 将内积展开为矩阵乘积：
+   $$
+   \left\langle R_mq,R_nk\right\rangle
+   =(R_mq)^\top(R_nk)
+   =q^\top R_m^\top R_nk.
+   $$
+2. 转置每个二维分块：
+   $$
+   R(m\theta_i)^\top=R(-m\theta_i).
+   $$
+   由于旋转角度相加，
+   $$
+   R(-m\theta_i)R(n\theta_i)=R((n-m)\theta_i).
+   $$
+3. 分块相等性给出
+   $$
+   R_m^\top R_n
+   =\operatorname{blockdiag}\bigl(R((n-m)\theta_0),\ldots,R((n-m)\theta_{M-1})\bigr)
+   =R_{n-m}.
+   $$
+4. 将此代入步骤 1：
+   $$
+   \left\langle R_mq,R_nk\right\rangle
+   =q^\top R_{n-m}k.
+   $$
+5. 复数形式逐对表达了相同的内容：
+   $$
+   q_{m,i}=q_i e^{\mathrm{i}m\theta_i},\qquad
+   k_{n,i}=k_i e^{\mathrm{i}n\theta_i},
+   $$
+   因此实数点积贡献为
+   $$
+   \operatorname{Re}\left(\overline{q_i e^{\mathrm{i}m\theta_i}}\,
+   k_i e^{\mathrm{i}n\theta_i}\right)
+   =\operatorname{Re}\left(\overline{q_i}k_i e^{\mathrm{i}(n-m)\theta_i}\right).
+   $$
+6. 该恒等式仅作用于 $q$ 和 $k$。旋转 $v$ 会改变形成注意力权重后传递的值向量；它不属于此 QK 恒等式的一部分。
+
+**结果。**
+
+$$
+\boxed{R_m^\top R_n=R_{n-m}
+\quad\Longrightarrow\quad
+\left\langle R_mq,R_nk\right\rangle=q^\top R_{n-m}k}
+$$
+
+随机 float64 检查报告的最大恒等式误差为 $1.2434497875801753\times10^{-14}$，最大矩阵组合误差为 $3.469446951953614\times10^{-15}$。值路径保持不变。
+
+**检查。** checks/M3/D-M3.2-02.py —— 随机 $q,k,m,n$；它断言 $|\mathrm{lhs}-\mathrm{rhs}|<10^{-10}$ 并打印 passed = True。
+
+**直觉。** 绝对旋转在点积中相互抵消，直到只剩下相对角度。这就是为什么 RoPE 将位置置于 QK 几何结构中，而无需在残差流中添加位置向量。
+
+### D-M3.2-03 · 修正后的 RoPE Abel 界与错误的衰减定理
+
+**定理，精确不等式。** 令 $M=d/2$，令
+
+$$
+a(\Delta)=\operatorname{Re}\sum_{i=0}^{M-1}h_i e^{\mathrm{i}\Delta\theta_i},
+\qquad
+h_i=\overline{z_i}w_i,
+\qquad
+\theta_i=\operatorname{base}^{-2i/d},
+$$
+
+其中 $z_i=q_{2i}+\mathrm{i}q_{2i+1}$ 和 $w_i=k_{2i}+\mathrm{i}k_{2i+1}$ 分别是 $q$ 和 $k$ 的分块复数形式。定义
+
+$$
+S_j(\Delta)=\sum_{r=0}^{j-1}e^{\mathrm{i}\Delta\theta_r},
+\qquad
+A_M(\Delta)=\frac{1}{M}\sum_{j=1}^{M}|S_j(\Delta)|.
+$$
+
+设 $h_M=0$。则分部求和给出确定性界
+
+$$
+\boxed{
+|a(\Delta)|
+\le
+M\left(\max_{0\le i<M}|h_i-h_{i+1}|\right)A_M(\Delta)
+}.
+$$
+
+这就是该定理。原始分数单调衰减并非定理。
+
+**步骤。**
+
+1. 缩写为 $u_i=e^{\mathrm{i}\Delta\theta_i}$。部分和满足
+   $$
+   S_{i+1}-S_i=u_i,\qquad S_0=0.
+   $$
+   因此取实部之前的复数和为
+   $$
+   Z(\Delta)=\sum_{i=0}^{M-1}h_i u_i
+   =\sum_{i=0}^{M-1}h_i(S_{i+1}-S_i).
+   $$
+2. 分配两个求和：
+   $$
+   Z(\Delta)=
+   \sum_{i=0}^{M-1}h_iS_{i+1}
+   -\sum_{i=0}^{M-1}h_iS_i.
+   $$
+   第一个求和的项为 $h_{j-1}S_j$（当 $j=1,\ldots,M$）；第二个求和的项为 $h_jS_j$（当 $j=0,\ldots,M-1$）。由于 $S_0=0$，$j=0$ 项为零。
+3. 合并相等的部分和：
+   $$
+   Z(\Delta)
+   =\sum_{j=1}^{M-1}(h_{j-1}-h_j)S_j+h_{M-1}S_M.
+   $$
+   当 $h_M=0$ 时，最后一项具有与其他项相同的形式：
+   $$
+   Z(\Delta)=\sum_{j=1}^{M}(h_{j-1}-h_j)S_j.
+   $$
+4. 取绝对值并使用三角不等式：
+   $$
+   |Z(\Delta)|
+   \le
+   \sum_{j=1}^{M}|h_{j-1}-h_j|\,|S_j|
+   \le
+   \left(\max_{0\le i<M}|h_i-h_{i+1}|\right)\sum_{j=1}^{M}|S_j|.
+   $$
+5. 根据定义 $\sum_{j=1}^{M}|S_j|=M A_M(\Delta)$。同时 $|a(\Delta)|=|\operatorname{Re}Z(\Delta)|\le|Z(\Delta)|$。结合这两个不等式证明了框出的界。
+6. 对于标准的对数间隔调度，论文中提到的“长期衰减”是一个独立的定性观察：大量的抵消通常使 $A_M(\Delta)$ 在实际范围内总体呈下降趋势。该界限并未证明这一趋势，也未使原始分数单调。
+7. 单频率反例证伪了单调衰减定理。令 $q=k$ 仅支持于具有 $\theta_0=1$ 的分块，并选择其系数使得 $h_0=1$。则
+   $$
+   a(\Delta)=\cos(\Delta),
+   $$
+   且
+   $$
+   |a(3)|\approx0.9899924966>0.4161468365\approx|a(2)|.
+   $$
+   原始分数是振荡的，而非衰减的。
+8. 包络 $A_M$ 通常也不是单调的。对于 $d=4$ 和 $\operatorname{base}=10000$，有 $\theta=(1,0.01)$ 且
+   $$
+   A_2(\Delta)
+   =\frac12\left(1+\left|e^{\mathrm{i}\Delta}+e^{\mathrm{i}0.01\Delta}\right|\right).
+   $$
+   检查得到
+   $$
+   A_2(3)=0.5856911075961685,\qquad
+   A_2(4)=0.8978788737899159,
+   $$
+   因此 $A_2(4)>A_2(3)$。
+9. 对于固定的有限 $d$，$Z(\Delta)$ 是一个有限的三角和。当频率可公度时，它是严格周期的；否则，丢番图逼近允许相位在较大距离处重新接近对齐。因此，对于原始有限和不存在一般的渐近趋于零定理。
+10. 随机性无法挽救原始分数衰减的主张。对于各向同性、独立、零均值的 $q,k$，其每坐标方差为 $\sigma_q^2,\sigma_k^2$，有
+    $$
+    \mathbb{E}\left[(q^\top R_\Delta k)^2\right]
+    =\sigma_k^2\mathbb{E}\left[q^\top R_\Delta R_\Delta^\top q\right]
+    =\sigma_k^2\mathbb{E}\left[\|q\|^2\right]
+    =d\sigma_q^2\sigma_k^2,
+    $$
+    与 $\Delta$ 无关。float64 蒙特卡洛检查估计单位方差值在 $\Delta\in\{0,17,101\}$，相对误差为 $0.006671071757480718$。
+11. 当 $k$ 与 $q$ 相关时（例如 $k^\star=q+\varepsilon$），会出现真正依赖于距离和分布的量。在独立、零均值噪声模型下，信号项包含
+    $$
+    \mathbb{E}[q^\top R_\Delta q]
+    \propto\sum_i\cos(\Delta\theta_i),
+    $$
+    其本身是振荡的，并且在某些距离和小基下可能为负。这是 Men 等人 (https://arxiv.org/abs/2405.14591) 中关于源限定预期优势的讨论，而非精确 Abel 不等式的替代品。
+
+**主张，正确界定范围。** "RoPE 分数随距离单调衰减”是错误的。可辩护的陈述是：标准的对数间隔调度在实际相关范围内产生了一个总体下降的抵消包络（在 Abel 界中）；这是定性的，未被证明。
+
+**检查。** checks/M3/D-M3.2-03.py 验证了分部求和恒等式、确定性界、$\cos(\Delta)$ 反例、$A_2(4)>A_2(3)$ 反例以及各向同性 RMS 计算；它打印 passed = True。
+
+**直觉。** RoPE 提供了一组旋转时钟，因此不同的频率分块可以在许多偏移量上相互抵消。抵消可以是广泛的而非单调的，且有限数量的时钟稍后可能会再次对齐。
+
+### D-M3.2-04 · ALiBi 和 NoPE
+
+**主张。** ALiBi 为每个头添加固定的距离相关偏置，
+
+$$
+B^{(h)}_{ij}=-m_h|i-j|,
+$$
+
+在因果掩码之前它是 Toeplitz 矩阵，因为 $B^{(h)}_{i+1,j+1}=B^{(h)}_{ij}$。NoPE 并未在因果解码器中恢复完全的排列对称性：掩码本身具有位置相关的支撑集。
+
+**步骤。**
+
+1. 对于 ALiBi，从未修改的分数 $S_{ij}^{(h)}$ 开始。添加偏置得到
+   $$
+   \widehat S_{ij}^{(h)}
+   =S_{ij}^{(h)}-m_h|i-j|.
+   $$
+   偏置仅依赖于相对索引差，因此只要两个条目仍在范围内，将两个索引都平移一个单位不会改变它。
+2. 因果 softmax 随后使用
+   $$
+   \widetilde S_{ij}^{(h)}
+   =
+   \begin{cases}
+   \widehat S_{ij}^{(h)},&j\le i,\\
+   -\infty,&j>i.
+   \end{cases}
+   $$
+   数值检查验证了每条相邻对角线上的 Toeplitz 相等性，并验证了所有未来条目均为 $-\infty$。
+3. 对于 NoPE，定义行 $i$ 的因果支撑集：
+   $$
+   \mathcal{V}_i=\{0,1,\ldots,i\}.
+   $$
+   其基数为
+   $$
+   |\mathcal{V}_i|=i+1.
+   $$
+   这些计数在 $i=0,\ldots,n-1$ 时各不相同。交换具有不同计数的两个位置的排列无法保持掩码，因此因果注意力与无位置特征的未掩码注意力一样，不具备相同的排列等变性。
+4. 计数论证表明，即使没有添加显式的位置向量，解码器也可以从可用前缀槽的数量以及可见槽和未来槽之间的边界推断出与位置相关的信号。Haviv 等人通过实证测试了这种 NoPE 机制 (https://arxiv.org/abs/2203.16634)。
+5. 这是一种架构上的可能性，并非声称每个 NoPE 模型都必须学习有用的位置表示或匹配 RoPE/ALiBi 的质量。该检查验证的是组合支撑信号，而非下游语言模型的性能。
+
+**检查。** checks/M3/D-M3.2-04.py 验证了 Toeplitz 偏置、因果无效条目以及不同的支撑计数 $[1,2,\ldots,7]$；它打印 passed = True。
+
+**类比，已标注。** ALiBi 可以想象为注意力边上的距离相关税收。精确的陈述是加法 Toeplitz 公式；“税收”一词仅是一个类比。
+
+## 4。数值验证
+
+所有四项检查均使用确定性 float64 计算。以下输出记录自当前仓库：
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M3.2-01 | 正弦位移最大误差 $3.566591466608315\times10^{-15}$ | 通过 |
+| D-M3.2-02 | RoPE 恒等式误差 $1.2434497875801753\times10^{-14}$；值路径未变 | 通过 |
+| D-M3.2-03 | Abel 恒等式误差 $2.1868857395626282\times10^{-15}$；$A_2(3)=0.5856911075961685$，$A_2(4)=0.8978788737899159$；各向同性 RMS 相对误差 $0.006671071757480718$ | 通过 |
+| D-M3.2-04 | Toeplitz 误差 $0$；因果支撑计数 $[1,2,3,4,5,6,7]$ | 通过 |
+
+由于检查直接比较精确的向量/矩阵构造和确定性反例，因此闭式位置恒等式无需共享测试框架。请在仓库父目录中运行 python -m pytest course/tests；课程测试也会运行 TypeScript 组件测试。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M3-c" />
+
+**V-M3-c — RoPE 旋转与点积衰减**。规范位于 viz/specs/V-M3-c.yaml，纯计算模块为 viz/compute/rope.ts。读者可控制 $d$、基数（base）、相对距离、单频块切换开关以及诊断值旋转切换开关。该组件展示了旋转的 2D 平面、相对位置恒等误差、合成原始分数曲线以及 Abel 包络线。
+
+默认曲线故意未绘制为平滑的单调衰减曲线。单频切换开关揭示了 $a(\Delta)=\cos(\Delta)$，而 $d=4$ 及基数 $=10000$ 设置则展示了非单调包络的反例。值切换开关报告了如果读者应用了 QK 恒等式从未请求的旋转，值向量将移动多远。
+
+该模块不访问 DOM，仅返回纯数组和记录。现有的前端可以将旋转平面渲染为 SVG，将曲线渲染为 Canvas2D，而无需更改阅读器。
+
+## 6。结语
+
+**反直觉的问题。** 从因果解码器中完全移除位置编码；为什么它仍然能够学习依赖顺序的语言？**解答：** D-M3.2-04 统计可见的前缀槽位数量。第 $i$ 行可以关注 $i+1$ 个源位置，而后面的行可以关注更多；因此因果掩码打破了未掩码的集合注意力层所具有的排列对称性。这即使在 NoPE 的情况下也提供了与位置相关的信号，尽管它并不能证明每个模型都会有效地利用该信号。
+
+**作业 A-M3。** 在 code/minilm/ 基础上扩展由配置驱动的 nanoGPT 基线，保留手写注意力梯度，并暴露位置选择以供后续实验使用。导出 V-M3-a 注意力数据，并在同一小型语料库上比较正弦、RoPE、ALiBi 和 NoPE；记录损失、注意力行为以及相关的数值检查。
+
+**核心检查。** 从架构上看，位置机制指定了 Transformer 如何区分偏移量：固定移位、QK 旋转、分数偏差或因果支持。从概率角度看，这四种方法仍然在允许的前缀上生成行级条件读取，因此它们修改了自回归条件的参数化，但并未改变其因果分解。

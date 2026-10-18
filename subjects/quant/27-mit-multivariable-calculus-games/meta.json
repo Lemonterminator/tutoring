@@ -1,0 +1,14 @@
+{
+  "id": "GAME-MIT-MV",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "mit-multivariable-calculus",
+  "module": "MIT 18.02SC · Complete course practice",
+  "title": { "en": "MIT 18.02SC multivariable calculus: course games", "zh": "MIT 18.02SC 多变量微积分：全课程小游戏" },
+  "prereqs": [],
+  "spine": {
+    "en": { "a": "Planned: 69 games covering all 102 sessions and 5 exams of the Fall 2010 course; games appear here as they are finished.", "b": "Each game links its own lecture notes, problems and solutions, and uses figures where the geometry matters." },
+    "zh": { "a": "计划：69 个游戏覆盖 2010 秋季课程的全部 102 个课节和 5 场考试；完成的游戏会陆续出现在这里。", "b": "每个游戏都附有对应的讲义、习题与答案，几何内容配有图形。" }
+  },
+  "references": ["MIT OpenCourseWare, 18.02SC Multivariable Calculus, Fall 2010 (Prof. Denis Auroux)"]
+}

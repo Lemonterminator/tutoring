@@ -1,0 +1,281 @@
+## 1. Motivation
+
+M0.5.3 made a conditional probability explicit as a count table. The next defect is treating “the output distribution” as a cosmetic choice. Bernoulli and categorical heads produce discrete likelihoods, a fixed-variance Gaussian head produces a mean-seeking squared-error objective, and a mixture head can represent multiple plausible outcomes. This lesson derives those losses and the stable numerics needed to compute them.
+
+## 2. Forward definition
+
+For a scalar logit $z\in\mathbb{R}$, define $\sigma(z)=1/(1+e^{-z})\in(0,1)$. For a categorical logit vector $z\in\mathbb{R}^{V}$, let $p=\operatorname{softmax}(z)\in\Delta^{V-1}$. Their negative log-likelihoods for a binary target $y\in\{0,1\}$ and categorical target $y\in\{1,\ldots,V\}$ are
+
+$$
+\mathrm{BCE}(z,y)=-y\log\sigma(z)-(1-y)\log(1-\sigma(z))\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{CE}(z,y)=-\log p_y\in\mathbb{R}_{\ge0}.
+$$
+
+For a scalar target $x\in\mathbb{R}$, a Gaussian head uses mean $\mu\in\mathbb{R}$ and fixed scale $\sigma>0$:
+
+$$
+p(x\mid\mu,\sigma)=\mathcal{N}(x;\mu,\sigma^2)\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{NLL}(x;\mu,\sigma)=\frac12\log(2\pi\sigma^2)+\frac{(x-\mu)^2}{2\sigma^2}\in\mathbb{R}.
+$$
+
+For a $K$-component mixture, $x,\mu_k\in\mathbb{R}$, $z_\pi, z_\sigma\in\mathbb{R}^{K}$, and $\pi\in\Delta^{K-1}$. In D-M0.5.4-03 we use the sign convention fixed by the specification, $\pi=\operatorname{softmax}(-z_\pi)$, so the requested logit gradient is $\gamma-\pi$:
+
+$$
+p(x)=\sum_{k=1}^{K}\pi_k\mathcal{N}(x;\mu_k,\sigma_k^2)\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{NLL}(x)=-\log p(x)\in\mathbb{R}.
+$$
+
+## 3. Derivations
+
+### D-M0.5.4-01 · Bernoulli BCE and categorical CE
+
+**Claim.** The Bernoulli logit gradient is $\partial\mathrm{BCE}/\partial z=\sigma(z)-y\in\mathbb{R}$, and the categorical logit gradient is $\nabla_z\mathrm{CE}=p-e_y\in\mathbb{R}^{V}$.
+
+**Steps.**
+
+1. Write the Bernoulli probability as $q=\sigma(z)\in(0,1)$ and the loss as
+   $$
+   L(q,y)=-y\log q-(1-y)\log(1-q)\in\mathbb{R}_{\ge0}.
+   $$
+   (The two terms select the likelihood of the observed binary outcome.)
+2. Differentiate with respect to $q$:
+   $$
+   \frac{\partial L}{\partial q}=-\frac{y}{q}+\frac{1-y}{1-q}\in\mathbb{R}.
+   $$
+   (The derivative of $-\log(1-q)$ contributes the positive reciprocal term.)
+3. Differentiate the sigmoid:
+   $$
+   \frac{\partial q}{\partial z}=q(1-q)\in\mathbb{R}.
+   $$
+   (Differentiate $q=(1+e^{-z})^{-1}$ and rewrite the result using $q$.)
+4. Apply the scalar chain rule and simplify:
+   $$
+   \frac{\partial L}{\partial z}=\left(-\frac{y}{q}+\frac{1-y}{1-q}\right)q(1-q)=q-y=\sigma(z)-y\in\mathbb{R}.
+   $$
+   (The factors $q$ and $1-q$ cancel the two denominators.)
+5. For a categorical target, use the softmax cross-entropy from D-M0.1-02:
+   $$
+   L(z,y)=-\log\operatorname{softmax}(z)_y\in\mathbb{R}_{\ge0}.
+   $$
+   (The categorical head assigns one probability to each of the $V$ outcomes.)
+6. Apply D-M0.1-02 directly:
+   $$
+   \nabla_zL=p-e_y\in\mathbb{R}^{V}.
+   $$
+   (The prior derivation already includes the softmax Jacobian and the target coordinate.)
+
+**Check.** `checks/M0.5/D-M0.5.4-01.py` — BCE max absolute error `1.218e-10`, CE max absolute error `1.560e-10`, `passed = True`.
+
+**Intuition.** BCE and CE are not arbitrary names for loss functions. They are negative log-likelihoods whose simple logit gradients arise from the corresponding output distributions.
+
+### D-M0.5.4-02 · Fixed-variance Gaussian NLL is MSE up to constants
+
+**Claim.** For fixed $\sigma>0$, minimizing Gaussian NLL over $\mu$ is equivalent to minimizing squared error, and a single Gaussian predicts the conditional mean. On a symmetric bimodal target, that mean lies between the modes.
+
+**Steps.**
+
+1. Start with the scalar Gaussian density and take its negative logarithm:
+   $$
+   -\log p(x\mid\mu,\sigma)=\frac12\log(2\pi\sigma^2)+\frac{(x-\mu)^2}{2\sigma^2}\in\mathbb{R}.
+   $$
+   (Taking the negative logarithm converts the density product used in likelihood training into an additive loss.)
+2. For fixed $\sigma$, define the constant $C_\sigma=\frac12\log(2\pi\sigma^2)\in\mathbb{R}$:
+   $$
+   \mathrm{NLL}(x;\mu,\sigma)=C_\sigma+\frac{1}{2\sigma^2}(x-\mu)^2\in\mathbb{R}.
+   $$
+   (The first term does not depend on the predicted mean.)
+3. Over data $x_1,\ldots,x_N\in\mathbb{R}$, average the loss:
+   $$
+   \overline{\mathrm{NLL}}(\mu)=C_\sigma+\frac{1}{2\sigma^2}\frac1N\sum_{i=1}^{N}(x_i-\mu)^2\in\mathbb{R}.
+   $$
+   (Averaging preserves the same additive constant and positive scale.)
+4. Differentiate with respect to $\mu$:
+   $$
+   \frac{d\overline{\mathrm{NLL}}}{d\mu}=\frac{1}{N\sigma^2}\sum_{i=1}^{N}(\mu-x_i)\in\mathbb{R}.
+   $$
+   (The derivative of $(x_i-\mu)^2$ is $2(\mu-x_i)$.)
+5. Set the derivative to zero:
+   $$
+   0=N\mu-\sum_ix_i\quad\Longrightarrow\quad\hat\mu=\frac1N\sum_{i=1}^{N}x_i\in\mathbb{R}.
+   $$
+   (The unique quadratic minimizer is the sample mean.)
+6. For the bimodal target $x\in\{-1,+1\}$ with equal mass, $\hat\mu=0\in\mathbb{R}$. (The mean lies in a low-density gap between the two modes.)
+7. Therefore a fixed-variance single Gaussian has the same optimizer as MSE and blurs this bimodal target, while a mixture can put separate mass near both modes. (The output family, not the hidden representation alone, determines this uncertainty behavior.)
+
+**Check.** `checks/M0.5/D-M0.5.4-02.py` — mean `0.0`, MSE `1.0`, NLL/MSE equivalence error `0.0`, `passed = True`.
+
+**Intuition.** Predicting the mean is optimal for a single squared-error bowl. When the target has two valid answers, that bowl places its optimum between them.
+
+### D-M0.5.4-03 · Mixture-density NLL and posterior responsibilities
+
+**Claim.** Let $\gamma_k$ be the posterior responsibility of component $k$. With the D-M0.5.4 specification's sign convention $\pi=\operatorname{softmax}(-z_\pi)$,
+
+$$
+\frac{\partial\mathrm{NLL}}{\partial\mu_k}=-\gamma_k\frac{x-\mu_k}{\sigma_k^2},
+\qquad
+\frac{\partial\mathrm{NLL}}{\partial\log\sigma_k}=-\gamma_k\left(\frac{(x-\mu_k)^2}{\sigma_k^2}-1\right),
+\qquad
+\nabla_{z_\pi}\mathrm{NLL}=\gamma-\pi\in\mathbb{R}^{K}.
+$$
+
+**Steps.**
+
+1. Define the component density and mixture density:
+   $$
+   q_k=\mathcal{N}(x;\mu_k,\sigma_k^2)\in\mathbb{R}_{>0},
+   \qquad
+   S=\sum_{j=1}^{K}\pi_jq_j\in\mathbb{R}_{>0},
+   \qquad
+   \mathrm{NLL}=-\log S\in\mathbb{R}.
+   $$
+   (The positive mixture density is the sum of weighted positive component densities.)
+2. Define the posterior responsibility:
+   $$
+   \gamma_k=\frac{\pi_kq_k}{S}\in[0,1],
+   \qquad
+   \sum_{k=1}^{K}\gamma_k=1.
+   $$
+   (Bayes' rule normalizes the component contribution for the observed $x$.)
+3. Differentiate the Gaussian log density with respect to its mean:
+   $$
+   \frac{\partial\log q_k}{\partial\mu_k}=\frac{x-\mu_k}{\sigma_k^2}\in\mathbb{R}.
+   $$
+   (Only the squared residual depends on $\mu_k$.)
+4. Differentiate the mixture NLL through $S$:
+   $$
+   \frac{\partial\mathrm{NLL}}{\partial\mu_k}=-\frac{1}{S}\pi_k\frac{\partial q_k}{\partial\mu_k}
+   =-\frac{\pi_kq_k}{S}\frac{\partial\log q_k}{\partial\mu_k}
+   =-\gamma_k\frac{x-\mu_k}{\sigma_k^2}.
+   $$
+   (The responsibility appears when the component derivative is divided by the full mixture density.)
+5. Let $r_k=\log\sigma_k\in\mathbb{R}$, so $\sigma_k=e^{r_k}\in\mathbb{R}_{>0}$. Differentiate:
+   $$
+   \frac{\partial\log q_k}{\partial r_k}=\frac{(x-\mu_k)^2}{\sigma_k^2}-1\in\mathbb{R}.
+   $$
+   (The log scale contributes one normalization term and one residual-scale term.)
+6. Apply the same mixture weighting:
+   $$
+   \frac{\partial\mathrm{NLL}}{\partial r_k}=-\gamma_k\left(\frac{(x-\mu_k)^2}{\sigma_k^2}-1\right)\in\mathbb{R}.
+   $$
+   (The responsibility weights the component's scale evidence.)
+7. Use $\pi=\operatorname{softmax}(-z_\pi)$ and $\partial\log S/\partial\log\pi_k=\gamma_k$:
+   $$
+   \frac{\partial\mathrm{NLL}}{\partial z_{\pi,k}}=\gamma_k-\pi_k\in\mathbb{R}.
+   $$
+   (The negative sign in the chosen parameterization contributes the requested sign.)
+8. Collect the three coordinate families into the displayed gradient. (This is the point where EM's responsibility calculation and gradient descent's parameter update meet.)
+
+**Check.** `checks/M0.5/D-M0.5.4-03.py` — joint parameter gradient max absolute error `1.866e-10`; responsibilities `[0.2381187835, 0.5459244470, 0.2159567700]`; `passed = True`.
+
+**Intuition.** Each observation distributes responsibility across components. A component moves its mean and scale according to its responsibility, while the mixture logits compete through the normalized responsibility vector.
+
+### D-M0.5.4-04 · Stable log-sum-exp and output reparameterizations
+
+**Claim.** For $a\in\mathbb{R}^{K}$, the log-sum-exp identity
+
+$$
+\operatorname{lse}(a)=\log\sum_{k=1}^{K}e^{a_k}=m+\log\sum_{k=1}^{K}e^{a_k-m},\qquad m=\max_k a_k\in\mathbb{R}
+$$
+
+is exact, and no exponentiated term exceeds $1$. The reparameterizations $\sigma=e^{z_\sigma}$ and $\pi=\operatorname{softmax}(z_\pi)$ have scalar derivative $\partial\sigma/\partial z_\sigma=\sigma$ and Jacobian $\operatorname{diag}(\pi)-\pi\pi^\top\in\mathbb{R}^{K\times K}$.
+
+**Steps.**
+
+1. Factor out $e^m$ from the positive sum:
+   $$
+   \sum_ke^{a_k}=\sum_ke^{m}e^{a_k-m}=e^m\sum_ke^{a_k-m}\in\mathbb{R}_{>0}.
+   $$
+   (The same scalar factor $e^m$ multiplies every term.)
+2. Take logarithms:
+   $$
+   \log\sum_ke^{a_k}=\log e^m+\log\sum_ke^{a_k-m}=m+\log\sum_ke^{a_k-m}\in\mathbb{R}.
+   $$
+   (The logarithm turns the factored product into a sum.)
+3. Since $m=\max_k a_k$, every shifted exponent satisfies $a_k-m\le0$:
+   $$
+   0<e^{a_k-m}\le1\in\mathbb{R}.
+   $$
+   (No individual exponential can overflow after the shift.)
+4. For the positive scale reparameterization $\sigma=e^{z_\sigma}$:
+   $$
+   \frac{\partial\sigma}{\partial z_\sigma}=e^{z_\sigma}=\sigma\in\mathbb{R}_{>0}.
+   $$
+   (The exponential derivative preserves positivity.)
+5. For $\pi=\operatorname{softmax}(z_\pi)\in\Delta^{K-1}$, D-M0.1-01 gives
+   $$
+   \frac{\partial\pi}{\partial z_\pi}=\operatorname{diag}(\pi)-\pi\pi^\top\in\mathbb{R}^{K\times K}.
+   $$
+   (The normalization couples all categorical coordinates.)
+6. Therefore stable log-sum-exp is algebraically exact but numerically safer, while the exponential and softmax maps enforce the output constraints. (Stability changes the evaluation path, not the represented real-valued expression.)
+
+**Check.** `checks/M0.5/D-M0.5.4-04.py` — stable log-sum-exp error `0.0`, softmax sum `1.0`, Jacobian symmetry error `0.0`, `passed = True`.
+
+**Intuition.** Subtracting the maximum does not approximate log-sum-exp. It changes the order of operations so that floating-point exponentials stay in a safe range.
+
+### D-M0.5.4-05 · Discretized logistic mixtures over bins
+
+**Claim.** For a logistic component with mean $\mu\in\mathbb{R}$ and log scale $r\in\mathbb{R}$, the probability of a bin $[\ell,u]\subset\mathbb{R}$ is the CDF difference
+
+$$
+P(\ell\le X\le u)=\operatorname{sigmoid}\left(\frac{u-\mu}{e^r}\right)-\operatorname{sigmoid}\left(\frac{\ell-\mu}{e^r}\right)\in[0,1].
+$$
+
+A mixture sums these bin masses with weights $\pi_k$, so categorical bins and continuous mixture-density outputs are two ends of one likelihood framework.
+
+**Steps.**
+
+1. Define the logistic CDF for scalar $z\in\mathbb{R}$:
+   $$
+   F(z;\mu,r)=\operatorname{sigmoid}\left(\frac{z-\mu}{e^r}\right)\in(0,1).
+   $$
+   (The positive scale is $e^r$ and the sigmoid maps the standardized coordinate to a CDF value.)
+2. Integrate the density over a bin by evaluating the CDF at its endpoints:
+   $$
+   P(\ell\le X\le u)=F(u;\mu,r)-F(\ell;\mu,r)\in[0,1].
+   $$
+   (The fundamental theorem of calculus turns the density integral into a CDF difference.)
+3. For $K$ components, weight and add the component bin probabilities:
+   $$
+   P(\ell\le X\le u)=\sum_{k=1}^{K}\pi_k\left[F(u;\mu_k,r_k)-F(\ell;\mu_k,r_k)\right]\in[0,1].
+   $$
+   (Mixture probability is the weighted sum of component probabilities.)
+4. If the output bins are the complete discrete alphabet, these bin masses form a categorical distribution. (The continuous density has been converted into finite-bin probabilities.)
+5. If the bins are fine and the mixture parameters remain continuous, the same expression approximates a continuous density likelihood. (The bin width controls the discretization rather than changing the mixture principle.)
+6. Terminology note: the original NADE by Larochelle and Murray (2011) is a binary-data model with weight-shared hidden units; the mixture-density recurrent model in the lecture is closer to RNADE/MDN-RNN. (These names identify different output constructions and should not be conflated.)
+
+Primary terminology sources: [NADE](https://proceedings.mlr.press/v15/larochelle11a.html), [RNADE](https://arxiv.org/abs/1306.0186), and [PixelCNN++](https://arxiv.org/abs/1701.05517).
+
+**Check.** `checks/M0.5/D-M0.5.4-05.py` — minimum bin probability is nonnegative; covered mass `0.999...`; `passed = True`.
+
+**Intuition.** A categorical head assigns mass directly to bins. A logistic-mixture head assigns mass by integrating smooth components over the same bins, so the two heads differ in parameterization and resolution rather than in the probability bookkeeping.
+
+## 4. Numerical verification
+
+The five checks use deterministic float64 inputs. They cover BCE/CE gradients, the Gaussian/MSE equivalence, all requested MDN gradients, stable log-sum-exp, and discretized logistic bin integration.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M0.5.4-01 | BCE error `1.218e-10`; CE error `1.560e-10` | pass |
+| D-M0.5.4-02 | mean `0.0`; MSE `1.0`; equivalence error `0.0` | pass |
+| D-M0.5.4-03 | gradient error `1.866e-10`; responsibilities sum to `1` | pass |
+| D-M0.5.4-04 | stable LSE error `0.0`; softmax sum `1.0` | pass |
+| D-M0.5.4-05 | covered mass `0.999...`; bin probabilities nonnegative | pass |
+
+Run `python -m pytest course/tests` from the repository parent. The Gaussian-versus-mixture widget has a separate Node test for its pure compute contract.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M0.5-c" />
+
+**V-M0.5-c — Single Gaussian vs mixture.** The reader chooses component count $K$ and a deterministic unimodal or bimodal data shape. The pure compute module returns the data, the MSE-optimal Gaussian mean, mixture parameters, and fixed-step loss traces. Its single insight is that MSE predicts the mean and blurs bimodal targets, while a mixture can place mass near both modes; the spec is `viz/specs/V-M0.5-c.yaml`, and the tested computation is `viz/compute/gaussian_mixture_trainer.ts`.
+
+## 6. Closing
+
+**Counterintuitive question.** Why can a better hidden representation still produce blurred predictions? **Worked answer:** D-M0.5.4-02 shows that a fixed-variance single Gaussian optimizes MSE and therefore predicts the conditional mean. The output family discards multimodality even if the hidden state contains useful information. D-M0.5.4-03 shows how a mixture restores multiple modes through responsibilities.
+
+**Assignment A-M0.5.** Compare the single-Gaussian and mixture likelihoods on a bimodal toy set, and export the deterministic traces used by V-M0.5-c. The assignment contract is in `code/common/A-M0.5-README.md`.
+
+**Spine check.** Architecture-wise, the output head is part of the model's inductive bias: it decides whether uncertainty is Bernoulli, categorical, unimodal continuous, or multimodal continuous. Probability-wise, each familiar loss is a negative log-likelihood with a checkable gradient.

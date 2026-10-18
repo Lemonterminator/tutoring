@@ -1,0 +1,37 @@
+{
+  "subject": "llm",
+  "id": "M4.3",
+  "module": "M4",
+  "title": {
+    "en": "KV-cache lineage: MHA, MQA, GQA, and MLA",
+    "zh": "KV 缓存谱系：MHA、MQA、GQA 和 MLA"
+  },
+  "prereqs": [
+    "M4.2"
+  ],
+  "estimatedHours": 8,
+  "spine": {
+    "en": {
+      "a": "The KV cache is a memory term in the decoder path; sharing heads reduces repeated K/V state, and latent compression reduces it further while preserving the score and value paths.",
+      "b": "Every variant still defines a prefix-conditioned attention distribution. MQA and GQA share cached K/V representations, while MLA changes the cached representation and uses algebraic absorption only where the indices permit it."
+    },
+    "zh": {
+      "a": "KV 缓存是解码器路径中的一个内存术语；共享头可以减少重复的 K/V 状态，而潜在压缩可以进一步减少它，同时保留分数和价值路径。",
+      "b": "每个变体仍然定义了一个前缀条件注意力分布。MQA 和 GQA 共享缓存的 K/V 表示，而 MLA 改变了缓存的表示，并且仅在索引允许的地方使用代数吸收。"
+    }
+  },
+  "derivations": [
+    "D-M4.3-01",
+    "D-M4.3-02",
+    "D-M4.3-03"
+  ],
+  "visualizations": [
+    "V-M4-c"
+  ],
+  "assignment": "A-M4",
+  "references": [
+    "shazeer2019",
+    "ainslie2023",
+    "deepseekv2"
+  ]
+}

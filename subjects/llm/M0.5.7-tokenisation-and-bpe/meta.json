@@ -1,0 +1,34 @@
+{
+  "subject": "llm",
+  "id": "M0.5.7",
+  "module": "M0.5",
+  "title": {
+    "en": "Tokenisation and byte-pair encoding",
+    "zh": "分词与字节对编码"
+  },
+  "prereqs": [
+    "M0.5.6"
+  ],
+  "estimatedHours": 3,
+  "spine": {
+    "en": {
+      "a": "Treat tokenisation as a learned compression scheme that changes the symbols seen by every later autoregressive architecture.",
+      "b": "Separate BPE's greedy merge rule from the probabilistic Unigram LM alternative."
+    },
+    "zh": {
+      "a": "将分词视为一种学习到的压缩方案，它改变了后续所有自回归架构所看到的符号。",
+      "b": "区分 BPE 的贪婪合并规则与概率化的 Unigram LM 替代方案。"
+    }
+  },
+  "derivations": [
+    "D-M0.5.7-01"
+  ],
+  "visualizations": [
+    "V-M0.5-f"
+  ],
+  "assignment": "A-M0.5",
+  "references": [
+    "sennrich2016",
+    "kudo2018"
+  ]
+}

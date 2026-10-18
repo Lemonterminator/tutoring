@@ -1,0 +1,17 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { klCards } from '../../../framework/games/variational-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## 开始练习
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+先分配概率，再拼 KL；用两个状态辨别方向、不对称与零概率。离散关统一使用 log₂，单位为 bit。
+
+<PracticeGame generate={klCards} lang="zh" />
+
+## 边界与原始课程
+
+离散模型能精确枚举，但不能代表已经掌握连续分布或测度论。KL 非负是整体性质，单个加权对数项可以为负。
+
+公式依据 [Auto-Encoding Variational Bayes，第 2 节及高斯附录](https://arxiv.org/html/1312.6114v11)。

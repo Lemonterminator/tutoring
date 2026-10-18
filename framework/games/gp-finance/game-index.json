@@ -1,0 +1,14 @@
+{
+  "GP-F1": {
+    "chunk": "pilot",
+    "stages": 8
+  },
+  "GP-F2": {
+    "chunk": "pilot",
+    "stages": 8
+  },
+  "GP-F3": {
+    "chunk": "pilot",
+    "stages": 9
+  }
+}

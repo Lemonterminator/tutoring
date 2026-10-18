@@ -1,0 +1,57 @@
+import { FundamentalSpacesGame } from '../../../framework/quant/FundamentalSpacesGame';
+import { DotProductGame } from '../../../framework/quant/DotProductGame';
+import { graphConceptHref, quantLessonHref } from '../../../framework/quant/learning-resources';
+import { openCourseAsset } from '../../../framework/quant/OpenCourseLibrary';
+
+## 四个基本子空间挑战
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+<a href={quantLessonHref('GAME-MIT-LA')}>进入 MIT 18.06SC 全课程：41 个小游戏，每个都有对应原材料 →</a>
+
+根据 MIT 18.06SC Fall 2011 Lecture 10 的讲义，围绕一个 3×4、秩为 2 的矩阵，练习列空间、零空间、行空间和左零空间。先跟着讲义逐步算，再用一张新矩阵独立检查两个零空间维数。
+
+<FundamentalSpacesGame lang="zh" />
+
+本局重点：两对正交补如何匹配到 Rⁿ 与 Rᵐ；四个空间的维数如何由 m、n 和 r 决定；Ax=b 的可解条件与完整解集；以及讲义最后的 3×3 对角矩阵子空间例子。
+
+星图中的<a href={graphConceptHref('four-fundamental-subspaces')}>四个基本子空间</a>节点可查看课程讲授证据。<a href={openCourseAsset('18-06sc-linear-algebra-fall-2011/materials/62a9db9eeab190694d40afe4734068ca_MIT18_06SCF11_Ses1.10sum.pdf') + '#page=1'} target="_blank" rel="noopener noreferrer">打开 MIT 原讲义 PDF</a>。
+
+### 练习边界
+
+- 题目检查固定题型下的维数关系、正交搭档和概念判断；通关不代表能从任意矩阵独立求出四个空间的基。
+- 引导题沿用讲义的 3×4 例子；最后一关只换 m、n、r，仍属于相同的模板练习。下一步应练习陌生矩阵的消元与特殊解。
+- 本局没有计时或生命值；提示与返修次数是练习记录，不是掌握度分数。
+
+## 另一局：点积与正交
+
+本次试点对应星图的<a href={graphConceptHref('orthogonality')}>正交节点</a>。只需会小整数加减乘法，没有计时，也不扣生命值。
+
+一句规则：二维向量的点积，就是**同位置相乘，再把乘积相加**。两个非零向量的点积为零，表示它们互相垂直。这里使用普通欧氏点积。
+
+<DotProductGame lang="zh" />
+
+## 这四个点积小游戏练什么
+
+1. **拼公式**：拖拽乘号与加号，分两步算出点积。
+2. **负号关**：仍然用同一条规则，把符号算对。
+3. **正交侦探**：先算，再判断；有的向量垂直，有的不垂直。
+4. **补齐向量**：反过来找一个整数，让点积为零。最后独立算一题，不再显示中间结果。
+
+不用追求速度。完成之后，试着说出“为什么要配对相同位置”，再换一局。提示使用次数和返修次数只是本局记录。
+
+## 这种玩法的局限
+
+- **会填空不等于会解释**：游戏检查数字与符号，还不能检查你是否理解点积的几何意义。下一步应加入箭头图和一句话解释。
+- **分步提示会替你安排思路**：如果每题都拆开，可能只会跟着步骤做。因此本局末尾撤去中间结果；以后还需要隔天回顾和陌生题。
+- **小整数覆盖有限**：本局不涉及分数、高维向量、矩阵、证明或不同内积。这些必须逐渐补上。
+- **随机换数的变化有限**：这里改变数字与是否正交，仍然使用固定题型。以后需要加入找错、反例、图形和实际建模。
+- **操作也有成本**：拖拽不顺不一定是数学不会；每个符号都支持点击选择，再点击空位，也支持键盘操作。
+
+所以先把它当作练手与查漏工具。单局通关还不能据此判断掌握程度，也不必为了积分刷已经会的题。
+
+## 点积来源与后续
+
+公式与正交判据可对照 [MIT 18.02SC 点积讲义](https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/6082f2744b609da87e23f3d8feed0565_MIT18_02SC_notes_1.pdf)。非零向量的角度才有定义；零向量虽然与任意向量点积为零，本局不拿它来问夹角。
+
+若这种练法适合你，接下来可用同样模式练二维矩阵乘向量，再接投影与最小二乘。

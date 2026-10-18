@@ -1,0 +1,331 @@
+## 1. 动机
+
+M2 注意力机制每次读取一个编码器状态序列。Transformer 则为每个位置并行执行相同的归一化读取：查询（queries）决定哪些键（keys）重要，而值（values）则根据生成的权重进行混合。该操作并非固定矩阵，因为权重取决于当前输入。仅解码器（decoder-only）的 Transformer 会添加因果掩码（causal mask），使得位置 $i$ 可以使用位置 $j\le i$，但无法使用未来的 token。
+
+本课将推导完整的单头反向传播过程，解释为何 logits 需除以 $\sqrt{d_k}$，并区分串行依赖深度与算术工作量。多头注意力机制随后运行多个宽度较小的头，并通过一个输出投影混合其结果。
+
+## 2. 前向定义
+
+设 $X\in\mathbb{R}^{n\times d}$ 为 $n$ 个残差流向量序列。对于单个注意力头，令
+
+$$
+W_Q\in\mathbb{R}^{d\times d_k},\qquad
+W_K\in\mathbb{R}^{d\times d_k},\qquad
+W_V\in\mathbb{R}^{d\times d_v}.
+$$
+
+投影、分数、因果掩码、权重及输出分别为
+
+$$
+Q=XW_Q\in\mathbb{R}^{n\times d_k},\qquad
+K=XW_K\in\mathbb{R}^{n\times d_k},\qquad
+V=XW_V\in\mathbb{R}^{n\times d_v},
+$$
+
+$$
+S=\frac{QK^\top}{\sqrt{d_k}}\in\mathbb{R}^{n\times n},
+$$
+
+$$
+\widetilde S_{ij}=
+\begin{cases}
+S_{ij},&j\le i,\\
+-\infty,&j>i,
+\end{cases}
+\qquad
+A=\operatorname{softmax}_{\mathrm{rows}}(\widetilde S)\in\mathbb{R}^{n\times n},
+$$
+
+$$
+Y=AV\in\mathbb{R}^{n\times d_v}.
+$$
+
+掩码在行 Softmax 之前应用。具有 $h$ 个头且模型宽度为 $d$ 的多头层使用 $d_h=d/h$ 并拼接 $Y^{(1)},\ldots,Y^{(h)}\in\mathbb{R}^{n\times d_h}$：
+
+$$
+\operatorname{MHA}(X)=
+\operatorname{Concat}(Y^{(1)},\ldots,Y^{(h)})W_O\in\mathbb{R}^{n\times d},
+\qquad
+W_O\in\mathbb{R}^{d\times d}.
+$$
+
+行随机矩阵 $A$ 是内部计算。目标概率仍由后续输出头发出的因果条件概率决定。
+
+**来源说明。** 缩放点积、掩码、多头定义及复杂度比较遵循 Vaswani 等人，“Attention Is All You Need”（https://papers.neurips.cc/paper/7181-attention-is-all-you-need 和 https://arxiv.org/abs/1706.03762）。
+
+## 3. 推导过程
+
+### D-M3.1-01 · 为什么要除以 $\sqrt{d_k}$
+
+**定理。** 如果 $q,k\in\mathbb{R}^{d_k}$ 具有独立的、零均值、单位方差的分量，且对应的分量相互独立，则
+
+$$
+\operatorname{Var}(q^\top k)=d_k,\qquad
+\operatorname{Var}\left(\frac{q^\top k}{\sqrt{d_k}}\right)=1.
+$$
+
+**步骤。**
+
+1. 展开点积：
+   $$
+   q^\top k=\sum_{\ell=1}^{d_k}q_\ell k_\ell\in\mathbb{R}.
+   $$
+   每个乘积的均值为 $\mathbb{E}[q_\ell k_\ell]=\mathbb{E}[q_\ell]\mathbb{E}[k_\ell]=0$。
+2. 其二阶矩为
+   $$
+   \mathbb{E}[(q_\ell k_\ell)^2]
+   =\mathbb{E}[q_\ell^2]\mathbb{E}[k_\ell^2]
+   =1.
+   $$
+   由于乘积均值为零，故 $\operatorname{Var}(q_\ell k_\ell)=1$。
+3. 坐标间的独立性使得交叉协方差消失：
+   $$
+   \operatorname{Var}\left(\sum_{\ell=1}^{d_k}q_\ell k_\ell\right)
+   =\sum_{\ell=1}^{d_k}\operatorname{Var}(q_\ell k_\ell)
+   =d_k.
+   $$
+4. 对于标量常数 $a$，有 $\operatorname{Var}(aZ)=a^2\operatorname{Var}(Z)$。设 $a=d_k^{-1/2}$：
+   $$
+   \operatorname{Var}\left(\frac{q^\top k}{\sqrt{d_k}}\right)
+   =\frac{1}{d_k}d_k=1.
+   $$
+5. 若不加缩放因子，随着 $d_k$ 增大，分数分布会扩散。对于行向量 $s\in\mathbb{R}^{n}$，从 D-M0.1-01 出发的 softmax 雅可比矩阵为
+   $$
+   J_{\mathrm{softmax}}(a)=\operatorname{diag}(a)-aa^\top\in\mathbb{R}^{n\times n}.
+   $$
+   若某个 logit 占主导地位，$a$ 趋近于 one-hot 向量，且该雅可比矩阵的每个元素都趋近于零。因此，较大的未缩放方差会使行 softmax 饱和并消除其局部梯度。
+6. 数值检查采样维度 $d_k\in\{4,16,64,256\}$，估计两种方差，并比较有无缩放时的熵。结果显示相对方差误差低于 $0.016$，且缩放后的 $d_k=256$ 行具有更高的熵。
+
+**检查。** checks/M3/D-M3.1-01.py 报告经验方差和熵表，并打印 passed = True。
+
+**直觉。** 平方根因子将典型分数差保持在激活尺度上，使其不随头宽增长。它并不强制每个训练后的 logit 具有单位方差；它控制的是本定理中的初始化尺度机制。
+
+### D-M3.1-02 · 通过注意力机制的完整梯度
+
+**定理。** 对于未投影的头 $Y=AV$ 和上游梯度 $G=\nabla_YL\in\mathbb{R}^{n\times d_v}$，有
+
+$$
+\nabla_VL=A^\top G\in\mathbb{R}^{n\times d_v},
+\qquad
+\nabla_AL=GV^\top\in\mathbb{R}^{n\times n}.
+$$
+
+对于每一行 $i$，其中 $a_i=A_{i,:}^\top$ 且 $g_{A,i}=(\nabla_AL)_{i,:}^\top$，有
+
+$$
+g_{S,i}=
+\left(\operatorname{diag}(a_i)-a_ia_i^\top\right)g_{A,i}\in\mathbb{R}^{n}.
+$$
+
+堆叠各行并应用 $S=QK^\top/\sqrt{d_k}$ 得到
+
+$$
+\nabla_QL=\frac{\nabla_SL\,K}{\sqrt{d_k}}\in\mathbb{R}^{n\times d_k},
+\qquad
+\nabla_KL=\frac{(\nabla_SL)^\top Q}{\sqrt{d_k}}\in\mathbb{R}^{n\times d_k}.
+$$
+
+投影梯度为
+
+$$
+\nabla_{W_Q}L=X^\top\nabla_QL\in\mathbb{R}^{d\times d_k},\quad
+\nabla_{W_K}L=X^\top\nabla_KL\in\mathbb{R}^{d\times d_k},\quad
+\nabla_{W_V}L=X^\top\nabla_VL\in\mathbb{R}^{d\times d_v}.
+$$
+
+在掩码位置，分数梯度精确为零。
+
+**步骤。**
+
+1. 写出输出微分：
+   $$
+   dY=dA\,V+A\,dV\in\mathbb{R}^{n\times d_v}.
+   $$
+   标量损失微分为
+   $$
+   dL=\langle G,dY\rangle_F
+   =\langle G,dA\,V\rangle_F+\langle G,A\,dV\rangle_F.
+   $$
+2. 对第二项使用 Frobenius 迹恒等式：
+   $$
+   \langle G,A\,dV\rangle_F
+   =\operatorname{tr}(G^\top A\,dV)
+   =\operatorname{tr}((A^\top G)^\top dV).
+   $$
+   因此 $\nabla_VL=A^\top G$。
+3. 对第一项应用相同的恒等式：
+   $$
+   \langle G,dA\,V\rangle_F
+   =\operatorname{tr}(G^\top dA\,V)
+   =\operatorname{tr}((GV^\top)^\top dA).
+   $$
+   因此 $\nabla_AL=GV^\top$。
+4. 第 $i$ 行使用 $a_i=\operatorname{softmax}(\widetilde s_i)$。其微分为 $da_i=J_i\,d\widetilde s_i$，其中
+   $$
+   J_i=\operatorname{diag}(a_i)-a_ia_i^\top\in\mathbb{R}^{n\times n}.
+   $$
+   其标量贡献为 $g_{A,i}^\top da_i=(J_i^\top g_{A,i})^\top d\widetilde s_i$。雅可比矩阵是对称的，从而得到所示的行公式。
+5. 掩码坐标是 softmax 的常数 $-\infty$ 输入。它没有微分，因此在该处 $d\widetilde s_{ij}=0$ 且 $(\nabla_SL)_{ij}=0$。这就是为什么实现在行雅可比乘法后显式地将掩码分数梯度置零的原因。
+6. 对于 $S=QK^\top/\sqrt{d_k}$，有
+   $$
+   dS=\frac{dQ\,K^\top+Q\,dK^\top}{\sqrt{d_k}}.
+   $$
+   第一项识别出 $\nabla_QL=(\nabla_SL)K/\sqrt{d_k}$；转置第二项则识别出 $\nabla_KL=(\nabla_SL)^\top Q/\sqrt{d_k}$。
+7. 最后，对于 $Q=XW_Q$、$K=XW_K$ 和 $V=XW_V$。应用相同的矩阵微分恒等式以获得三个投影梯度，并将其贡献加到 $\nabla_XL$ 中。
+8. 检查使用 $n=4,d=d_k=d_v=3$ 和标量目标 $\sum_{ij}Y_{ij}G_{ij}$。通用的 float64 测试框架报告在 $9.472506112828682\times10^{-12}$ 上的最大绝对误差为 $X,W_Q,W_K,W_V$。如果安装了 PyTorch，相同的检查会将这些数组与 torch.float64 autograd 进行比较；当前最小环境报告 torch_autograd = unavailable，而不是虚构一个 autograd 结果。
+
+**检查。** checks/M3/D-M3.1-02.py 验证所有手写梯度、掩码分数梯度以及可选的 autograd 比较；passed = True。
+
+**直觉。** 反向传播遵循前向数据流的逆序：首先是值，然后是行竞争，接着是查询/键几何结构，最后是三个输入投影。因果掩码移除了一条路径，而不仅仅是使其变小。
+
+### D-M3.1-03 · 注意力作为 Nadaraya--Watson 核回归
+
+**定理。** 定义
+
+$$
+\kappa(q_i,k_j)=\exp\left(\frac{q_i^\top k_j}{\sqrt{d_k}}\right)>0.
+$$
+
+则注意力行为归一化核
+
+$$
+A_{ij}=\frac{\kappa(q_i,k_j)}{\sum_{r=1}^{n}\kappa(q_i,k_r)},
+$$
+
+且输出为
+
+$$
+y_i=\sum_{j=1}^{n}A_{ij}v_j
+=\frac{\sum_{j=1}^{n}\kappa(q_i,k_j)v_j}{\sum_{j=1}^{n}\kappa(q_i,k_j)}
+\in\mathbb{R}^{d_v}.
+$$
+
+**步骤。**
+
+1. 从无掩码分数 $s_{ij}=q_i^\top k_j/\sqrt{d_k}\in\mathbb{R}$ 开始。
+2. 指数化得到正核 $\kappa(q_i,k_j)=e^{s_{ij}}$。
+3. 行 softmax 将每个核值除以行和，产生所示的 $A_{ij}$ 和 $\sum_jA_{ij}=1$。
+4. 将归一化权重乘以值向量并求和。所得表达式正是 Nadaraya--Watson 估计量，这是一种可微的字典查找，其中查询选择插值权重。
+5. 对于固定的 $Q,K$，$V\mapsto AV$ 是线性的。但 $A$ 随输入导出的 $Q,K$ 而变化，因此整个注意力层是一个数据依赖的线性映射，而非一个固定的 MLP 矩阵。
+6. 数值检查在相同的随机数组上评估两种形式，并验证在固定权重下关于 $V$ 的线性度误差低于 $3\times10^{-17}$。
+
+**检查。** checks/M3/D-M3.1-03 比较核商与注意力输出，并打印 passed = True。
+
+**类比（已标注）。** 将注意力称为“软字典查找”是对归一化核计算的类比。确切的定理是等于上述 Nadaraya--Watson 商。
+
+### D-M3.1-04 · Softmax 之前与之后的因果掩码
+
+**定理。** 对于具有有效索引集 $\mathcal{V}$ 的行，在 softmax 之前向无效 logit 添加 $-\infty$，得到的行与对所有 logit 进行 softmax、将无效权重设为零并在 $\mathcal{V}$ 上重新归一化后的结果相同：
+
+$$
+\frac{\exp(\widetilde s_j)}{\sum_{r\in\mathcal{V}}\exp(\widetilde s_r)}
+=\frac{\exp(s_j)}{\sum_{r\in\mathcal{V}}\exp(s_r)}
+\quad(j\in\mathcal{V}),
+$$
+
+且两边对于 $j\notin\mathcal{V}$ 均为零。
+
+**步骤。**
+
+1. 对于 $j\in\mathcal{V}$，掩码前值为 $\widetilde s_j=s_j$；对于 $j\notin\mathcal{V}$，为 $\exp(\widetilde s_j)=\exp(-\infty)=0$。
+2. 因此，掩码前 softmax 的分母为
+   $$
+   \sum_{r=1}^{n}\exp(\widetilde s_r)
+   =\sum_{r\in\mathcal{V}}\exp(s_r).
+   $$
+3. 有效分子和分母与 softmax 后重新归一化的表达式匹配。无效坐标在两种构造中均为零。
+4. 实现使用 softmax 前的形式，因为一次稳定的行 softmax 传递可以保持归一化，且掩码自动贡献零梯度。完全掩码的行是一个单独的集合为空边缘情况，而非正常的因果行。
+5. 检查在具有上三角因果掩码的五个随机行上比较两种算法；最大差异为 $1.1102230246251565\times10^{-16}$。
+
+**检查。** checks/M3/D-M3.1-04 验证等价性、有效行和，并打印 passed = True。
+
+**直觉。** 这两种程序的区别在于移除无效支持的时间点不同，而非最终的归一化分布。Softmax 前掩码使预期的支持成为 softmax 操作本身的一部分。
+
+### D-M3.1-05 · 多头参数、FLOPs 和依赖路径
+
+**断言。** 设模型宽度为 $d$，头数为 $h$，且 $d_h=d/h$，则四个稠密投影矩阵 $W_Q,W_K,W_V,W_O\in\mathbb{R}^{d\times d}$ 包含
+
+$$
+4d^2
+$$
+
+个参数（忽略偏置）。对于序列长度 $n$，本课程约定中的每层主导 FLOP 估计为
+
+$$
+8nd^2\quad\text{(Q/K/V/O projections)}
+$$
+
+加上
+
+$$
+4n^2d\quad\text{(score products and value products)}
+$$
+
+再加上
+
+$$
+16nd^2\quad\text{(a $d\to4d\to d$ FFN)},
+$$
+
+因此
+
+$$
+\operatorname{FLOPs}_{\mathrm{layer}}\approx24nd^2+4n^2d.
+$$
+
+**步骤。**
+
+1. Q、K、V 中的每一个在拼接头宽后都将 $\mathbb{R}^{d}$ 映射到 $\mathbb{R}^{d}$，因此每个包含 $d^2$ 个条目。输出混合矩阵增加了第四个 $d^2$ 块。
+2. 稠密序列投影使用 $n d^2$ 次乘累加操作。将一次乘法和一次加法计为两个 FLOP，则每个投影为 $2nd^2$，四个投影总计 $8nd^2$。
+3. 在所有头上，分数乘积和值乘积在相同约定下各消耗约 $2n^2d$ FLOPs。两者合计贡献 $4n^2d$。
+4. FFN 首先将 $d$ 扩展至 $4d$，然后将 $4d$ 收缩至 $d$。这两个矩阵乘积包含每个 token $4d^2+4d^2=8d^2$ 次 MAC，即 $16nd^2$ FLOPs。
+5. 将三项相加得到 $24nd^2+4n^2d$。检查使用 $d=12,n=5$ 并得到 $4d^2=576$ 及所述表达式。
+6. 依赖表区分了三个概念：
+
+| 层 | 顺序操作 | 最长路径 | 每层工作量 |
+| --- | --- | --- | --- |
+| 自注意力 | 训练期间为 $O(1)$ | $O(1)$ | $O(n^2d+nd^2)$ |
+| RNN | $O(n)$ | $O(n)$ | $O(nd^2)$ |
+| 宽度为 $k$ 的卷积 | 采用树调度时为 $O(\log_k n)$ | $O(\log_k n)$ | $O(knd^2)$ |
+
+   自注意力具有二次方成对工作量，但训练时依赖深度为常数；RNN 具有线性依赖深度，但没有成对的 $n^2$ 分数矩阵。
+
+**检查。** checks/M3/D-M3.1-05 验证 $4d^2$ 计数、FLOP 分解、输出形状及复杂度表；passed = True。
+
+**来源注记。** 顺序操作和路径长度的比较是 Vaswani 等人论文中的表格级比较 2017；上述 FLOP 核算陈述了本课程使用的简化 $4d$ FFN 及乘加约定。
+
+**直觉。** 多头注意力用几个较窄的视图交换了一个宽大的相似空间。模型获得了并行短路径，但代价是一个 $n^2$ 交互项；后续的 M4 将推导减少内存流量或缓存成本的方法。
+
+## 4. 数值验证
+
+这五项检查使用确定性的 float64 NumPy 计算和共享的有限差分测试框架。D-M3.1-02 还包含一个可选的 torch.float64 autograd 对比；由于当前环境未安装 PyTorch 包，其输出记录为 torch_autograd = unavailable，因此手写检查在此处仍作为权威的执行结果。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M3.1-01 | 方差相对误差低于 $0.016$；缩放后的高宽熵超过未缩放的熵 | pass |
+| D-M3.1-02 | 所有 $X,W_Q,W_K,W_V$ 梯度；最大绝对误差 $9.472506112828682\times10^{-12}$；掩码分数梯度为零 | pass |
+| D-M3.1-03 | 核输出误差 $0$；固定权重线性度误差 $2.7755575615628914\times10^{-17}$ | pass |
+| D-M3.1-04 | 掩码前后最大差异 $1.1102230246251565\times10^{-16}$ | pass |
+| D-M3.1-05 | 参数 $4d^2=576$ 在 $d=12$；输出形状和成本表通过 | pass |
+
+从仓库父目录运行 python -m pytest course/tests。读者可查看这些静态数值摘要；CI 负责运行检查。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M3-a" />
+
+<CourseWidget id="V-M3-b" />
+
+**V-M3-a — 注意力探索器。** 小部件规范位于 viz/specs/V-M3-a.yaml，纯计算模块为 viz/compute/attention_explorer.ts。读者可以选择句子、层和头，然后检查选定的注意力矩阵以及 QK 分数和 OV 值摘要。A-M3 导出小型 GPT 的真实注意力数据。
+
+**V-M3-b — $1/\sqrt{d_k}$ 缩放滑块。** 小部件规范位于 viz/specs/V-M3-b.yaml，纯计算模块为 viz/compute/attention_scale.ts。更改 $d_k$ 并切换缩放以查看 logit 方差、熵和 softmax-Jacobian 范数。核心见解是：未缩放的宽 logits 会导致熵和梯度坍缩。
+
+这些模块返回普通的 typed arrays/records。现有前端的 Canvas2D 层可以渲染矩阵和线性摘要，而无需替换阅读器。
+
+## 6。结语
+
+**反直觉的问题。** 为什么尽管自注意力机制可能执行更多的算术运算，但其依赖路径却比 RNN 更短？**解答：** D-M3.1-05 将路径长度与计算量区分开来。在训练过程中，每个位置都可以并行地形成其查询 - 键分数并混合值，因此从一个位置到另一个位置的信息路径仅跨越一个注意力矩阵。该矩阵包含 $n^2$ 个成对条目，而 RNN 则执行 $n$ 次顺序状态转移，涉及 $O(nd^2)$ 的计算量。更短的路径是一个关于依赖关系的陈述，而非声称总 FLOPs 更低或内存流量更小。
+
+**作业 A-M3。** 在 code/minilm/ 中实现配置驱动的 nanoGPT 基线代码，保持注意力梯度为手写并经过验证，在 tiny-Shakespeare 字符测试集和 BPE 分词的小规模语料库上进行训练，使用 M0.5 中的解码规则进行采样，并导出 V-M3-a 注意力数据。接下来的 M3 课程将增加位置编码、归一化、残差连接、前馈网络（FFN）以及训练/推理细节。
+
+**核心检查。** 从架构角度看，注意力机制用掩码的、数据依赖的读取矩阵取代了位置间的循环状态传递。从概率角度看，因果掩码使得每一行仅依赖于其前缀，因此相同的自回归分解依然有效，同时计算图获得了并行训练路径。

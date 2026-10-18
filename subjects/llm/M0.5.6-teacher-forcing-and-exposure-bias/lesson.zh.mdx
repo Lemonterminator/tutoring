@@ -1,0 +1,160 @@
+## 1. 动机
+
+教师强制（Teacher forcing）在序列模型预测下一个 token 时提供观测到的前缀。在推理阶段，模型必须自行提供其前缀。因此，局部条件模型可以在一种前缀分布下进行评估，而在另一种分布下部署。本课时将明确写出这种分布偏移，并推导出一个简单的累积误差界。该界限是一个标记为**近似**的结论：它通过联合界隔离了暴露偏差（exposure bias），并不声称能描述所有训练或解码效应。
+
+## 2. 前向定义
+
+设 $x_{1:T}$ 为一个序列，$p_{mathrm{data}}$ 为数据分布，$p_	heta$ 为模型分布。在时间 $t$，定义一个标量 token 成本
+
+$$
+\ell_	heta(x_t\mid x_{<t})=-\log p_	heta(x_t\mid x_{<t})\in\mathbb{R}_{\ge0}.
+$$
+
+Teacher forcing 在从数据中抽取的前缀上评估此成本：
+
+$$
+J_{\mathrm{TF}}(\theta)=
+\mathbb{E}_{x_{1:T}\sim p_{\mathrm{data}}}
+\left[\sum_{t=1}^{T}\ell_\theta(x_t\mid x_{<t})\right].
+$$
+
+而推理则从 $p_\theta$ 展开前缀。记 $q_t^{\mathrm{data}}$ 和 $q_t^\theta$ 分别为这两个过程中 $x_{<t}$ 的分布，
+
+$$
+J_{\mathrm{roll}}(\theta)=
+\sum_{t=1}^{T}\mathbb{E}_{x_{<t}\sim q_t^\theta}
+\mathbb{E}_{x_t\sim p_{\mathrm{data}}(\cdot\mid x_{<t})}
+\left[\ell_\theta(x_t\mid x_{<t})\right].
+$$
+
+条件目标可能保持不变，而前缀测度发生变化。这正是本课中暴露偏差（exposure bias）的来源。
+
+## 3. 推导过程
+
+### D-M0.5.6-01 · 推理时的评估分布发生变化
+
+**断言。** 推理时与教师强制（teacher-forced）的 token 成本之间的差异，是同一成本函数针对两个不同的前缀分布进行积分后的总和。
+
+**步骤。**
+
+1. 定义时刻 $t$ 的期望数据前缀成本：
+   $$
+   J_t^{\mathrm{data}}=
+   \mathbb{E}_{x_{<t}\sim q_t^{\mathrm{data}}}
+   \mathbb{E}_{x_t\sim p_{\mathrm{data}}(\cdot\mid x_{<t})}
+   [\ell_\theta(x_t\mid x_{<t})].
+   $$
+   （教师强制用观测到的前缀替换了之前生成的 token。）
+2. 定义时刻 $t$ 的期望模型前缀成本：
+   $$
+   J_t^\theta=
+   \mathbb{E}_{x_{<t}\sim q_t^\theta}
+   \mathbb{E}_{x_t\sim p_{\mathrm{data}}(\cdot\mid x_{<t})}
+   [\ell_\theta(x_t\mid x_{<t})].
+   $$
+   （在推理阶段，前缀由模型生成；为了进行比较，下一个 token 的目标仍写在数据条件分布下。）
+3. 对时间求和：
+   $$
+   J_{\mathrm{TF}}=\sum_{t=1}^{T}J_t^{\mathrm{data}},
+   \qquad
+   J_{\mathrm{roll}}=\sum_{t=1}^{T}J_t^\theta.
+   $$
+   （序列成本在各个预测时刻是可加的。）
+4. 减去这两个表达式：
+   $$
+   J_{\mathrm{roll}}-J_{\mathrm{TF}}
+   =\sum_{t=1}^{T}(J_t^\theta-J_t^{\mathrm{data}}).
+   $$
+   （只有前缀测度不同。）
+5. 对于已检查的三前缀测试用例（fixture），使用
+   $q_t^{\mathrm{data}}=(0.55,0.30,0.15)$，
+   $q_t^\theta=(0.20,0.35,0.45)$，以及成本 $(0.1,0.7,1.2)$。那么
+   $$
+   J_t^{\mathrm{data}}=0.55(0.1)+0.30(0.7)+0.15(1.2)=0.40,
+   $$
+   $$
+   J_t^\theta=0.20(0.1)+0.35(0.7)+0.45(1.2)=0.785,
+   $$
+   $$
+   J_t^\theta-J_t^{\mathrm{data}}=0.385.
+   $$
+   （该测试用例使得分布偏移可被观测，而无需将其隐藏在模拟器中。）
+
+**检查。** `checks/M0.5/D-M0.5.6-01.py` 报告了 `training_expectation = 0.4`、`inference_expectation = 0.785` 和 `shift_identity_error = 0.0`；`passed = True`。
+
+**直觉。** 较低的教师强制损失回答了“模型对数据前缀的评分有多好？”这个问题。而推理阶段问的是“它对自身创建的前缀评分有多好？”。即使 token 级别的公式完全相同，这两个期望也是不同的。
+
+### D-M0.5.6-02 · 简化的累积误差界限
+
+**近似。** 假设在任意一步中，给定此前一直停留在数据流形上，做出错误前缀决策的概率至多为 $\epsilon\in[0,1]$。并集界限（union bound）给出时刻 $t$ 的暴露概率至多为 $(t-1)\epsilon$。这是一个刻意简化的上界，并非关于所有训练模型的定理。
+
+**步骤。**
+
+1. 设 $E_s$ 为生成前缀在步骤 $s$ 首次偏离数据前缀的事件。对于长度为 $t-1$ 的前缀，坏事件为
+   $$
+   E_{<t}=\bigcup_{s=1}^{t-1}E_s.
+   $$
+   （如果至少有一个之前的决策是错误的，则前缀偏离流形。）
+2. 应用并集界限：
+   $$
+   \Pr(E_{<t})\le\sum_{s=1}^{t-1}\Pr(E_s)\le\sum_{s=1}^{t-1}\epsilon=(t-1)\epsilon.
+   $$
+   （并集界限不要求误差事件相互独立。）
+3. 将概率截断为一：
+   $$
+   \Pr(E_{<t})\le\min\{1,(t-1)\epsilon\}.
+   $$
+   （概率不能超过一。）
+4. 对未截断的界限在时间范围 $T$ 上求和，得到简化的序列级暴露项：
+   $$
+   \sum_{t=1}^{T}(t-1)\epsilon
+   =\epsilon\sum_{r=0}^{T-1}r
+   =\epsilon\frac{T(T-1)}{2}
+   =O(T^2\epsilon).
+   $$
+   （等差数列计算了多少个更早的机会可能污染每一个后续前缀。）
+5. 在相同时间范围内对教师强制的每步误差界限求和为
+   $$
+   \sum_{t=1}^{T}\epsilon=T\epsilon=O(T\epsilon).
+   $$
+   （每一步教师强制都在数据前缀上进行评估，因此这种简化比较没有增长的前缀风险因子。）
+6. 对于已检查的测试用例 $T=10$ 和 $\epsilon=0.01$，
+   $$
+   T\epsilon=0.1,
+   \qquad
+   \epsilon\frac{T(T-1)}2=0.45,
+   \qquad
+   \frac{0.45}{0.1}=4.5.
+   $$
+   （对于此未截断近似，比值为 $\frac{T-1}{2}$。）
+
+**检查。** `checks/M0.5/D-M0.5.6-02.py` 报告了教师强制界限 `0.1`、暴露界限 `0.45`、并集界限和 `0.45`，以及比值 `4.5`；`passed = True`。
+
+**直觉。** 一个局部错误会产生一个前缀，该前缀可能影响许多后续决策。二次项是对序列长度的警告，而非预测每个模型的测量损失必须精确地呈二次方增长。
+
+## 4。数值验证
+
+两个确定性的 float64 检查用于验证期望偏移恒等式及所述的联合界算术运算。V-M0.5-e 使用相同的公式，展示当时间步长或单步误差变化时，线性教师强制项与二次暴露项如何分离。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M0.5.6-01 | data-prefix cost `0.4`; model-prefix cost `0.785`; identity error `0.0` | pass |
+| D-M0.5.6-02 | teacher-forced `0.1`; exposure bound `0.45`; ratio `4.5` | pass |
+
+从仓库根目录运行 `python -m pytest course/tests`。这两个检查均可独立于课程文本执行。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M0.5-e" />
+
+**V-M0.5-e — 暴露偏差模拟器。** 组件规范为 `viz/specs/V-M0.5-e.yaml`，纯计算部分为 `viz/compute/exposure_bias.ts`。调整 $\epsilon$ 和预测步长（horizon）。该组件绘制了教师强制的 $O(T\epsilon)$ 参考值、暴露偏差的 $O(T^2\epsilon)$ 界限，以及被截断的流形外概率 $\min(1,t\epsilon)$。画布层属于现有的前端；本课时提供数据契约和计算函数。
+
+## 6。结语
+
+**反直觉的问题。** 如果教师强制（teacher forcing）使用了正确的观测前缀，为什么其损失值可能成为不可靠的部署预测指标？**解答示例：** D-M0.5.6-01 表明，训练和推理过程针对不同的前缀分布对相同的局部成本进行了积分。D-M0.5.6-02 在带有标签的简化假设下，解释了为何前缀误差会随序列长度累积。
+
+**作业 A-M0.5。** 扩展通用作业实现，使其并排报告教师强制下的负对数似然（NLL）和推理估计值，然后将两者与 V-M0.5-e 曲线进行比较。在报告中明确列出数据/模型的前缀分布。
+
+**核心检查。** 从架构角度看，RNN 仍然按顺序向前滚动隐藏状态，而因果 Transformer 由于对未来的 token 进行了掩码处理，可以并行训练所有教师强制的位置。从概率角度看，两者仍然区分用于训练的数据前缀测度和用于生成的模型前缀测度。
+
+**参考文献。** Ross and Bagnell, “A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning,” [PMLR 15 (2011)](https://proceedings.mlr.press/v15/ross11a.html)。该文献阐述了分布偏移的视角；上述界限是本课程明确标注的简化计算结果。

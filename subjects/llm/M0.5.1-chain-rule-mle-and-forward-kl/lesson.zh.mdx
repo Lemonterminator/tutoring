@@ -1,0 +1,215 @@
+## 1. 动机
+
+M0.1 解决了标量损失和反向模式约定。剩余的概率侧缺陷在于，序列模型通常被描述为一个不透明的概率，而不是条件预测的乘积。本课将使该乘积精确化，将精确的链式法则与用于参数化每个条件的近似方法区分开来，并将最大似然估计与前向 KL 散度和困惑度联系起来。
+
+## 2. 前向定义
+
+设词汇表为有限集 $\mathcal{V}$，其中 $|\mathcal{V}|=V$，并设序列为 $x_{1:T}=(x_1,\ldots,x_T)\in\mathcal{V}^{T}$。每个 token 的概率是 $[0,1]$ 中的标量。自回归模型为
+
+$$
+p_\theta(x_{1:T})=\prod_{t=1}^{T}p_\theta(x_t\mid x_{<t})\in[0,1],
+\qquad x_{<t}=(x_1,\ldots,x_{t-1})\in\mathcal{V}^{t-1}.
+$$
+
+对于有限支撑集 $\mathcal{X}$，设 $p_{\mathrm{data}},p_\theta\in\Delta^{|\mathcal{X}|-1}$ 为概率向量，其中每个坐标均为标量且满足 $\sum_{x\in\mathcal{X}}p(x)=1$。交叉熵、熵和前向 KL 散度分别为
+
+$$
+H(p_{\mathrm{data}})=-\sum_{x\in\mathcal{X}}p_{\mathrm{data}}(x)\log p_{\mathrm{data}}(x)\in\mathbb{R},
+$$
+
+$$
+H(p_{\mathrm{data}},p_\theta)=-\sum_{x\in\mathcal{X}}p_{\mathrm{data}}(x)\log p_\theta(x)\in\mathbb{R},
+\qquad
+\mathrm{KL}(p_{\mathrm{data}}\Vert p_\theta)=\sum_{x\in\mathcal{X}}p_{\mathrm{data}}(x)\log\frac{p_{\mathrm{data}}(x)}{p_\theta(x)}\in[0,\infty].
+$$
+
+对于包含 $N=\sum_s T_s$ 个观测 token 的序列数据集，经验平均 token 交叉熵和困惑度为
+
+$$
+H_N=-\frac{1}{N}\sum_s\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})\in\mathbb{R},
+\qquad
+\mathrm{ppl}=\exp(H_N)\in[1,\infty).
+$$
+
+`checks/M0.5` 中的数值检查使用具有严格正坐标的 float64 概率向量，因此所有显示的日志值均为有限值。
+
+## 3. 推导过程
+
+### D-M0.5.1-01 · 链式法则分解是一个恒等式
+
+**定理。** 对于 $x_{1:T}\in\mathcal{V}^{T}$ 上的任意联合分布，只要所需的条件概率有定义，则：
+
+$$
+p(x_{1:T})=p(x_1)\prod_{t=2}^{T}p(x_t\mid x_{<t})\in[0,1].
+$$
+
+该分解是精确的。建模近似仅始于将真实的条件概率 $p(x_t\mid x_{<t})$ 替换为参数化族 $p_\theta(x_t\mid x_{<t})$ 时。
+
+**步骤。**
+
+1. 对于 $T=1$，乘积仅含一个因子，该陈述显然成立（$p(x_1)=p(x_1)$）。（基本情况即单 token 联合分布的定义。）
+2. 对于 $T=2$，应用条件概率定义：
+   $$
+   p(x_1,x_2)=p(x_1)p(x_2\mid x_1)\in[0,1].
+   $$
+   （联合概率等于第一个边缘概率乘以第二个条件概率。）
+3. 假设分解在时间 $T-1$ 之前成立：
+   $$
+   p(x_{1:T-1})=p(x_1)\prod_{t=2}^{T-1}p(x_t\mid x_{<t})\in[0,1].
+   $$
+   （这是长度为 $T-1$ 的前缀的归纳假设。）
+4. 对前缀和最后一个 token 应用双变量条件恒等式：
+   $$
+   p(x_{1:T})=p(x_{1:T-1})p(x_T\mid x_{<T})\in[0,1].
+   $$
+   （将前缀视为一个随机变量，从而暴露出最后的条件因子。）
+5. 代入归纳假设：
+   $$
+   p(x_{1:T})=\left[p(x_1)\prod_{t=2}^{T-1}p(x_t\mid x_{<t})\right]p(x_T\mid x_{<T})
+   =p(x_1)\prod_{t=2}^{T}p(x_t\mid x_{<t}).
+   $$
+   （附加最后一个因子完成了归纳步骤。）
+6. 将每个真实条件概率替换为参数化条件概率，并定义
+   $$
+   p_\theta(x_{1:T})=\prod_{t=1}^{T}p_\theta(x_t\mid x_{<t})\in[0,1].
+   $$
+   （这是建模选择；它不是关于数据分布的新概率恒等式。）
+7. 因此，链式法则分解是一个恒等式，而近似则是从所有有效条件概率限制到由 $\theta$ 索引的选定族。（这一区分防止将架构选择误认为是概率定律。）
+
+**对比（带标签）。** 变分自编码器引入了变分后验分布，通常优化的是证据下界而非精确的边缘对数似然。这是一种不同的近似机制；上述自回归分解并未引入下界。
+
+**检查。** `checks/M0.5/D-M0.5.1-01.py` — 重构联合概率 `max_abs_err = 5.551e-17`，模型归一化 `1.0`，`passed = True`。
+
+**直觉。** 链式法则表明，任何联合分布都可以逐次读取条件概率。RNN、Transformer 或其他架构改变的是条件概率的计算方式，而非相乘这些条件概率的恒等式本身。
+
+### D-M0.5.1-02 · 最大似然估计最小化前向 KL 散度
+
+**定理。** 对于 $p_\theta(x)$ 支撑集上严格为正的 $p_{\mathrm{data}}(x)$，有：
+
+$$
+\mathbb{E}_{x\sim p_{\mathrm{data}}}\left[-\log p_\theta(x)\right]
+=H(p_{\mathrm{data}})+\mathrm{KL}(p_{\mathrm{data}}\Vert p_\theta)\in\mathbb{R}.
+$$
+
+由于 $H(p_{\mathrm{data}})$ 与 $\theta$ 无关，最大似然估计即最小化前向 KL 散度。
+
+**步骤。**
+
+1. 将期望展开为有限和：
+   $$
+   \mathbb{E}_{p_{\mathrm{data}}}[-\log p_\theta(x)]
+   =-\sum_{x\in\mathcal{X}}p_{\mathrm{data}}(x)\log p_\theta(x)\in\mathbb{R}.
+   $$
+   （标量函数在有限分布上的期望是加权标量和。）
+2. 在和项内部加减 $\log p_{\mathrm{data}}(x)$：
+   $$
+   -p_{\mathrm{data}}(x)\log p_\theta(x)
+   =-p_{\mathrm{data}}(x)\log p_{\mathrm{data}}(x)
+   +p_{\mathrm{data}}(x)\left[\log p_{\mathrm{data}}(x)-\log p_\theta(x)\right].
+   $$
+   （添加的项相互抵消，因此标量表达式保持不变。）
+3. 对 $x$ 求和并拆分有限和：
+   $$
+   -\sum_xp_{\mathrm{data}}(x)\log p_\theta(x)
+   =-\sum_xp_{\mathrm{data}}(x)\log p_{\mathrm{data}}(x)
+   +\sum_xp_{\mathrm{data}}(x)\log\frac{p_{\mathrm{data}}(x)}{p_\theta(x)}.
+   $$
+   （求和的线性性质将熵项与散度项分离。）
+4. 识别这两项：
+   $$
+   H(p_{\mathrm{data}},p_\theta)=H(p_{\mathrm{data}})+\mathrm{KL}(p_{\mathrm{data}}\Vert p_\theta)\in\mathbb{R}.
+   $$
+   （左侧是交叉熵，右侧是熵加上前向 KL 散度。）
+5. 令 $\theta^*$ 最小化交叉熵。由于 $H(p_{\mathrm{data}})$ 不依赖于 $\theta$，
+   $$
+   \arg\min_\theta H(p_{\mathrm{data}},p_\theta)
+   =\arg\min_\theta\mathrm{KL}(p_{\mathrm{data}}\Vert p_\theta).
+   $$
+   （移除加性常数不会改变最小值集合。）
+6. 选择一个状态 $x^*$ 使得 $p_{\mathrm{data}}(x^*)>0$，并设 $p_\theta(x^*)=\varepsilon>0$。其交叉熵贡献为
+   $$
+   -p_{\mathrm{data}}(x^*)\log\varepsilon\xrightarrow[\varepsilon\to0^+]{}+\infty.
+   $$
+   （正的数据质量乘以发散的负对数概率会导致正向发散。）
+7. 因此，前向 KL 散度在此意义上具有“覆盖质量”的特性：若将任何数据支撑状态上的模型质量设为趋近于零，目标函数将发散。（该短语描述的是对缺失数据支撑的惩罚，而非声称每个拟合模型在每处都具有相等密度。）
+
+**检查。** `checks/M0.5/D-M0.5.1-02.py` — 分解误差 `2.220e-16`；当模型概率趋近于零时的交叉熵为 `[1.916..., 3.864..., 8.008...]`；`passed = True`。
+
+**直觉。** 当数据分布对模型几乎排除的事件赋予质量时，最大似然估计是不容情的。这就是为什么从训练好的模型中采样仍可能产生不太可能的输出：训练目标必须覆盖观测到的模式，而生成阶段则选择如何遍历这些模式。
+
+### D-M0.5.1-03 · 序列负对数似然分解为 token 交叉熵之和
+
+**定理。** 对于包含 $\{x_{s,1:T_s}\}_{s=1}^{S}$ 个 token 的序列数据集 $N=\sum_sT_s$，有：
+
+$$
+\mathrm{NLL}(\theta)=-\sum_{s=1}^{S}\log p_\theta(x_{s,1:T_s})
+=-\sum_{s=1}^{S}\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})\in\mathbb{R}.
+$$
+
+平均 token 交叉熵和困惑度（perplexity）分别为：
+
+$$
+H_N=\frac{\mathrm{NLL}(\theta)}{N}\in\mathbb{R},
+\qquad
+\mathrm{ppl}=\exp(H_N)=\left(\prod_{s=1}^{S}\prod_{t=1}^{T_s}p_\theta(x_{s,t}\mid x_{s,<t})\right)^{-1/N}\in[1,\infty).
+$$
+
+**步骤。**
+
+1. 对每个序列应用链式法则分解：
+   $$
+   p_\theta(x_{s,1:T_s})=\prod_{t=1}^{T_s}p_\theta(x_{s,t}\mid x_{s,<t})\in[0,1].
+   $$
+   （D-M0.5.1-01 为每个观测序列提供精确乘积。）
+2. 取该乘积的负对数：
+   $$
+   -\log p_\theta(x_{s,1:T_s})
+   =-\log\prod_{t=1}^{T_s}p_\theta(x_{s,t}\mid x_{s,<t})
+   =-\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})\in\mathbb{R}.
+   $$
+   （对数将乘法转换为加法。）
+3. 对所有序列求和：
+   $$
+   \mathrm{NLL}(\theta)=-\sum_{s=1}^{S}\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})\in\mathbb{R}.
+   $$
+   （每个观测 token 贡献一个条件负对数概率。）
+4. 除以总 token 数 $N$：
+   $$
+   H_N=-\frac1N\sum_{s=1}^{S}\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})=\frac{\mathrm{NLL}(\theta)}{N}\in\mathbb{R}.
+   $$
+   （除法将数据集总量转换为每个 token 的平均值。）
+5. 对均值取指数：
+   $$
+   \exp(H_N)=\exp\left(-\frac1N\sum_{s,t}\log p_{s,t}\right)
+   =\left(\prod_{s,t}p_{s,t}\right)^{-1/N}\in[1,\infty),
+   $$
+   其中 $p_{s,t}=p_\theta(x_{s,t}\mid x_{s,<t})\in(0,1]$。（对数的均值取指数得到几何平均的倒数。）
+6. 将结果定义为困惑度：$\mathrm{ppl}=\exp(H_N)\in[1,\infty)$。（值为 $k$ 表示均匀 $k$ 路预测器的有效分支因子。）
+
+**检查。** `checks/M0.5/D-M0.5.1-03.py` — NLL 误差 `0.000e+00`，困惑度恒等式误差 `0.000e+00`，`perplexity = 2.553...`，`passed = True`。
+
+**直觉。** 序列似然是乘积形式，但在对数空间中进行训练和报告更为简便。困惑度将平均 token 惊讶度取指数，使其读起来像是同等可能选择的有效数量。
+
+## 4. 数值验证
+
+这三项检查使用确定性的 float64 值，且不涉及采样随机性。其当前报告如下：
+
+| 推导 | 数值声明 | 结果 |
+| --- | --- | --- |
+| D-M0.5.1-01 | 重构联合`max_abs_err = 5.551e-17`；模型归一化`1.0` | pass |
+| D-M0.5.1-02 | 分解误差`2.220e-16`；零支撑极限增加交叉熵 | pass |
+| D-M0.5.1-03 | NLL 误差`0.000e+00`；困惑度恒等式误差`0.000e+00` | pass |
+
+从仓库父目录运行`python -m pytest course/tests`。由于当前前端没有面向读者的 Python 运行时，这些检查以静态输出形式展示。
+
+## 5。交互式可视化
+
+本课没有独立的组件：其精确的概率恒等式由上述可执行检查进行练习。下一课将介绍 **V-M0.5-a**，即 AR(1) 探索器，其中相同的标量因子 $\phi^k$ 既作为自相关系数，也作为递归梯度乘数。该组件在下一课中被引用，而非与其所可视化的递归推导分离。
+
+## 6。结语
+
+**反直觉的问题。** 如果链式法则分解是精确的，那么自回归模型在哪里进行了近似？**解答：** D-M0.5.1-01 中的恒等式对于真实的条件概率是精确的。近似始于将这些条件概率限制在参数化族 $p_\theta(x_t\mid x_{<t})$ 中时。D-M0.5.1-02 随后展示了在该族内最大似然估计所优化的内容：前向 KL 散度，对于将数据支持事件的概率质量分配为趋近于零的情况施加无限惩罚。
+
+**作业 A-M0.5。** 通过闭式解和梯度下降拟合 AR(1) 模型，实现平滑的双词元（bigram）模型，并在后续课程中复现 BPE 示例。作业合同位于 `code/common/A-M0.5-README.md`。
+
+**核心检查。** 从架构角度看，后续所有的序列架构都提供了计算 $p_\theta(x_t\mid x_{<t})$ 的机制。从概率角度看，本课程确立了精确的链式法则分解、MLE 到前向 KL 的目标函数，以及报告为困惑度（perplexity）的词元级量度。

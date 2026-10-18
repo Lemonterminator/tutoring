@@ -12,6 +12,14 @@
     "typecheck": "tsc --noEmit",
     "build": "tsx scripts/check.ts && tsx scripts/build-all.ts",
     "check": "tsx scripts/check.ts",
+    "sync:llm": "tsx scripts/sync-llm-course.ts",
+    "sync:concept-graph": "tsx scripts/sync-concept-graph.ts",
+    "sync:game-index": "tsx scripts/sync-game-index.ts",
+    "sync:quant-materials": "tsx scripts/sync-quant-materials.ts",
+    "sync:bs-math": "python -X utf8 scripts/sync-bs-math.py",
+    "sync:catalog": "tsx scripts/sync-llm-course.ts --catalog-only",
+    "sync:open-courses": "python -X utf8 scripts/sync-open-courses.py && tsx scripts/layout-open-courses.ts",
+    "translate:llm": "tsx scripts/translate-llm-course.ts",
     "translate": "tsx scripts/translate.ts"
   },
   "repository": {
@@ -29,6 +37,7 @@
   "private": "true",
   "dependencies": {
     "@preact/signals": "^2.11.2",
+    "katex": "^0.16.47",
     "preact": "^10.29.8"
   },
   "devDependencies": {

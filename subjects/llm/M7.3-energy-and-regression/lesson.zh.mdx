@@ -1,0 +1,210 @@
+## 1. 动机
+
+M7.2 描述了 token 如何移动。本课探讨检索步骤优化了什么，以及循环记忆写入什么。在 Transformer 表示中看似归一化的同一个 softmax，实际上是一个正则化最大化问题的解。现代 Hopfield 更新是针对能量的增广最小化（majorization-minimization）步骤。线性注意力状态是一个在线回归器，而 delta 规则将其写入操作转化为一个 LMS/SGD 步骤。
+
+作用范围至关重要。Hopfield 下降证明控制了带有 $Q=\xi$ 和 $K=V=X$ 的原始关联更新。通用的 $Q,K,V$ 注意力需要学习到的投影和值读出；只有关联权重继承了 Hopfield 证明。容量陈述是在分离条件下的概率下界，而非无条件的 $\Theta(e^d)$ 定律。
+
+## 2. 前向定义
+
+对于分数 $z\in\mathbb{R}^{N}$ 和概率 $p\in\Delta_N=\{p\in\mathbb{R}^{N}:p_i\ge0,\sum_i p_i=1\}$，定义香农熵
+
+$$
+H(p)=-\sum_{i=1}^{N}p_i\log p_i.
+$$
+
+对于包含 $N$ 个模式 $X=[x_1,\ldots,x_N]\in\mathbb{R}^{d\times N}$ 的记忆和关联状态 $\xi\in\mathbb{R}^{d}$，定义
+
+$$
+E(\xi)=-\frac{1}{\beta}\operatorname{lse}(\beta X^\top\xi)+\frac12\lVert\xi\rVert_2^2,
+\qquad X^\top\xi\in\mathbb{R}^{N}.
+$$
+
+注意力形状的关联权重为 $p=\operatorname{softmax}(\beta X^\top\xi)\in\Delta_N$，检索到的状态为 $Xp\in\mathbb{R}^{d}$。对于在线回归，令 $S_t\in\mathbb{R}^{d_v\times d_k}$ 存储键值映射，$k_t\in\mathbb{R}^{d_k}$ 为键，$v_t\in\mathbb{R}^{d_v}$ 为其目标。
+
+## 3。推导过程
+
+### D-M7.3-01 · 吉布斯变分原理与单纯形兄弟算法
+
+**定理。** 对于 $z\in\mathbb{R}^{N}$，
+
+$$
+\operatorname{softmax}(z)
+=\underset{p\in\Delta_N}{\operatorname{argmax}}\;\langle p,z\rangle+H(p),
+$$
+
+最优值为 $\operatorname{lse}(z)=\log\sum_i e^{z_i}$。
+
+**步骤。**
+
+1. 在单纯形内部构造拉格朗日函数
+   $$
+   \mathcal{L}(p,\lambda)=\sum_i p_i z_i-\sum_i p_i\log p_i+\lambda\left(\sum_i p_i-1\right).
+   $$
+2. 对每个标量 $p_i$ 求导：
+   $$
+   \frac{\partial\mathcal{L}}{\partial p_i}=z_i-(\log p_i+1)+\lambda=0.
+   $$
+   因此 $p_i=\exp(z_i+\lambda-1)$。
+3. 归一化：
+   $$
+   1=\sum_i p_i=e^{\lambda-1}\sum_i e^{z_i},
+   \qquad p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.
+   $$
+4. 代入优化器。由于 $\log p_i=z_i-\operatorname{lse}(z)$，
+   $$
+   \langle p,z\rangle+H(p)=\sum_i p_i\operatorname{lse}(z)=\operatorname{lse}(z).
+   $$
+   $H$ 在单纯形内部的严格凹性使得当分数有限时该优化器唯一。
+5. 引入逆温度 $\beta>0$，最大化 $\langle p,z\rangle+H(p)/\beta$。相同的步骤给出
+   $$
+   p=\operatorname{softmax}(\beta z),
+   \qquad \max=\frac{1}{\beta}\operatorname{lse}(\beta z).
+   $$
+6. Sparsemax 用二次正则项替换了负熵正则项，并投影到 $\Delta_N$；Entmax 则在稀疏和稠密选择之间进行插值。这些是兄弟算法，而非 Softmax 的替代推导。[Fenchel–Young losses](https://arxiv.org/abs/1901.02324) 提供了凸共轭与正则化预测框架。
+7. float64 检查验证了目标函数值、有限差分梯度 $\nabla_z\operatorname{lse}(z)=\operatorname{softmax}(z)$、随机单纯形上界以及 Sparsemax 的单纯形约束。
+
+**检查。** checks/M7/D-M7.3-01.py 报告目标差距 $0$、梯度误差 $6.561998860954432\times10^{-11}$，以及随机单纯形违反值为 $-0.0380489323599188$（负值）。
+
+### D-M7.3-02 · 基于 MM/CCCP 的现代 Hopfield 检索
+
+**定理（限于基本关联更新）。** 设
+
+$$
+g(\xi)=\frac12\lVert\xi\rVert_2^2,
+\qquad
+h(\xi)=-\frac{1}{\beta}\operatorname{lse}(\beta X^\top\xi),
+\qquad E=g+h.
+$$
+
+则 $g$ 是严格凸的，且 $h$ 是凹的。更新规则
+
+$$
+\xi_{t+1}=X\operatorname{softmax}(\beta X^\top\xi_t)
+$$
+
+是 $E$ 在 $\xi_t$ 处的切线主函数的唯一极小值点，并使 $E$ 单调递减。
+
+**步骤。**
+
+1. 设 $p_t=\operatorname{softmax}(\beta X^\top\xi_t)$。对数求和指数部分的 Hessian 矩阵为
+   $$
+   \nabla^2_\xi\operatorname{lse}(\beta X^\top\xi)
+   =\beta X\bigl(\operatorname{Diag}(p)-pp^\top\bigr)X^\top\succeq0.
+   $$
+   中间矩阵是类别协方差，因此 $h$ 是凹的。
+2. 凹性给出了切线上界
+   $$
+   h(\xi)\le h(\xi_t)+\nabla h(\xi_t)^\top(\xi-\xi_t),
+   \qquad \nabla h(\xi_t)=-Xp_t.
+   $$
+3. 定义二次代理函数
+   $$
+   Q_t(\xi)=\frac12\lVert\xi\rVert_2^2-(Xp_t)^\top\xi
+   +h(\xi_t)+(Xp_t)^\top\xi_t.
+   $$
+   其 Hessian 矩阵为 $I_d\succ0$，因此其唯一极小值点满足
+   $$
+   \nabla Q_t(\xi)=\xi-Xp_t=0,
+   \qquad \xi_{t+1}=Xp_t.
+   $$
+4. 主化链为
+   $$
+   E(\xi_{t+1})\le Q_t(\xi_{t+1})\le Q_t(\xi_t)=E(\xi_t).
+   $$
+   这证明了关联/键空间更新的能量单调下降。
+5. 基本对应关系正是带有 $Q=\xi$、$K=V=X$ 的缩放点积注意力：权重为 $\operatorname{softmax}(\beta X^\top\xi)$，读出为 $Xp$。通用 Transformer 注意力 $\operatorname{softmax}(QK^\top/\sqrt{d_k})V$ 在 $x_i=W_K^\top y_i$ 时增加了学习到的投影 $\xi=W_Q^\top r$、$p^\top V$ 以及值读出 $V\ne K$。该读出并未声称是对同一 $E$ 的 MM 步骤；证明仅控制关联权重部分。
+6. 定义模式分离
+   $$
+   \Delta_i=x_i^\top x_i-\max_{j\ne i}x_i^\top x_j.
+   $$
+   对于等范数模式 $\lVert x_i\rVert=M$，
+   $$
+   \Delta_i=\frac12\min_{j\ne i}\lVert x_i-x_j\rVert_2^2.
+   $$
+   论文中的充分主不等式为
+   $$
+   \Delta_{\min}\ge\frac{2}{\beta N}+\frac{1}{\beta}\log(2N^2\beta M^2).
+   $$
+7. 对于半径为 $M=K\sqrt{d-1}$、失败概率为 $p$ 的球面上随机模式，附录中的界限使用 $c=b/W_0(be^a)$ 并给出，以至少 $1-p$ 的概率：
+   $$
+   N\ge\sqrt{p}\,c^{(d-1)/4}.
+   $$
+   这是在随机模式、分离条件设定下的 $N=\exp(\Omega(d))$ 下界。它不是无条件的 $\Theta(e^d)$ 或 $O(e^d)$ 容量定理。经典离散 Hopfield 容量取决于标准，因此诸如 $0.138d$ 和 $O(d/\log d)$ 的数值在未指明标准前无法比较。
+8. [现代 Hopfield 论文](https://arxiv.org/abs/2008.02217) 是能量/更新对应关系及容量范围的来源。该检查验证了能量下降、梯度、类别协方差正定性、分离恒等式、主不等式见证以及 Lambert-$W$ 代数。
+
+**检查。** checks/M7/D-M7.3-02.py 报告能量 $-0.3820023603796427\to-0.4999873687143783$、梯度误差 $2.919567886061625\times10^{-11}$ 以及分离误差 $0$。
+
+### D-M7.3-03 · 测试时回归统一了写入与读取
+
+**定理（针对所述状态更新）。** 在 token $t$ 处的在线平方损失目标为
+
+$$
+\ell_t(S)=\frac12\lVert Sk_t-v_t\rVert_2^2,
+\qquad S\in\mathbb{R}^{d_v\times d_k}.
+$$
+
+其梯度为 $\nabla_S\ell_t=(Sk_t-v_t)k_t^\top$。
+
+**步骤。**
+
+1. Hebbian 累积写入外积：
+   $$
+   S_t=S_{t-1}+v_tk_t^\top.
+   $$
+   它不减去当前的预测误差。
+2. 学习率为 $\eta_t$ 的单步 Delta/LMS/SGD 更新为
+   $$
+   S_t=S_{t-1}-\eta_t\nabla_S\ell_t(S_{t-1})
+   =S_{t-1}+\eta_t(v_t-S_{t-1}k_t)k_t^\top.
+   $$
+   这是 M4.6 中使用的精确单步恒等式。
+3. Gated DeltaNet 首先衰减状态，然后应用一步 Delta：
+   $$
+   \widetilde S_t=\alpha_tS_{t-1},
+   \qquad
+   S_t=\widetilde S_t+\beta_t(v_t-\widetilde S_tk_t)k_t^\top.
+   $$
+   展开后得到
+   $$
+   S_t=\alpha_tS_{t-1}(I-\beta_tk_tk_t^\top)+\beta_tv_tk_t^\top.
+   $$
+   这正是论文称 $\alpha_t$ 为权重衰减门的含义。它与教科书上 L2 正则化损失的一步更新不同：衰减发生在评估 Delta 残差之前。
+4. Softmax 注意力是非参数核回归：对于查询 $q$、键 $k_j$ 和值 $v_j$，
+   $$
+   \widehat v(q)=\sum_j\frac{e^{\beta q^\top k_j}}{\sum_r e^{\beta q^\top k_r}}v_j.
+   $$
+   线性注意力用有限状态替换了归一化核读出。Hebbian、Delta 和 Gated-Delta 更新是针对同一关联回归问题的不同内部优化器。
+5. [测试时回归](https://arxiv.org/abs/2501.12352) 提供了这一统一框架。[Gated DeltaNet](https://arxiv.org/abs/2412.06464) 提供了 Gated-Delta 更新。官方 [Qwen3-Next 模型卡片](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) 是将此抽象映射到该模型混合层时的参考来源；本课不推断未记录的实现细节。
+6. float64 检查将 Delta 步与有限梯度方向导数进行比较，以两种方式展开门控递推，并在同一数据流上运行所有三种规则。
+
+**检查。** checks/M7/D-M7.3-03.py 报告 Delta 误差 $0$、门控展开误差 $1.1102230246251565\times10^{-16}$ 以及有限梯度误差 $1.121334580744815\times10^{-9}$。
+
+## 4. 数值验证
+
+| 推导 | 数值输出 | 状态 |
+| --- | --- | --- |
+| D-M7.3-01 | Gibbs 目标差距 $0$; $\nabla\operatorname{lse}$ 误差 $6.561998860954432\times10^{-11}$ | pass |
+| D-M7.3-02 | 能量下降 $-0.3820023603796427\to-0.4999873687143783$; 分离误差 $0$ | pass |
+| D-M7.3-03 | delta 误差 $0$; 门控扩展误差 $1.1102230246251565\times10^{-16}$ | pass |
+
+运行 checks/M7/D-M7.3-01.py 至 checks/M7/D-M7.3-04.py。第四个检查验证在线回归查看器的状态形状和有限轨迹。精确恒等式使用 float64；容量语言保持显式作用域。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M7-c" />
+
+<CourseWidget id="V-M7-d" />
+
+**V-M7-c — Hopfield 检索。**规范位于 viz/specs/V-M7-c.yaml，纯计算模块为 viz/compute/hopfield_retrieval.ts。存储模式、移动查询，并调整 $\beta$ 以及 MM/CCCP 迭代步数。该组件展示关联权重、检索到的混合分布、能量轨迹以及前后的能量值。
+
+**V-M7-d — 在线回归查看器。**规范位于 viz/specs/V-M7-d.yaml，纯计算模块为 viz/compute/online_regression.ts。将相同的 $(k_t,v_t)$ 数据流输入 Hebbian、delta 或门控更新机制。对比状态矩阵、预测结果和重构误差。该组件使“针对同一回归记忆使用不同优化器”的概念具体化；它并不声称这三种规则具有相等的容量。
+
+## 6。结语
+
+**反直觉的问题。** 如果 Hopfield 检索即注意力机制，为何能量证明不能自动推导出任意 Transformer 注意力块的单调下降性质？
+
+**解答示例。** D-M7.3-02 控制基础更新 $\xi\mapsto X\operatorname{softmax}(\beta X^\top\xi)$，其中同一模式矩阵同时提供键（keys）和值（values）。通用注意力机制引入了 $W_Q$、$W_K$ 以及独立的值读取。关联权重仍具有 softmax 形式，但输出 $p^\top V$ 未必是 Hopfield 代理函数的最小化器 $Xp$。该定理仅适用于所述范围内的关联步骤，而非每一个投影块。
+
+**作业 A-M7。** 向 V-M7-b 添加 Sinkhorn 模式，然后使用 V-M7-c 比较 softmax 检索与低温亚稳态混合物的性能。利用 V-M7-d 在同一数据流上报告 Hebbian、delta 和门控误差。包含容量分离不等式，并将超出该不等式的任何外推标记为近似或类比。
+
+**核心检查。** Softmax 是一种熵正则化的单纯形优化器；Hopfield 检索是一种 MM/CCCP 关联更新；循环线性记忆是具有不同写入规则的在线回归器。变分视角留下了学习到的外部参数以及完整模型的质量与成本权衡问题未决。

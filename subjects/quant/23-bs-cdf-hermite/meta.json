@@ -1,0 +1,52 @@
+{
+  "id": "QUANT-BS5",
+  "subject": "quant",
+  "module": "BS paper · Numerical differentiation (05/08)",
+  "title": {
+    "en": "Complex CDF, Hermite polynomials and P3",
+    "zh": "复数 CDF、Hermite 多项式与 P3"
+  },
+  "prereqs": [
+    "QUANT-BS4"
+  ],
+  "estimatedHours": 1.5,
+  "spine": {
+    "en": {
+      "a": "Rebuild the derivation with paper and pencil.",
+      "b": "Compare assumptions, formulas and the supplied numerical evidence."
+    },
+    "zh": {
+      "a": "用纸笔重建每步推导，先尝试再打开答案。",
+      "b": "对照假设、公式、图片与提供的数值证据。"
+    }
+  },
+  "assignment": "Paper pauses · chapter 05",
+  "references": [
+    "Quant_interview BS assignment (5 pages)",
+    "Original corrected paper-workbook derivations"
+  ],
+  "navigation": {
+    "previous": {
+      "id": "QUANT-BS4",
+      "title": {
+        "en": "Complex-step and the 45-degree Gamma formula",
+        "zh": "Complex-step 与 45° Gamma"
+      },
+      "devHref": "/subjects/quant/22-bs-complex-step/index.html",
+      "buildHref": "/quant-22-bs-complex-step.html"
+    },
+    "indexHref": {
+      "dev": "/subjects/quant/18-bs-paper-course/index.html",
+      "build": "/quant-18-bs-paper-course.html"
+    },
+    "next": {
+      "id": "QUANT-BS6",
+      "title": {
+        "en": "Vega, Theta, Rho and dividend sensitivity",
+        "zh": "Vega、Theta、Rho 与股息敏感度"
+      },
+      "devHref": "/subjects/quant/24-bs-first-order-greeks/index.html",
+      "buildHref": "/quant-24-bs-first-order-greeks.html"
+    }
+  }
+}

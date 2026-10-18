@@ -1,0 +1,40 @@
+{
+  "subject": "llm",
+  "id": "M3.5",
+  "module": "M3",
+  "title": {
+    "en": "Training and inference: AdamW, tying, caches, and decoding",
+    "zh": "训练与推理：AdamW、权重共享、缓存及解码"
+  },
+  "prereqs": [
+    "M3.4"
+  ],
+  "estimatedHours": 7,
+  "spine": {
+    "en": {
+      "a": "Training and inference turn the Transformer block into an executable system: updates choose the parameter path, caches reuse the attention path, and decoding chooses the next-token path.",
+      "b": "The objective remains a prefix-conditioned next-token distribution; smoothing, tying, caching, and decoding alter optimization, representation sharing, computation, or sampling around that distribution."
+    },
+    "zh": {
+      "a": "训练和推理将 Transformer 块转化为可执行系统：更新选择参数路径，缓存复用注意力路径，而解码选择下一 token 路径。",
+      "b": "目标仍然是前缀条件化的下一 token 分布；平滑、权重共享、缓存和解码会围绕该分布改变优化、表示共享、计算或采样。"
+    }
+  },
+  "derivations": [
+    "D-M3.5-01",
+    "D-M3.5-02",
+    "D-M3.5-03",
+    "D-M3.5-04",
+    "D-M3.5-05"
+  ],
+  "visualizations": [
+    "V-M3-e"
+  ],
+  "assignment": "A-M3",
+  "references": [
+    "loshchilov2019",
+    "szegedy2016",
+    "presswolf2017",
+    "holtzman2020"
+  ]
+}

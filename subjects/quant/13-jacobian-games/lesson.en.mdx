@@ -1,0 +1,26 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { jacobianCards } from '../../../framework/games/jacobian-cards';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## Start practicing
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to the game library</a>
+
+14 steps connect partial derivatives, matrix shapes, small perturbations, the chain rule and least-squares optimization. Convention: output rows, input columns, column gradients. Prerequisites are the derivatives of squares and products; hints are always available.
+
+Coordinates and coefficients are small integers; integer gradients never exceed 14 in magnitude. Fraction questions use tenths, hundredths and quarters. You can enter fractions directly. Each round draws new parameters.
+
+<PracticeGame generate={jacobianCards} lang="en" />
+
+## Why optimization needs it
+
+For vector residuals r(x), the Jacobian J describes how each parameter affects each residual. The least-squares loss L=½‖r‖² has gradient Jᵀr. Gauss–Newton approximates its Hessian by JᵀJ and solves (JᵀJ)Δ=−Jᵀr. A stage checks when that matrix cannot simply be inverted.
+
+## Limits and further practice
+
+Correct blanks do not establish geometric understanding, differentiability proofs or optimizer implementation skills. A fixed step size has no universal descent guarantee; Gauss–Newton has no general global convergence guarantee. Try an unfamiliar residual function next: derive J yourself and check a descent direction.
+
+<a href={quantLessonHref('GAME-M0-SHAPES')}>Continue: LLM lesson one, shapes and transpose</a>
+
+<SourceLessonLink source="llm:M0.1" lang="en" />

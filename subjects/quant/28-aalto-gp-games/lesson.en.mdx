@@ -1,0 +1,24 @@
+import { AaltoGpCourse } from '../../../framework/games/aalto-gp/AaltoGpCourse';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## Play the Aalto Gaussian processes course
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to the game library</a>
+
+The games follow Aalto University's CS-E4895 Gaussian Processes (2023): multivariate Gaussians and Bayesian regression, GP regression and kernels, model selection, classification and approximate inference, large-scale and sparse variational GPs, RKHS and infinitely wide networks, deep GPs, latent variables and multiple outputs, state-space GPs, and Bayesian optimisation. All 33 games are available below, including two topics found only in the earlier CS-E4075 special course.
+
+Each game links the exact lecture pages, the GPML section and the assignment task it practises. Sources open in another tab so you keep your answers. Questions give kernel values and small matrices, so the arithmetic stays mental; the work is choosing the right formula, telling f* from y*, and noticing when an assumption fails. Numbers accept fractions such as 3/4. There is no timer or lost life.
+
+To connect these ideas with portfolios, continue with <a href={quantLessonHref('GAME-GP-FINANCE')}>Gaussian processes and portfolios: bridge games</a>.
+
+<AaltoGpCourse lang="en" />
+
+## How to use the materials
+
+Try a step first, open a hint, then read the lecture pages if the idea is unfamiliar. The assignment notebooks are on GitHub; after a round, implement the same computation yourself (a Cholesky solve or a Kalman recursion, for example).
+
+## Continue beyond these templates
+
+Game completion records practice, not mastery. These bounded templates do not assess programming, running hyperparameter optimisation, or every derivation in the slides, and a correct number does not show that you can model real data. After a round, explain the final answer in your own words, do the matching assignment task and revisit the topic later without hints.
+
+The slides come from Aalto University's CS-E4895 and CS-E4075 courses and remain the copyright of their lecturers; the local copy is taken from the student-maintained GitHub mirror SpringNuance/Gaussian-Processes for local study only. The textbook is Rasmussen and Williams, *Gaussian Processes for Machine Learning* (MIT Press, 2006).

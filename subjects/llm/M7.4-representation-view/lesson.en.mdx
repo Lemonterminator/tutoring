@@ -1,0 +1,102 @@
+## 1. Motivation
+
+M7.1 showed that a sequence mixer can be classified by a structured matrix. Positional encoding supplies another structure: translation acts on feature space. The useful question is not merely “where is token $i$?” It is “which representation of a position shift is applied before the query-key inner product?”
+
+This view separates exact group identities from spectral and long-context approximations. RoPE gives an exact homomorphism for the rotations it defines. Bochner's theorem classifies shift-invariant positive-definite kernels. YaRN changes the usable frequency support through a context-extension procedure; it is not the same theorem as RoPE. ALiBi and T5 biases are relative-position Toeplitz logit corrections, not unitary representations.
+
+## 2. Forward definition
+
+Let the feature width be even, $d=2m$, and let frequencies $\omega_1,\ldots,\omega_m\in\mathbb{R}$. Define
+
+$$
+R(n)=\operatorname{blockdiag}_{r=1}^{m}
+\begin{bmatrix}
+\cos(n\omega_r)&-\sin(n\omega_r)\\
+\sin(n\omega_r)&\cos(n\omega_r)
+\end{bmatrix}
+\in SO(d),
+\qquad n\in\mathbb{Z}.
+$$
+
+For $q,k\in\mathbb{R}^{d}$, rotary attention uses $R(m)q$ and $R(n)k$. A finite real spectral measure has atoms $(\omega_r,w_r)$ with $w_r\ge0$ and positional kernel
+
+$$
+\kappa(\delta)=\sum_{r=1}^{m}w_r\cos(\omega_r\delta),
+\qquad \delta\in\mathbb{Z}.
+$$
+
+The [RoFormer paper](https://arxiv.org/abs/2104.09864) gives the rotation and relative-position construction. The spectral statement below is the finite real form of Bochner's correspondence.
+
+## 3. Derivations
+
+### D-M7.4-01 · RoPE homomorphism and the spectral measure
+
+**Theorem.** The map $n\mapsto R(n)$ is a group homomorphism from $(\mathbb{Z},+)$ into $SO(d)$:
+
+$$
+R(m)R(n)=R(m+n),
+\qquad R(n)^\top R(n)=I_d,
+\qquad \det R(n)=1.
+$$
+
+**Steps.**
+
+1. For one frequency, multiply the two $2\times2$ blocks. The upper-left entry is
+   $$
+   \cos(m\omega)\cos(n\omega)-\sin(m\omega)\sin(n\omega)
+   =\cos((m+n)\omega),
+   $$
+   and the off-diagonal entries are the corresponding sine addition identities. Therefore $R_2(m)R_2(n)=R_2(m+n)$.
+2. Block-diagonal multiplication preserves this identity across all $m=d/2$ blocks, proving $R(m)R(n)=R(m+n)$. Each block has orthonormal columns and determinant one, so the full matrix lies in $SO(d)$.
+3. Relative-position invariance follows from orthogonality:
+   $$
+   \langle R(m)q,R(n)k\rangle
+   =q^\top R(m)^\top R(n)k
+   =q^\top R(n-m)k.
+   $$
+   Absolute positions have been converted into a relative shift in the inner product.
+4. For a real finite spectral measure $\nu=\sum_r w_r\delta_{\omega_r}$, define
+   $$
+   \kappa(\delta)=\int\cos(\omega\delta)\,d\nu(\omega)
+   =\sum_r w_r\cos(\omega_r\delta).
+   $$
+   For positions $p_1,\ldots,p_N$, its Gram matrix has the feature representation
+   $$
+   K_{ij}=\kappa(p_i-p_j)
+   =\sum_r w_r\bigl[\cos(\omega_r p_i)\cos(\omega_r p_j)+\sin(\omega_r p_i)\sin(\omega_r p_j)\bigr],
+   $$
+   so $K\succeq0$ when $w_r\ge0$. The converse classification for all translation-invariant positive-definite kernels is Bochner's theorem; the finite sum here is the explicit checkable special case.
+5. YaRN changes the frequency allocation used by a RoPE model for a longer context. In spectral language, it reshapes the effective spectral measure. This is a sourced approximation/engineering procedure, not a new homomorphism proof; see [YaRN](https://arxiv.org/abs/2309.00071).
+6. ALiBi adds a bias such as $B_{ij}=-m_h|i-j|$, and T5 uses relative-position buckets. Both have constant diagonals, so they are Toeplitz logit corrections in the sequence index. They modify attention logits rather than rotating feature vectors. Sources: [ALiBi](https://arxiv.org/abs/2108.12409) and [T5](https://arxiv.org/abs/1910.10683).
+7. Fourier features and neural tangent spectral bias explain why frequency allocation affects which variation is easy to fit; this is a modeling perspective, not a claim that one finite RoPE grid is optimal. [Fourier Features](https://arxiv.org/abs/2006.10739) provides the spectral-feature context. [LieRE](https://arxiv.org/abs/2406.10322) generalizes the construction to learned Lie-group generators for higher-dimensional positions; its generator exponential is a group-representation generalization, not the same one-dimensional $\mathbb{Z}$ proof.
+8. The float64 check verifies the homomorphism, $SO(d)$ constraints, relative-inner-product identity, positive semidefiniteness of the finite spectral Gram matrix, and Toeplitz diagonals for ALiBi/T5-style corrections.
+
+**Check.** checks/M7/D-M7.4-01.py reports homomorphism error $2.498001805406602\times10^{-16}$, relative-inner-product error $1.7763568394002505\times10^{-15}$, and spectral Gram minimum eigenvalue $-1.102346585102705\times10^{-15}$ from roundoff.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Status |
+| --- | --- | --- |
+| D-M7.4-01 | homomorphism error $2.498001805406602\times10^{-16}$; orthogonality error $2.3989568912105\times10^{-17}$ | pass |
+| D-M7.4-01 | relative-inner-product error $1.7763568394002505\times10^{-15}$; spectral reconstruction error $0$ | pass |
+| D-M7.4-01 | ALiBi and T5 Toeplitz diagonal errors $0$ | pass |
+
+Run checks/M7/D-M7.4-01.py. The PSD statement is checked for a finite nonnegative spectral measure; YaRN's frequency reshaping is labeled as an engineering approximation rather than asserted as an exact identity.
+
+## 5. Interactive visualization
+
+<CourseWidget id="V-M7-e" />
+
+**V-M7-e — Spectral-measure explorer.** The specification is viz/specs/V-M7-e.yaml and the pure compute module is viz/compute/spectral_measure.ts. Switch among RoPE, a frequency-rescaled YaRN-style view, ALiBi, and a clipped-distance T5-style bucket baseline. Adjust sequence length, frequency atoms, masses, scale, and slope. The widget displays the spectral atoms and the resulting relative-position kernel or Toeplitz bias heatmap. The bucket baseline is deliberately transparent; it is not a full production T5 bucketing reproduction.
+
+The insight is structural: moving mass on the frequency axis changes the relative kernel; ALiBi/T5 remain Toeplitz logit corrections rather than becoming rotations.
+
+## 6. Closing
+
+**Counterintuitive question.** Why can a relative-position kernel be positive definite even though its entries oscillate and become negative?
+
+**Worked answer.** Positive definiteness is a matrix property, not entrywise nonnegativity. D-M7.4-01 writes the Gram matrix as a sum of outer products of cosine/sine feature vectors with nonnegative weights. Individual entries $\cos(\omega\delta)$ can be negative, while every quadratic form $a^\top K a$ remains nonnegative. This is the finite spectral-measure form of Bochner's theorem.
+
+**Assignment A-M7.** Use V-M7-e to compare the spectral support of the base RoPE and a context-extended frequency schedule. Verify the relative-position identity and PSD Gram matrix numerically. Add ALiBi and T5 as Toeplitz baselines, and label any claim about long-context quality as empirical rather than implied by the representation theorem.
+
+**Spine check.** RoPE represents integer translations by unitary rotations; its attention inner product depends on relative position. Spectral measures explain the resulting positive-definite kernels. YaRN reshapes frequencies, while ALiBi/T5 change logits through Toeplitz biases. The view leaves open how a learned model allocates useful spectral mass.

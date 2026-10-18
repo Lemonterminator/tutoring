@@ -1,0 +1,440 @@
+## 1. 动机
+
+M0.5 解决了概率分解问题。剩余的缺陷在于架构：原生 RNN 将前缀存储在一个递归更新的隐藏状态中，因此梯度必须穿越一系列循环雅可比矩阵的乘积。本课将展开该计算图，推导所有共享参数的梯度，并区分三个常被混淆的效应：饱和、截断和梯度裁剪。
+
+## 2. 前向定义
+
+设 $x_t\in\mathbb{R}^{D}$, $h_t\in\mathbb{R}^{H}$, $z_t\in\mathbb{R}^{V}$, 和 $p_t\in\Delta^{V-1}\subset\mathbb{R}^{V}$。令
+
+$$
+W_h\in\mathbb{R}^{H\times H},\quad
+W_x\in\mathbb{R}^{H\times D},\quad
+b\in\mathbb{R}^{H},\quad
+W_y\in\mathbb{R}^{V\times H},\quad
+c\in\mathbb{R}^{V}.
+$$
+
+其中 $h_0=0\in\mathbb{R}^{H}$，递推关系和输出为
+
+$$
+a_t=W_hh_{t-1}+W_xx_t+b\in\mathbb{R}^{H},
+\qquad
+h_t=\tanh(a_t)\in\mathbb{R}^{H},
+$$
+
+$$
+z_t=W_yh_t+c\in\mathbb{R}^{V},
+\qquad
+p_t=\operatorname{softmax}(z_t)\in\Delta^{V-1}.
+$$
+
+对于下一词元教师强制（teacher forcing），目标 $x_{t+1}$ 由 $\{1,\ldots,V\}$ 中的索引表示，而 $e_{x_{t+1}}\in\mathbb{R}^{V}$ 是其 one-hot 向量。标量损失和序列损失为
+
+$$
+\ell_t=-\log p_t[x_{t+1}]\in\mathbb{R},
+\qquad
+L=\sum_{t=1}^{T}\ell_t\in\mathbb{R}.
+$$
+
+即使所有教师强制输入在前向传播之前已知，RNN 在 $h_t$ 上仍是顺序的。
+
+## 3. 推导过程
+
+### D-M1.1-01 · 单步输出梯度
+
+**定理。** 对于 $\ell_t=-\log p_t[x_{t+1}]$ 且满足 $p_t=\operatorname{softmax}(z_t)$，
+
+$$
+\frac{\partial\ell_t}{\partial z_t}=p_t-e_{x_{t+1}}\in\mathbb{R}^{V},
+\qquad
+\nabla_{W_y}\ell_t=(p_t-e_{x_{t+1}})h_t^\top\in\mathbb{R}^{V\times H}.
+$$
+
+**步骤。**
+
+1. 对于 $p_i=\exp(z_i)/\sum_j\exp(z_j)$，将坐标 $i$ 对 logit $z_j$ 求导：
+   $$
+   \frac{\partial p_i}{\partial z_j}=p_i(\mathbf{1}_{i=j}-p_j)\in\mathbb{R}.
+   $$
+   （商法则给出一个直接的分子项和一个共享分母项。）
+2. 损失函数对概率坐标 $p_i$ 的导数为
+   $$
+   \frac{\partial\ell_t}{\partial p_i}
+   =-\frac{\mathbf{1}_{i=x_{t+1}}}{p_{x_{t+1}}}\in\mathbb{R}.
+   $$
+   （仅目标坐标出现在负对数中。）
+3. 对 logit 坐标 $z_j$ 应用标量链式法则：
+   $$
+   \frac{\partial\ell_t}{\partial z_j}
+   =\sum_i\frac{\partial\ell_t}{\partial p_i}
+   \frac{\partial p_i}{\partial z_j}
+   =-\frac{p_{x_{t+1}}(\mathbf{1}_{x_{t+1}=j}-p_j)}{p_{x_{t+1}}}
+   =p_j-\mathbf{1}_{j=x_{t+1}}.
+   $$
+   （目标概率项相互抵消。）
+4. 收集 $V$ 个标量坐标：
+   $$
+   \nabla_{z_t}\ell_t=p_t-e_{x_{t+1}}\in\mathbb{R}^{V}.
+   $$
+   （这与在 D-M0.1-02 中验证的 softmax-交叉熵结果相同。）
+5. 对于 $z_t=W_yh_t+c$，对 $W_y$ 进行扰动得到
+   $$
+   dz_t=(dW_y)h_t\in\mathbb{R}^{V}.
+   $$
+   标量微分为
+   $$
+   d\ell_t=(p_t-e_{x_{t+1}})^\top(dW_y)h_t
+   =\operatorname{tr}\left(\left[(p_t-e_{x_{t+1}})h_t^\top\right]^\top dW_y\right).
+   $$
+   （迹形式在 Frobenius 内积下识别矩阵梯度。）
+6. 因此
+   $$
+   \nabla_{W_y}\ell_t=(p_t-e_{x_{t+1}})h_t^\top\in\mathbb{R}^{V\times H}.
+   $$
+   （每个输出行接收标量 logit 误差与隐藏激活的乘积。）
+
+**验证。** checks/M1/D-M1.1-01.py 将 logit 梯度与 float64 中心差分进行比较，并检查外积矩阵形式；passed = True。
+
+**直观理解。** 输出层在词汇空间看到一个误差向量。矩阵梯度将该向量映射回导致预测的隐藏激活。
+
+### D-M1.1-02 · 隐藏状态中的反向递归
+
+**定理。** 定义 $\delta_t=\nabla_{h_t}L\in\mathbb{R}^{H}$。给定 $\delta_{T+1}=0\in\mathbb{R}^{H}$，
+
+$$
+\delta_t
+=W_y^\top(p_t-e_{x_{t+1}})
++W_h^\top\left(\delta_{t+1}\odot(1-h_{t+1}^{\odot2})\right)
+\in\mathbb{R}^{H}.
+$$
+
+第一项是时间 $t$ 处的直接输出路径；第二项是通过 $h_{t+1}$ 的间接路径。
+
+用一行表示，递归为 $\delta_t = W_y^\top(p_t-e_{x_{t+1}})+W_h^\top(\delta_{t+1}\odot(1-h_{t+1}^{\odot2}))$，其中每一项都在 $\mathbb{R}^{H}$ 中。
+
+**步骤。**
+
+1. 通过 $z_t=W_yh_t+c$ 的直接路径贡献为
+   $$
+   \left.\nabla_{h_t}\ell_t\right|_{\mathrm{direct}}
+   =W_y^\top\nabla_{z_t}\ell_t
+   =W_y^\top(p_t-e_{x_{t+1}})\in\mathbb{R}^{H}.
+   $$
+   （转置从隐藏空间到词汇空间的线性映射。）
+2. 下一个隐藏状态为
+   $$
+   h_{t+1}=\tanh(W_hh_t+W_xx_{t+1}+b)\in\mathbb{R}^{H}.
+   $$
+   其局部雅可比矩阵为
+   $$
+   \frac{\partial h_{t+1}}{\partial h_t}
+   =\operatorname{diag}(1-h_{t+1}^{\odot2})W_h\in\mathbb{R}^{H\times H}.
+   $$
+   （tanh 的导数是逐坐标应用的。）
+3. 间接路径将转置雅可比矩阵应用于上游状态梯度：
+   $$
+   \left.\nabla_{h_t}L\right|_{\mathrm{indirect}}
+   =\left(\frac{\partial h_{t+1}}{\partial h_t}\right)^\top\delta_{t+1}
+   =W_h^\top\left(\delta_{t+1}\odot(1-h_{t+1}^{\odot2})\right)\in\mathbb{R}^{H}.
+   $$
+   （反向模式转置前向雅可比矩阵。）
+4. 将两条路径相加：
+   $$
+   \delta_t
+   =\left.\nabla_{h_t}\ell_t\right|_{\mathrm{direct}}
+   +\left.\nabla_{h_t}L\right|_{\mathrm{indirect}}.
+   $$
+   （总损失包含局部输出和所有后续输出。）
+5. 在最终预测处没有后续的循环状态，因此 $\delta_{T+1}=0\in\mathbb{R}^{H}$。这使得递归在 $t=T$ 处终止。
+6. 对于数值测试用例，独立扰动 $h_0\in\mathbb{R}^{H}$，重新运行前向损失，并将有限差分梯度与递归传播的 $\nabla_{h_0}L$ 进行比较。（该检查测试完整的链式法则，而不仅仅是符号替换。）
+
+**验证。** checks/M1/D-M1.1-02.py 报告有限差分最大绝对误差低于 8e-10，递归恒等式误差为 0.0；passed = True。
+
+**直观理解。** 每个时间步贡献一个直接误差，而每个后续时间步通过循环边向后发送额外的误差。BPTT 是这些路径的总和。
+
+### D-M1.1-03 · 参数梯度与权重共享
+
+**定理。** 设
+
+$$
+\eta_t=\delta_t\odot(1-h_t^{\odot2})\in\mathbb{R}^{H}
+$$
+
+为预激活梯度。则
+
+$$
+\nabla_{W_h}L=\sum_{t=1}^{T}\eta_t h_{t-1}^\top\in\mathbb{R}^{H\times H},
+\qquad
+\nabla_{W_x}L=\sum_{t=1}^{T}\eta_t x_t^\top\in\mathbb{R}^{H\times D},
+$$
+
+$$
+\nabla_bL=\sum_{t=1}^{T}\eta_t\in\mathbb{R}^{H},
+\qquad
+\nabla_{W_y}L=\sum_{t=1}^{T}(p_t-e_{x_{t+1}})h_t^\top\in\mathbb{R}^{V\times H},
+\qquad
+\nabla_cL=\sum_{t=1}^{T}(p_t-e_{x_{t+1}})\in\mathbb{R}^{V}.
+$$
+
+**步骤。**
+
+1. 由 $h_t=\tanh(a_t)$，逐坐标导数给出
+   $$
+   da_t=\eta_t\in\mathbb{R}^{H},
+   \qquad
+   \eta_t=\delta_t\odot(1-h_t^{\odot2}).
+   $$
+   （这是通过 tanh 的局部反向模式导数。）
+2. 对于 $a_t=W_hh_{t-1}+W_xx_t+b$，扰动 $W_h$ 得到 $da_t=(dW_h)h_{t-1}$。因此
+   $$
+   dL=\eta_t^\top(dW_h)h_{t-1}
+   =\operatorname{tr}\left((\eta_t h_{t-1}^\top)^\top dW_h\right),
+   $$
+   所以时间 $t$ 的贡献是 $\eta_t h_{t-1}^\top\in\mathbb{R}^{H\times H}$。
+3. 扰动 $W_x$ 得到 $da_t=(dW_x)x_t$，因此时间 $t$ 的贡献为
+   $$
+   \eta_t x_t^\top\in\mathbb{R}^{H\times D}.
+   $$
+   （输入向量和隐藏向量占据不同的右侧空间。）
+4. 扰动 $b$ 得到 $da_t=db$，因此时间 $t$ 的贡献为
+   $$
+   \nabla_b\ell_t=\eta_t\in\mathbb{R}^{H}.
+   $$
+   （共享偏置在每个时间点接收一个向量贡献。）
+5. 跨时间累加贡献，因为相同的 $W_h$、$W_x$ 和 $b$ 被重复使用：
+   $$
+   \nabla_{W_h}L=\sum_t\eta_th_{t-1}^\top,\qquad
+   \nabla_{W_x}L=\sum_t\eta_tx_t^\top,\qquad
+   \nabla_bL=\sum_t\eta_t.
+   $$
+   （这个求和是权重共享的数学特征。）
+6. D-M1.1-01 给出输出层的贡献，跨时间求和得到 $\nabla_{W_y}L$ 和 $\nabla_cL$。（输出参数以完全相同的加法方式共享。）
+7. 检查使用 $H=8$、$D=5$、$V=5$ 和 $T=6$，然后将所有五个参数数组与 float64 有限差分进行比较。（每个报告的形状都由测试框架检查。）
+
+**验证。** checks/M1/D-M1.1-03.py 在 rtol = $W_h$ 时检查 $W_x$、$b$、$W_y$、$c$ 和 1e-5；最大绝对误差为 1.786e-09；passed = True。
+
+**直观理解。** 单个参数参与单元展开的每一个副本。反向传播将所有副本的梯度相加，而不是为每个时间步创建单独的参数。
+
+### D-M1.1-04 · 展开的雅可比乘积
+
+**定理。** 对于滞后 $k\ge1$，从 $h_{t-k}\in\mathbb{R}^{H}$ 到 $h_t\in\mathbb{R}^{H}$ 的雅可比矩阵为
+
+$$
+\frac{\partial h_t}{\partial h_{t-k}}
+=J_tJ_{t-1}\cdots J_{t-k+1}
+=\prod_{s=t-k+1}^{t}{}^{\leftarrow}
+\left[\operatorname{diag}(1-h_s^{\odot2})W_h\right]
+\in\mathbb{R}^{H\times H},
+$$
+
+其中 $J_s=\operatorname{diag}(1-h_s^{\odot2})W_h$，左箭头表示较大的时间索引在左侧相乘。矩阵的乘积顺序不可交换。
+
+**步骤。**
+
+1. 对于一条循环边，
+   $$
+   \frac{\partial h_s}{\partial h_{s-1}}
+   =J_s=\operatorname{diag}(1-h_s^{\odot2})W_h\in\mathbb{R}^{H\times H}.
+   $$
+   （这是在 D-M1.1-02 中已使用的局部雅可比矩阵。）
+2. 对于 $k=2$，多元链式法则给出
+   $$
+   \frac{\partial h_t}{\partial h_{t-2}}
+   =\frac{\partial h_t}{\partial h_{t-1}}
+    \frac{\partial h_{t-1}}{\partial h_{t-2}}
+   =J_tJ_{t-1}\in\mathbb{R}^{H\times H}.
+   $$
+   （较晚的映射在较早的映射之后应用，因此它是左因子。）
+3. 对 $k$ 条边重复链式法则得到
+   $$
+   \frac{\partial h_t}{\partial h_{t-k}}
+   =J_tJ_{t-1}\cdots J_{t-k+1}.
+   $$
+   （每条额外的边在左侧贡献一个雅可比矩阵。）
+4. 数值检查固定输入，仅改变 $h_{t-k}\in\mathbb{R}^{H}$。它将上述乘积与通过中心差分计算的完整向量雅可比矩阵进行比较。（测试使用 $H=3$、$k=4$ 和平滑的 tanh 状态。）
+
+**验证。** checks/M1/D-M1.1-04.py 报告最大雅可比绝对误差 1.345e-11；passed = True。
+
+**直观理解。** 长程梯度不是一个数字。它是一个矩阵乘积，其因子取决于循环权重和饱和的隐藏状态。
+
+### D-M1.1-05 · 范数界与一维情况
+
+**定理。** 对于谱范数，
+
+$$
+\left\|\frac{\partial h_t}{\partial h_{t-k}}\right\|_2
+\le\prod_{s=t-k+1}^{t}\left\|\operatorname{diag}(1-h_s^{\odot2})W_h\right\|_2
+\le\left(\gamma\,\sigma_{\max}(W_h)\right)^k,
+\qquad
+\gamma=\sup_u|\tanh'(u)|=1.
+$$
+
+因此 $\sigma_{\max}(W_h)<1$ 足以使该上界消失。$\sigma_{\max}(W_h)>1$ 是梯度爆炸的必要条件而非充分条件：饱和仍可能收缩因子。
+
+**步骤。**
+
+1. 将次乘性应用于来自 D-M1.1-04 的乘积：
+   $$
+   \left\|J_tJ_{t-1}\cdots J_{t-k+1}\right\|_2
+   \le\prod_{s=t-k+1}^{t}\|J_s\|_2.
+   $$
+   （诱导谱范数通过范数的乘积来界定乘积。）
+2. 由于 $|\tanh'(u)|=1-\tanh^2(u)\le1$，对角导数矩阵满足
+   $$
+   \left\|\operatorname{diag}(1-h_s^{\odot2})\right\|_2\le1=\gamma.
+   $$
+   （对于对角矩阵，谱范数是绝对值最大的对角元素。）
+3. 应用矩阵范数乘积不等式：
+   $$
+   \|J_s\|_2
+   \le\left\|\operatorname{diag}(1-h_s^{\odot2})\right\|_2\|W_h\|_2
+   \le\gamma\sigma_{\max}(W_h).
+   $$
+   （$W_h$ 的谱范数是其最大奇异值。）
+4. 将 $k$ 个相同的上界相乘：
+   $$
+   \left\|\frac{\partial h_t}{\partial h_{t-k}}\right\|_2
+   \le(\gamma\sigma_{\max}(W_h))^k.
+   $$
+   （这是一个上界，而非非线性饱和轨迹的等式。）
+5. 如果 $\sigma_{\max}(W_h)<1$ 且 $\gamma=1$，右侧随 $k$ 几何衰减。（这给出了上界消失的充分条件。）
+6. 如果乘积渐近爆炸，上界底数不能低于一，因此 $\sigma_{\max}(W_h)>1$ 对此机制是必要的。它不是充分的，因为对角 tanh 导数可能远小于一。（范数界无法从上方证明增长。）
+7. 在一维情况下，$h_t=\tanh(wh_{t-1})$ 具有精确导数
+   $$
+   \frac{\partial h_t}{\partial h_{t-k}}
+   =\prod_{s=t-k+1}^{t}w(1-h_s^2).
+   $$
+   如果递归是线性的，即 $h_t=\phi h_{t-1}$，因子变为 $\phi$，结果为 $\phi^k$，与 D-M0.5.2-02 匹配。（非线性情况增加了饱和因子。）
+8. 检查采样 100 个随机 $W_h$ 矩阵和 2,100 乘积，计算每个奇异范数，并数值验证该界限。（随机种子固定，所有数组均为 float64。）
+
+**验证。** checks/M1/D-M1.1-05.py 报告 products_checked = 2100，最坏界限比 0.9944786301903756，以及 passed = True。
+
+**来源说明。** 范数界的框架遵循 Pascanu, Mikolov, and Bengio，“On the difficulty of training recurrent neural networks,” [PMLR 28 (2013)](https://proceedings.mlr.press/v28/pascanu13.html)。
+
+**直观理解。** 正交或单位谱半径权重消除了一个收缩源，但 tanh 仍会将路径乘以小于一的导数。M2 中引入的加法记忆路径解决了这一缺陷。
+
+### D-M1.1-06 · 截断 BPTT 与全局范数裁剪
+
+**近似。** 截断 BPTT 是一个有偏梯度估计器，因为它丢弃了早于选定窗口的循环路径。全局范数裁剪是一种保持方向的更新变换，用于限制梯度范数；它无法修复被丢弃的路径。
+
+**步骤。**
+
+1. 完整的隐藏梯度展开递归：
+   $$
+   \delta_t
+   =\sum_{j=t}^{T}
+   \left(\frac{\partial h_j}{\partial h_t}\right)^\top
+   W_y^\top(p_j-e_{x_{j+1}})
+   \in\mathbb{R}^{H}.
+   $$
+   （每个后续输出发送一条路径回到 $h_t$。）
+2. 给定循环窗口 $K\in\mathbb{N}_0$，截断 BPTT 仅保留满足 $j-t\le K$ 的项：
+   $$
+   \delta_t^{(K)}
+   =\sum_{j=t}^{\min(T,t+K)}
+   \left(\frac{\partial h_j}{\partial h_t}\right)^\top
+   W_y^\top(p_j-e_{x_{j+1}})\in\mathbb{R}^{H}.
+   $$
+   （来自超过 $K$ 个转换步长的输出的项被设为零。）
+3. 因此截断的参数梯度为
+   $$
+   g^{(K)}=\sum_{t=1}^{T}\text{local contribution from }\delta_t^{(K)},
+   $$
+   其中 $g^{(K)}$ 具有与完整梯度相同的参数形状。（省略取决于数据和当前参数，因此通常是有偏的。）
+4. 设拼接后的完整梯度为 $g\in\mathbb{R}^{P}$ 并选择阈值 $c>0$。定义
+   $$
+   \widetilde g=g\min\left(1,\frac{c}{\|g\|_2}\right)\in\mathbb{R}^{P}.
+   $$
+   （标量因子在阈值以下为一，并在其上方缩放整个向量。）
+5. 如果 $\|g\|_2>c$，则
+   $$
+   \|\widetilde g\|_2
+   =\|g\|_2\frac{c}{\|g\|_2}=c.
+   $$
+   如果 $\|g\|_2\le c$，则 $\widetilde g=g$。（因此范数被限制在 $c$ 以内。）
+6. 标量乘数为正，因此对于 $g\ne0$，
+   $$
+   \frac{\widetilde g}{\|\widetilde g\|_2}
+   =\frac{g}{\|g\|_2}.
+   $$
+   （裁剪保持方向不变，仅改变大小。）
+7. 检查比较完整梯度和 $K=2$ 梯度，然后验证裁剪后的范数和余弦方向。（非零的完整与截断差异是有偏性的数值特征。）
+
+**验证。** checks/M1/D-M1.1-06.py 报告完整与截断差异 0.020061110848026618、裁剪后范数 0.5 以及余弦值 1.0000000000000002；passed = True。
+
+**直观理解。** 截断遗忘了旧的原因；裁剪限制了剩余梯度的大小。它们解决不同的数值问题，不应被描述为相同的操作。
+
+### D-M1.1-07 · RNN 中的教师强制（Teacher Forcing）
+
+**命题。** 上述 RNN 递归是一个教师强制训练图：$x_t$ 和目标 $x_{t+1}$ 由数据序列提供。在推理时，下一个输入是从模型的先前输出中采样的，因此前缀分布发生变化，如 D-M0.5.6-01 所示。
+
+**步骤。**
+
+1. 在训练图中，已知输入序列为
+   $$
+   (x_1,\ldots,x_T)\in(\mathbb{R}^{D})^T,
+   $$
+   且每个 $h_t$ 使用观测到的 $x_t$。（前向传播不会将其自身的预测反馈到下一个输入中。）
+2. 时间 $t$ 处的损失目标是观测到的下一个 token：
+   $$
+   \ell_t=-\log p_\theta(x_{t+1}\mid x_{\le t})\in\mathbb{R}.
+   $$
+   （这是自回归条件损失的 RNN 形式。）
+3. 在 rollout（展开）中，从 $\widehat{x}_{t+1}$ 生成 $p_\theta(\cdot\mid\widehat{x}_{\le t})$，并将该生成的向量馈入下一个递归：
+   $$
+   \widehat{x}_{t+1}\sim p_\theta(\cdot\mid\widehat{x}_{\le t}),
+   \qquad
+   h_{t+1}=F_\theta(h_t,\widehat{x}_{t+1})\in\mathbb{R}^{H}.
+   $$
+   （模型现在提供它必须学会处理的前缀。）
+4. 因此，训练在数据前缀下平均成本，而 rollout 在模型前缀下平均它们：
+   $$
+   \mathbb{E}_{x_{<t}\sim p_{\mathrm{data}}}[\ell_\theta(x_t\mid x_{<t})]
+   \quad\text{versus}\quad
+   \mathbb{E}_{x_{<t}\sim p_\theta}[\ell_\theta(x_t\mid x_{<t})].
+   $$
+   （局部循环计算未变；前缀上的测度变了。）
+5. 教师强制使得所有目标条件在一个训练样本中可用，但它并未使隐藏递归并行化：$h_t$ 仍然依赖于 $h_{t-1}$。（因果 Transformer 将在 M3 中通过掩码矩阵操作获得不同的并行模式。）
+6. 检查将相同的初始输入分别用于教师强制和贪婪 rollout，然后验证后续前缀不同，而教师强制损失仍为有限标量。（这是暴露偏差的一个具体有限视界实例。）
+
+**验证。** checks/M1/D-M1.1-07.py 报告教师强制损失 7.011017626955435、非零的后续前缀差异 6.0 以及有限的隐藏梯度形状；passed = True。
+
+**直观理解。** 教师强制为 BPTT 提供了一条通过观测序列的清晰监督路径。部署移除了这种支持，因此单元必须基于其自身的历史运行。
+
+## 4。数值验证
+
+所有七个推导检查均使用确定性的 float64 NumPy 计算。D-M1.1-03 通过通用的有限差分测试框架检查每个共享参数的梯度。D-M1.1-05 在 100 个随机循环矩阵上检查范数界限。其余检查涵盖局部输出梯度、隐藏递归、矩阵雅可比乘积、截断/裁剪行为以及教师强制前缀移位。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M1.1-01 | logit 和输出矩阵梯度检查通过 | pass |
+| D-M1.1-02 | 有限差分隐藏状态误差低于 8e-10；递归误差 0.0 | pass |
+| D-M1.1-03 | 全部五个参数数组；最大绝对误差 1.786e-09 | pass |
+| D-M1.1-04 | 雅可比最大绝对误差 1.345e-11 | pass |
+| D-M1.1-05 | 2,100 乘积；最坏界限比率 0.9944786301903756 | pass |
+| D-M1.1-06 | 截断差异 0.020061110848026618；裁剪范数 0.5 | pass |
+| D-M1.1-07 | 教师强制损失有限；前缀差异 6.0 | pass |
+
+从仓库父目录运行 python -m pytest course/tests。由于当前阅读器没有 Python 运行时，页面可以显示这些静态输出。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M1-a" />
+
+<CourseWidget id="V-M1-b" />
+
+<CourseWidget id="V-M1-c" />
+
+**V-M1-a — 展开的 RNN 梯度热力图。** 规范位于 viz/specs/V-M1-a.yaml，纯计算模块为 viz/compute/rnn_gradient_heatmap.ts。调整谱半径、隐藏层大小和随机种子以检查按时间滞后的梯度带。它可视化了来自 D-M1.1-04 的乘积以及来自 D-M1.1-05 的收缩机制。
+
+**V-M1-b — 谱半径与梯度范数。** 规范位于 viz/specs/V-M1-b.yaml，纯计算模块为 viz/compute/spectral_gradient.ts。该图表将实际饱和路径曲线与来自 $\sigma_{\max}(W_h)^k$ 的 D-M1.1-05 界限叠加显示。虚线界限在线性区域可能较紧，而在 tanh 饱和后则较松。
+
+**V-M1-c — 延迟后复制 RNN 训练器。** 规范位于 viz/specs/V-M1-c.yaml，纯计算模块为 viz/compute/copy_delay_trainer.ts。它为从 2 到 40 的延迟提供确定性合成轨迹，具有固定的步数预算和重置状态。当浏览器端 Python 训练不可用时，viz/data/V-M1-c-copy-delay.json 提供紧凑的预计算轨迹。
+
+## 6。结语
+
+**反直觉的问题。** 为什么对 $W_h$ 进行谱半径恰好为一的正交初始化，并不能解决长程梯度问题？**解答：** D-M1.1-05 表明，循环乘积中还包含 $\operatorname{diag}(1-h_t^{\odot2})$。在远离零点处，Tanh 的导数小于 1，因此即使 $\sigma_{\max}(W_h)=1$，该乘积仍可能收缩。M2 中的加法状态路径改变了这一递推关系。
+
+**作业 A-M1。** 实现 code/numpy_rnn/rnn.py，包含前向传播、完整的 BPTT、全局范数裁剪以及截断窗口。复现七项检查，导出 V-M1-b 数据，并在作业 README 中运行合成 copy-after-delay 轨迹。
+
+**核心检查。** 从架构角度看，普通 RNN 将前缀压缩为 $h_t$，并在每一步复用相同的 $W_h$。从概率角度看，输出仍然是通过教师强制（teacher forcing）训练的因果条件分布；主要问题在于循环雅可比矩阵的乘积，以及由此导致的观测前缀与生成前缀之间的不匹配。

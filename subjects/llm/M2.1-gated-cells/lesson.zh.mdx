@@ -1,0 +1,430 @@
+## 1. 动机
+
+M1 表明，一个标准的 RNN 通过循环雅可比矩阵的乘积传递长程梯度。门控单元增加了一条路径：显式的状态更新，其旧状态系数可以接近一。本课将两个事实区分开来。LSTM 单元路径是加性的，但写入该路径的门仍然是非线性的。此外，符号 $\partial c_t/\partial c_{t-1}$ 既可以指在固定 $h_{t-1}$ 时的直接图边，也可以指代入 $h_{t-1}=o_{t-1}\odot\tanh(c_{t-1})$ 后的坍缩函数。前者是展开图所使用的反向模式边；后者包含了门泄漏。
+
+数值检查使用 float64 中心差分。在完整的 LSTM 和 GRU 检查中，会对比每个参数数组，而不仅仅是选定的权重矩阵。
+
+## 2。前向定义
+
+设 $x_t\in\mathbb{R}^{D}$、$h_t,c_t\in\mathbb{R}^{H}$，且令
+
+$$
+q_t=[h_{t-1};x_t]\in\mathbb{R}^{H+D}.
+$$
+
+对于 LSTM，使用一个堆叠的仿射映射来处理三个 sigmoid 门：
+
+$$
+W\in\mathbb{R}^{3H\times(H+D)},\qquad b\in\mathbb{R}^{3H},\qquad
+W_g\in\mathbb{R}^{H\times(H+D)},\qquad b_g\in\mathbb{R}^{H}.
+$$
+
+将第一个仿射输出拆分为三个长度为 $H$ 的块：
+
+$$
+[f_t;i_t;o_t]=\sigma(Wq_t+b),\qquad
+f_t,i_t,o_t\in(0,1)^H,
+$$
+
+$$
+g_t=\tanh(W_gq_t+b_g)\in(-1,1)^H,
+$$
+
+$$
+c_t=f_t\odot c_{t-1}+i_t\odot g_t\in\mathbb{R}^{H},\qquad
+h_t=o_t\odot\tanh(c_t)\in\mathbb{R}^{H}.
+$$
+
+输出层为
+
+$$
+z_t=W_yh_t+c\in\mathbb{R}^{V},\qquad
+p_t=\operatorname{softmax}(z_t)\in\Delta^{V-1},\qquad
+\ell_t=-\log p_t[y_t],\qquad L=\sum_{t=1}^{T}\ell_t.
+$$
+
+实现按 $W$ 的顺序存储 $[f;i;o]$。因此，$W_{f,h}$、$W_{i,h}$ 和 $W_{o,h}$ 分别表示限制在前 $H$ 个隐藏列上的第一、第二和第三 $H$ 行。输出投影在时间上是共享的。
+
+**来源说明。** LSTM 单元的定义是 Hochreiter 和 Schmidhuber 在“Long Short-Term Memory”中提出的架构（[技术报告 PDF](https://www.bioinf.jku.at/publications/older/2604.pdf)）。GRU 方程是 Cho 等人在“Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation”中使用的门控循环单元（[arXiv](https://arxiv.org/abs/1406.1078)）。上述方程固定了数值检查所使用的约定；URL 是主要的技术来源。
+
+作为比较，GRU 具有更新门、重置门和一个候选值：
+
+$$
+z_t=\sigma(W_zq_t+b_z),\qquad r_t=\sigma(W_rq_t+b_r),
+$$
+
+$$
+\widetilde q_t=[r_t\odot h_{t-1};x_t],\qquad
+\widetilde h_t=\tanh(W_n\widetilde q_t+b_n),
+$$
+
+$$
+h_t=(1-z_t)\odot h_{t-1}+z_t\odot\widetilde h_t.
+$$
+
+此处 $W_z,W_r,W_n\in\mathbb{R}^{H\times(H+D)}$，且每个偏置项位于 $\mathbb{R}^{H}$ 中。符号 $z_t$ 在此处表示 GRU 更新门；当在同一段落中讨论这两种单元时，它不是上述的 LSTM/输出 logit $z_t$。
+
+## 3. 推导过程
+
+### D-M2.1-01 · LSTM 单元雅可比矩阵与恒定误差传送带
+
+**定理。** 在保持 $h_{t-1}$ 固定的情况下，直接边偏导数为：
+
+$$
+\left.\frac{\partial c_t}{\partial c_{t-1}}\right|_{h_{t-1}\ \mathrm{fixed}}
+=\operatorname{diag}(f_t)\in\mathbb{R}^{H\times H}.
+$$
+
+如果我们在求导之前先代入 $h_{t-1}=o_{t-1}\odot\tanh(c_{t-1})$，则坍缩后的全导数为：
+
+$$
+\frac{dc_t}{dc_{t-1}}
+=\operatorname{diag}(f_t)
++\left[
+\operatorname{diag}(c_{t-1})\frac{\partial f_t}{\partial h_{t-1}}
++\operatorname{diag}(g_t)\frac{\partial i_t}{\partial h_{t-1}}
++\operatorname{diag}(i_t)\frac{\partial g_t}{\partial h_{t-1}}
+\right]
+\operatorname{diag}\left(o_{t-1}\odot(1-\tanh^2(c_{t-1}))\right).
+$$
+
+第一项是**恒定误差传送带**：它是一个加法状态路径，而不是 sigmoid 或 tanh 导数的乘积。括号内代表门控泄漏。这两个公式都是正确的，因为它们回答了不同的导数问题；$\partial c_t/\partial c_{t-1}=f_t$ 的标准表述指的是直接边偏导数。
+
+**步骤。**
+
+1. 保持 $h_{t-1}$ 和 $x_t$ 固定。此时 $q_t=[h_{t-1};x_t]$ 也是固定的，因此当 $f_t$ 变化时，$i_t$、$g_t$ 和 $c_{t-1}$ 均保持不变。（这是反向模式传播所使用的局部图边。）
+2. 对逐元素状态方程按坐标进行求导：
+   $$
+   c_{t,r}=f_{t,r}c_{t-1,r}+i_{t,r}g_{t,r}.
+   $$
+   对于某个坐标 $s$，
+   $$
+   \left.\frac{\partial c_{t,r}}{\partial c_{t-1,s}}\right|_{h_{t-1}\ \mathrm{fixed}}
+   =f_{t,r}\mathbf{1}_{r=s}.
+   $$
+   （在此偏导数下，写入项不直接依赖于 $c_{t-1}$。）
+3. 收集所有 $H^2$ 条目得到：
+   $$
+   dc_t=\operatorname{diag}(f_t)dc_{t-1}.
+   $$
+   由于每个 $f_{t,r}$ 都可能接近 1，该项可以在每一步不乘以 sigmoid 导数的情况下传递分量。
+4. 对于坍缩导数，首先代入前一个隐藏状态：
+   $$
+   h_{t-1}=o_{t-1}\odot\tanh(c_{t-1}),\qquad
+   \frac{dh_{t-1}}{dc_{t-1}}
+   =D_h:=\operatorname{diag}\left(o_{t-1}\odot(1-\tanh^2(c_{t-1}))\right).
+   $$
+   （在此代入中，输出门被视为来自上一时间步的固定值。）
+5. 写出状态更新的微分，同时允许门控通过 $h_{t-1}$ 发生变化：
+   $$
+   dc_t
+   =\operatorname{diag}(f_t)dc_{t-1}
+   +\operatorname{diag}(c_{t-1})df_t
+   +\operatorname{diag}(g_t)di_t
+   +\operatorname{diag}(i_t)dg_t.
+   $$
+   （这是针对四个逐元素乘积的乘积法则。）
+6. 每个门都通过其仿射映射的隐藏列依赖于 $h_{t-1}$。对于 sigmoid 导数 $\sigma'(a)=\sigma(a)(1-\sigma(a))$，
+   $$
+   \frac{\partial f_t}{\partial h_{t-1}}
+   =\operatorname{diag}(f_t\odot(1-f_t))W_{f,h},
+   $$
+   $$
+   \frac{\partial i_t}{\partial h_{t-1}}
+   =\operatorname{diag}(i_t\odot(1-i_t))W_{i,h}.
+   $$
+   对于候选值，$\tanh'(a)=1-\tanh^2(a)$，因此：
+   $$
+   \frac{\partial g_t}{\partial h_{t-1}}
+   =\operatorname{diag}(1-g_t^{\odot2})W_{g,h}.
+   $$
+7. 应用链式法则 $df_t=(\partial f_t/\partial h_{t-1})dh_{t-1}$，以及针对 $i_t$ 和 $g_t$ 的类似恒等式。将 $dh_{t-1}=D_hdc_{t-1}$ 代入步骤 5 并提取公因子 $dc_{t-1}$。由此得到框出的坍缩表达式。
+8. 如果 sigmoid 门饱和，则 $f_r(1-f_r)$ 或 $i_r(1-i_r)$ 接近于零。如果候选 tanh 饱和，则 $1-g_r^2$ 接近于零。因此，即使直接对角项不小，括号内的值也可能很小。（这是关于门控泄漏的局部陈述，并非声称所有 LSTM 梯度都是恒定的。）
+9. 该检查独立评估这两个函数。直接函数冻结 $h_{t-1}$；坍缩函数计算 $h_{t-1}=o_{t-1}\odot\tanh(c_{t-1})$。它还将门控预激活驱动至 $30$，并验证坍缩减直接泄漏范数变为 $2.5602028843728444\times10^{-14}$。
+
+**检查。** checks/M2/D-M2.1-01.py 报告直接和坍缩雅可比矩阵的最大绝对误差低于 $5\times10^{-11}$，饱和门控泄漏范数为 $2.5602028843728444\times10^{-14}$，以及 `passed: True`。
+
+**直觉。** 该单元可以通过 $f_t\odot c_{t-1}$ 携带旧状态，同时由门控决定是否写入。“加法记忆路径”并不意味着“所有梯度完全恒定”：依赖于门控的泄漏项仍然存在于坍缩的状态到状态导数中。
+
+### D-M2.1-02 · 完整的 LSTM 反向传播
+
+**定理。** 设 $\delta h_t$ 表示在时间 $h_t$ 的输出贡献及所有后续循环贡献累积后，到达 $t$ 的总梯度。设 $\delta c_{T+1}=0$。对于从 $t$ 到 $T$ 处理的 $1$，
+
+$$
+\delta c_t
+=\delta h_t\odot o_t\odot(1-\tanh^2(c_t))
++\delta c_{t+1}\odot f_{t+1},
+$$
+
+其中第二项在 $t=T$ 处被省略。定义门控预激活梯度：
+
+$$
+\delta o_t=\delta h_t\odot\tanh(c_t)\odot o_t(1-o_t),
+$$
+
+$$
+\delta f_t=\delta c_t\odot c_{t-1}\odot f_t(1-f_t),\qquad
+\delta i_t=\delta c_t\odot g_t\odot i_t(1-i_t),
+$$
+
+$$
+\delta g_t=\delta c_t\odot i_t\odot(1-g_t^2).
+$$
+
+利用 $\delta^{\mathrm{gate}}_t=[\delta f_t;\delta i_t;\delta o_t]\in\mathbb{R}^{3H}$ 和 $q_t=[h_{t-1};x_t]$，有：
+
+$$
+\nabla_W L=\sum_{t=1}^{T}\delta^{\mathrm{gate}}_tq_t^\top\in\mathbb{R}^{3H\times(H+D)},
+$$
+
+$$
+\nabla_{W_g}L=\sum_{t=1}^{T}\delta g_tq_t^\top\in\mathbb{R}^{H\times(H+D)},
+$$
+
+$$
+\nabla_bL=\sum_t\delta^{\mathrm{gate}}_t,\qquad
+\nabla_{b_g}L=\sum_t\delta g_t.
+$$
+
+来自单元门控的隐藏状态递归为：
+
+$$
+\delta h_{t-1}^{\mathrm{from\ gates}}
+=W_{h\text{-part}}^\top\delta^{\mathrm{gate}}_t
++W_{g,h\text{-part}}^\top\delta g_t\in\mathbb{R}^{H},
+$$
+
+同一较早时间步的输出贡献作为 $W_y^\top(p_{t-1}-e_{y_{t-1}})$ 被加入。单元贡献作为 $\delta c_{t-1}=\delta c_t\odot f_t$ 单独传递。最后，
+
+$$
+\nabla_{W_y}L=\sum_t(p_t-e_{y_t})h_t^\top,\qquad
+\nabla_cL=\sum_t(p_t-e_{y_t}).
+$$
+
+**步骤。**
+
+1. 在时间 $t$，输出 logits 为 $z_t=W_yh_t+c$。来自 M0 的 softmax-cross-entropy 导数为：
+   $$
+   \delta z_t:=\nabla_{z_t}\ell_t=p_t-e_{y_t}\in\mathbb{R}^{V}.
+   $$
+   输出路径对 $W_y^\top\delta z_t\in\mathbb{R}^{H}$ 的贡献为 $\delta h_t$。
+2. 局部隐藏方程为 $h_t=o_t\odot\tanh(c_t)$。对 $c_t$ 的扰动给出：
+   $$
+   dh_t=\operatorname{diag}(o_t\odot(1-\tanh^2(c_t)))dc_t.
+   $$
+   反向模式转置该对角矩阵（转置后不变），因此对 $\delta c_t$ 的局部贡献为 $\delta h_t\odot o_t\odot(1-\tanh^2(c_t))$。
+3. 下一个单元方程包含 $f_{t+1}\odot c_t$。其关于 $c_t$ 的微分为 $\operatorname{diag}(f_{t+1})$。因此反向模式将 $\delta c_{t+1}\odot f_{t+1}$ 发送至 $c_t$。将两条路径相加得到所述的 $\delta c_t$；在最后一步定义 $\delta c_{T+1}=0$。
+4. 对输出门分支 $o_t\odot\tanh(c_t)$ 关于 $o_t$ 求导。上游向量为 $\delta h_t\odot\tanh(c_t)$。乘以 sigmoid 导数得到：
+   $$
+   \delta o_t=(\delta h_t\odot\tanh(c_t))\odot o_t\odot(1-o_t)\in\mathbb{R}^{H}.
+   $$
+5. 对于状态方程，关于 $f_t$ 的导数为 $c_{t-1}$，关于 $i_t$ 的导数为 $g_t$，关于 $g_t$ 的导数为 $i_t$。因此逐元素非线性之前的预激活梯度为：
+   $$
+   \delta f_t=(\delta c_t\odot c_{t-1})\odot f_t\odot(1-f_t),
+   $$
+   $$
+   \delta i_t=(\delta c_t\odot g_t)\odot i_t\odot(1-i_t),
+   $$
+   $$
+   \delta g_t=(\delta c_t\odot i_t)\odot(1-g_t^2).
+   $$
+   每个表达式的形状均为 $\mathbb{R}^{H}$。
+6. 按实现顺序堆叠三个 sigmoid 预激活梯度：$\delta^{\mathrm{gate}}_t=[\delta f_t;\delta i_t;\delta o_t]$。由于仿射微分为 $d(Wq_t+b)=(dW)q_t+W\,dq_t$，
+   $$
+   dL_t=(\delta^{\mathrm{gate}}_t)^\top(dW)q_t
+   =\operatorname{tr}\left((\delta^{\mathrm{gate}}_tq_t^\top)^\top dW\right).
+   $$
+   因此时间 $t$ 的矩阵贡献为 $\delta^{\mathrm{gate}}_tq_t^\top\in\mathbb{R}^{3H\times(H+D)}$。针对 $W_g$ 的相同微分给出 $\delta g_tq_t^\top\in\mathbb{R}^{H\times(H+D)}$。
+7. 共享参数在每个时间步重复使用，因此对 $t$ 求和外积。添加偏置直接具有 $db$，因此其时间 $t$ 贡献为相应的预激活向量，序列梯度为其总和。
+8. 为了传播到 $h_{t-1}$，将 $W$ 和 $W_g$ 拆分为隐藏列和输入列。仿射微分包含 $W_{h\text{-part}}dh_{t-1}$ 和 $W_{g,h\text{-part}}dh_{t-1}$，因此反向模式给出：
+   $$
+   \delta h_{t-1}^{\mathrm{from\ gates}}
+   =W_{h\text{-part}}^\top\delta^{\mathrm{gate}}_t
+   +W_{g,h\text{-part}}^\top\delta g_t.
+   $$
+   在形成总梯度 $t-1$ 时，加入来自时间 $\delta h_{t-1}$ 的输出项，并沿显式单元边传递 $\delta c_{t-1}=\delta c_t\odot f_t$。没有门控项被静默丢弃。
+9. 该检查构建 $H=6,D=4,V=5,T=5$ 数组，并将 $W,b,W_g,b_g,W_y,c$ 的每个条目与在 `rtol=1e-5` 处的中心差分进行比较。最大绝对误差为 $1.3712259922976304\times10^{-9}$。
+
+**检查。** checks/M2/D-M2.1-02.py 检查所有六个 LSTM 参数数组并打印 `passed: True`。
+
+**直觉。** 存在两条反向流。单元流通过遗忘门携带 $\delta c$，而隐藏流发散至输出门和所有三个仿射门映射。保持这两条流分离是防止直接传送带项被意外替换为饱和激活导数的关键。
+
+### D-M2.1-03 · 完整的 GRU 反向传播及其学习到的泄漏积分器
+
+**定理。** 记 $q_t=[h_{t-1};x_t]$ 和 $\widetilde q_t=[r_t\odot h_{t-1};x_t]$。对于传入的 $\delta h_t$，
+
+$$
+\delta\widetilde h_t=\delta h_t\odot z_t,\qquad
+\delta z_t=\delta h_t\odot(\widetilde h_t-h_{t-1}),\qquad
+\delta h_{t-1}^{\mathrm{direct}}=\delta h_t\odot(1-z_t).
+$$
+
+候选预激活梯度为：
+
+$$
+\delta a^n_t=\delta\widetilde h_t\odot(1-\widetilde h_t^2).
+$$
+
+将 $W_n^\top\delta a^n_t=[u_t;v_t]$ 拆分为隐藏部分和输入部分。则：
+
+$$
+\delta r_t=u_t\odot h_{t-1},\qquad
+\delta a^r_t=\delta r_t\odot r_t(1-r_t),\qquad
+\delta h_{t-1}^{\mathrm{candidate}}=u_t\odot r_t,
+$$
+
+$$
+\delta a^z_t=\delta z_t\odot z_t(1-z_t).
+$$
+
+参数梯度为共享外积：
+
+$$
+\nabla_{W_z}L=\sum_t\delta a^z_tq_t^\top,\qquad
+\nabla_{W_r}L=\sum_t\delta a^r_tq_t^\top,\qquad
+\nabla_{W_n}L=\sum_t\delta a^n_t\widetilde q_t^\top,
+$$
+
+以及类似的偏置求和。循环隐藏梯度包括：
+
+$$
+\delta h_{t-1}
+=\delta h_t\odot(1-z_t)
++u_t\odot r_t
++W_{z,h}^\top\delta a^z_t
++W_{r,h}^\top\delta a^r_t,
+$$
+
+以及在组装总递归时加入的较早输出层贡献。
+
+**步骤。**
+
+1. 对混合更新按坐标求导：
+   $$
+   h_{t,r}=(1-z_{t,r})h_{t-1,r}+z_{t,r}\widetilde h_{t,r}.
+   $$
+   保持右侧三个因子独立，关于 $\widetilde h_t$ 的导数为 $z_t$，关于 $z_t$ 的导数为 $\widetilde h_t-h_{t-1}$，关于 $h_{t-1}$ 的直接导数为 $1-z_t$。乘以 $\delta h_t$ 得到前三个显示的梯度。
+2. 候选值为 $\widetilde h_t=\tanh(W_n\widetilde q_t+b_n)$。因此：
+   $$
+   \delta a^n_t=\delta\widetilde h_t\odot(1-\widetilde h_t^2)\in\mathbb{R}^{H}.
+   $$
+   由于 $d(W_n\widetilde q_t)=dW_n\widetilde q_t+W_nd\widetilde q_t$，其参数贡献为 $\delta a^n_t\widetilde q_t^\top$。
+3. 将候选仿射梯度传播至 $\widetilde q_t$：
+   $$
+   d\widetilde q_t=W_n^\top\delta a^n_t=[u_t;v_t],
+   $$
+   其中 $u_t\in\mathbb{R}^{H}$ 乘以 $r_t\odot h_{t-1}$，且 $v_t\in\mathbb{R}^{D}$ 乘以 $x_t$。因此重置门路径接收 $\delta r_t=u_t\odot h_{t-1}$，候选的隐藏输入接收 $u_t\odot r_t$。
+4. 对重置门应用 sigmoid 导数：
+   $$
+   \delta a^r_t=(u_t\odot h_{t-1})\odot r_t\odot(1-r_t).
+   $$
+   重置仿射映射使用 $q_t$，因此其参数贡献为 $\delta a^r_tq_t^\top$，隐藏贡献为 $W_{r,h}^\top\delta a^r_t$。
+5. 对更新门应用 sigmoid 导数：
+   $$
+   \delta a^z_t=(\delta h_t\odot(\widetilde h_t-h_{t-1}))\odot z_t\odot(1-z_t).
+   $$
+   其参数贡献为 $\delta a^z_tq_t^\top$，隐藏贡献为 $W_{z,h}^\top\delta a^z_t$。
+6. 将直接混合路径、候选路径和两个门仿射路径相加。这给出了显示的 $\delta h_{t-1}$。当包含较早时间步的输出损失时，加入 $W_y^\top(p_{t-1}-e_{y_{t-1}})$。输入侧部分不进行循环传播，但它们通过 $q_t$ 和 $\widetilde q_t$ 存在于参数外积中。
+7. 将前向混合重写为：
+   $$
+   h_t=h_{t-1}+z_t\odot(\widetilde h_t-h_{t-1}).
+   $$
+   这是一个逐元素的学习指数移动平均：$z_t$ 是写入/更新比例，$1-z_t$ 是携带比例。如果保持 $z_t$ 和 $\widetilde h_t$ 固定，则对局部雅可比矩阵的携带贡献恰好为：
+   $$
+   \operatorname{diag}(1-z_t).
+   $$
+   完整雅可比矩阵中的其他项来自依赖于 $h_{t-1}$ 的门和候选值。
+8. 该检查使用相同的 $H=6,D=4,V=5,T=5$ 大小，并对每个 GRU 参数数组进行有限差分。它还改变隐藏向量，同时保持 $z_t$ 和 $\widetilde h_t$ 固定，并检查加法对角项。
+
+**检查。** checks/M2/D-M2.1-03 报告全梯度最大绝对误差为 $1.137638444019995\times10^{-9}$，加法路径雅可比误差为 $3.447064855777171\times10^{-11}$；`passed: True`。
+
+**直觉。** GRU 在每个坐标上选择是携带还是写入。同一个更新门控制两者：较小的 $z_t$ 既保留了旧状态，也抑制了候选值写入当前输入的能力。
+
+### D-M2.1-04 · 参数计数与每步成本
+
+**断言。** 忽略输出投影，LSTM 有四个仿射参数块，而 GRU 有三个。每个块包含 $H(H+D)$ 个权重和 $H$ 个偏置，因此：
+
+$$
+P_{\mathrm{LSTM}}=4\bigl(H(H+D)+H\bigr),\qquad
+P_{\mathrm{GRU}}=3\bigl(H(H+D)+H\bigr).
+$$
+
+相应的循环仿射工作量为每步 $4H(H+D)$ 和 $3H(H+D)$ 次乘加运算。如果一次乘法和一次加法计为两次浮点运算，则这些仿射部分分别为 $8H(H+D)$ 和 $6H(H+D)$ FLOPs。逐元素的 sigmoid/tanh、乘法和加法增加 $O(H)$ 的工作量；当计算 logits 时，输出投影增加 $VH$ 次乘加运算。
+
+**步骤。**
+
+1. 一个 LSTM 门块将 $\mathbb{R}^{H+D}$ 映射到 $\mathbb{R}^{H}$，因此其权重矩阵包含 $H(H+D)$ 个条目，偏置包含 $H$ 个条目。
+2. 有三个 sigmoid 块加上一个候选 tanh 块。将单块计数乘以四得到 LSTM 表达式。
+3. 一个 GRU 更新、重置或候选块具有相同的输入和输出维度。乘以三得到 GRU 表达式。
+4. 使用 $H\times(H+D)$ 矩阵的稠密矩阵向量乘法包含 $H(H+D)$ 对乘加运算。为两个单元计数四个或三个此类乘法。门非线性不改变主导二次项。
+5. 对于已检查的 $H=6,D=4$ 夹具，一个块有 $6(6+4)=60$ 个权重和六个偏置。因此 $P_{\mathrm{LSTM}}=4(60+6)=264$、$P_{\mathrm{GRU}}=3(60+6)=198$，仿射 MAC 计数为 $240$ 和 $180$。
+
+**检查。** checks/M2/D-M2.1-04 复现了 $264$、$198$、$240$ 和 $180$，并打印 `passed: True`。
+
+**直觉。** 门控花费额外的仿射带宽以换取可控的状态路径。GRU 的门较少，而 LSTM 暴露了独立的单元和输出门；仅凭计数无法决定质量。
+
+### D-M2.1-05 · 遗忘门偏置初始化
+
+**断言。** 如果 LSTM 遗忘门偏置初始化为 $1$，则在学习到的预激活变化之前，门值为：
+
+$$
+f_t\approx\sigma(1)=\frac{1}{1+e^{-1}}=0.7310585786300049.
+$$
+
+对于偏置 $0$，对应的值为 $\sigma(0)=0.5$。沿着跨越 $k$ 步的直接传送带路径，标量保留因子约为 $f^k$；在 $k=8$ 时，对于偏置 $0.08158633452069013$ 为 $1$，对于偏置 $0.00390625$ 为 $0$。
+
+**步骤。**
+
+1. 将遗忘预激活设置为其仅偏置值。对于偏置 $b_f=1$，
+   $$
+   f=\sigma(b_f)=\frac{e^{b_f}}{1+e^{b_f}}=\frac{1}{1+e^{-1}}.
+   $$
+   对于 $b_f=0$，$f=1/2$。
+2. 使用来自 D-M2.1-01 的直接边雅可比矩阵。在遗忘值固定的一个坐标中，一步将扰动映射为 $\delta c_t=f\delta c_{t-1}$。
+3. 对 $k$ 步重复相同的标量因子得到：
+   $$
+   \delta c_k=f^k\delta c_0.
+   $$
+   这是一个简化的保留计算，并非声称训练后的 LSTM 具有恒定门控。
+4. 在 $k=8$ 时，零偏置因子为 $(0.5)^8=0.00390625$。一偏置因子为 $(0.7310585786300049)^8=0.08158633452069013$，大约大二十一倍。
+5. 该结果是一个初始化启发式方法。它在开始时保持传送带更开放，但输入依赖的门控、门泄漏和优化仍然决定训练轨迹。
+
+**来源说明。** Jozefowicz, Zaremba 和 Sutskever 在“Recurrent Network Architectures 的实证探索”中报告了遗忘偏置比较（[ACL Anthology](https://aclanthology.org/N15-1013/)）。上述数值是直接根据 sigmoid 评估得出的，而非从论文中回忆。
+
+**检查。** checks/M2/D-M2.1-05 验证了两个 sigmoid 值和 $k=8$ 乘积；`passed: True`。
+
+**直觉。** 正的遗忘偏置使单元以较长的记忆时间常数开始。它不会冻结状态：输入和候选门仍然可以写入，且饱和或条件不佳的门网络仍可能在其他地方产生弱梯度。
+
+## 4. 数值验证
+
+所有五项检查均使用确定性的 float64 NumPy 计算以及共享的 `code/common/gradcheck.py` 测试框架，用于比较导数。D-M2.1-02 和 D-M2.1-03 在 $H=6,D=4,T=5$ 处检查每个参数数组；D-M2.1-01 检查 LSTM 单元雅可比矩阵的两种含义。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M2.1-01 | 直接/坍缩雅可比误差低于 $5\times10^{-11}$；饱和泄漏范数 $2.5602028843728444\times10^{-14}$ | 通过 |
+| D-M2.1-02 | 所有 LSTM 数组；最大绝对误差 $1.3712259922976304\times10^{-9}$ | 通过 |
+| D-M2.1-03 | 所有 GRU 数组；最大绝对误差 $1.137638444019995\times10^{-9}$；加性路径误差 $3.447064855777171\times10^{-11}$ | 通过 |
+| D-M2.1-04 | LSTM/GRU 参数 $264/198$；仿射 MACs $240/180$ | 通过 |
+| D-M2.1-05 | $\sigma(1)=0.7310585786300049$；八步保留率 $0.08158633452069013$ 对比 $0.00390625$ | 通过 |
+
+从仓库根目录运行 `python -m pytest course/tests`。浏览器阅读器没有 Python 运行时，因此页面显示这些确定性输出，而 CI 执行检查。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M2-a" />
+
+<CourseWidget id="V-M2-b" />
+
+**V-M2-a — 门控时间线。** 规范为 `viz/specs/V-M2-a.yaml`，纯计算模块为 `viz/compute/gate_timeline.ts`。输入文本并检查字符位置上的遗忘门、输入门和输出门的热力图。预览使用确定性的浮点等效门方程；A-M2 可以用训练好的 char-LSTM 导出替换轨迹，而无需更改组件契约。
+
+**V-M2-b — 梯度高速公路。** 规范为 `viz/specs/V-M2-b.yaml`，纯计算模块为 `viz/compute/gradient_highway.ts`，静态夹具为 `viz/data/V-M2-b-gradient-highway.json`。切换遗忘偏置 $0/1$ 并将 $f^k$ 与 RNN 因子曲线进行比较。该图可视化了直接循环项，而非包含门泄漏的完整坍缩雅可比矩阵。
+
+计算模块返回纯数组，不依赖绘图库。现有的 Preact/MDX 阅读器可以使用其当前的 Canvas2D 层进行渲染。
+
+## 6。结语
+
+**反直觉的问题。** 为什么即使 GRU 在所有位置都使用 $z_t\to0$，且其加性项精确为 $h_{t-1}$，在处理极长依赖时仍可能失败？**解答：** D-M2.1-03 将更新重写为 $h_t=h_{t-1}+z_t\odot(\widetilde h_t-h_{t-1})$。当 $z_t\to0$ 时，直接传递的雅可比矩阵趋于单位矩阵，因此旧状态得以保留。但相同的因子 $z_t$ 也乘以候选项的贡献：模型停止将当前输入写入状态。一个能保留旧值却无法更新它的单元，拥有记忆保持能力却缺乏有用的记忆容量。这种权衡在于“传递”与“写入”之间，而非保证任意长程计算的能力。
+
+**作业 A-M2。** 实现 `code/numpy_rnn/lstm.py`、`gru.py` 和 `seq2seq_attn.py`；复现所有 M2.1 和 M2.2 检查；导出 V-M2-b 数据；并在 95% 次更新内，将声明的反向序列注意力夹具训练至至少 500 的精确 token 准确率。作业 README 记录了确定性夹具及用于复现结果的命令。
+
+**主干检查。** 从架构角度看，LSTM 和 GRU 为循环状态添加了可学习的传递/写入路径，而注意力机制随后将提供对所有编码器状态的直接加权读取。从概率角度看，这两种单元仍然输出因果条件分布，并可使用教师强制法进行训练；门控方程改变的是状态雅可比矩阵以及记忆与写入的权衡，而非自回归分解形式。

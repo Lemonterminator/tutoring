@@ -1,0 +1,12 @@
+{
+  "id": "QUANT-2", "subject": "quant", "module": "Regression evaluation, uncertainty and quantitative risk",
+  "title": { "en": "From regression evaluation to quantitative risk", "zh": "从回归评估到量化风险：推导与交互实验" },
+  "prereqs": ["QUANT-1", "Probability distributions", "Regression", "Hypothesis testing"],
+  "spine": {
+    "en": { "a": "Connect point errors and distribution calibration to financial forecast evaluation.", "b": "Inspect dependence, multiple testing and joint risk before interpreting backtest metrics." },
+    "zh": { "a": "将点误差、分布校准与金融预测评估联系起来。", "b": "解释回测指标前，检查依赖、多重检验与联合风险。" }
+  },
+  "derivations": ["RMSE/MAE", "CRPS", "PIT/ECE", "NLL", "VaR/ES", "GARCH/QLIKE", "Conformal prediction"],
+  "visualizations": ["15 original interactive experiments"],
+  "references": ["Linan Jiang: metrics_derivations_en.html / metrics_derivations_zh.html"]
+}

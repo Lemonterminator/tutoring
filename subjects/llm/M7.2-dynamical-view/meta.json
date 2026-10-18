@@ -1,0 +1,40 @@
+{
+  "subject": "llm",
+  "id": "M7.2",
+  "module": "M7",
+  "title": {
+    "en": "Dynamical view — tokens on a sphere and attention as a time-varying graph",
+    "zh": "动力学视角——球面上的 token 与作为时变图的注意力机制"
+  },
+  "prereqs": [
+    "M7.1",
+    "M3.3",
+    "M4.5"
+  ],
+  "estimatedHours": 8,
+  "spine": {
+    "en": {
+      "a": "With RMSNorm, a token state is constrained to a sphere; attention supplies a state-dependent row-stochastic graph and its tangent vector field.",
+      "b": "The dynamical view explains clustering and rank collapse only under stated assumptions. Residual paths and FFNs change the guarantee in different ways."
+    },
+    "zh": {
+      "a": "在 RMSNorm 下，token 状态被约束在球面上；注意力机制提供状态依赖的行随机图及其切向量场。",
+      "b": "动力学视角仅在特定假设下解释聚类与秩崩溃现象。残差路径和前馈网络以不同方式改变该保证。"
+    }
+  },
+  "derivations": [
+    "D-M7.2-01",
+    "D-M7.2-02",
+    "D-M7.2-03",
+    "D-M7.2-04"
+  ],
+  "visualizations": [
+    "V-M7-b"
+  ],
+  "assignment": "A-M7",
+  "references": [
+    "geshkovski2023",
+    "dong2021",
+    "sander2022"
+  ]
+}

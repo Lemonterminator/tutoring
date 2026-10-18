@@ -1,0 +1,18 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { gradcheckCards } from '../../../framework/games/llm-foundations-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+
+## 开始练习
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+沿四节点计算图累加梯度，再用中心差分与误差阈值找错。对应 D-M0.1-05 与数值验证框架；教学大步长会和原框架的 ε=10⁻⁶ 分开标注。
+
+<PracticeGame generate={gradcheckCards} lang="zh" />
+
+## 边界与原始课程
+
+浏览器游戏只判练习答案，不执行原课 Python 检查，也不证明实际代码的梯度正确。步长过小会受浮点舍入影响。
+
+<SourceLessonLink source="llm:M0.1" lang="zh" />

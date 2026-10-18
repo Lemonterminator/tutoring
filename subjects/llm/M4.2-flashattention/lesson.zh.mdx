@@ -1,0 +1,248 @@
+## 1. 动机
+
+标准注意力机制计算得分矩阵 $S\in\mathbb{R}^{n\times n}$，存储该矩阵或其 softmax 结果，然后与 $V$ 相乘。二次算术运算通常是可接受的。其缺陷在于需要在高带宽内存（HBM）和片上 SRAM 之间移动一个 $n\times n$ 对象。
+
+FlashAttention 在不近似注意力结果的情况下修复了内存传输路径。它扫描得分/值块，维护运行中的最大值、分母和加权分子，且无需实例化完整的注意力矩阵。该在线恒等式在精确算术下是精确的。浮点舍入和下溢仍是实现层面的效应。
+
+## 2. 前向定义
+
+对于单个查询 $q\in\mathbb{R}^{d}$、键 $K\in\mathbb{R}^{n\times d}$ 和值 $V\in\mathbb{R}^{n\times d_v}$，定义分数为
+
+$$
+s=Kq\in\mathbb{R}^{n},
+\qquad
+s_j=k_j^\top q\in\mathbb{R}.
+$$
+
+稠密注意力输出为
+
+$$
+y
+=\operatorname{softmax}(s)^\top V
+=\frac{\sum_{j=1}^{n}e^{s_j}v_j}{\sum_{j=1}^{n}e^{s_j}},
+\qquad
+y\in\mathbb{R}^{d_v}.
+$$
+
+为避免溢出，一种稳定的稠密实现选择 $m=\max_j s_j\in\mathbb{R}$ 并计算
+
+$$
+\ell=\sum_{j=1}^{n}e^{s_j-m}\in\mathbb{R}_{\ge 0},
+\qquad
+O=\sum_{j=1}^{n}e^{s_j-m}v_j\in\mathbb{R}^{d_v},
+\qquad
+y=O/\ell\in\mathbb{R}^{d_v}.
+$$
+
+对于具有分数 $b$ 和值 $s^{(b)}\in\mathbb{R}^{r}$ 的块 $V^{(b)}\in\mathbb{R}^{r\times d_v}$，其局部统计量为
+
+$$
+m_b=\max_j s^{(b)}_j\in\mathbb{R},
+\qquad
+\ell_b=\sum_j e^{s^{(b)}_j-m_b}\in\mathbb{R}_{\ge0},
+\qquad
+O_b=\sum_j e^{s^{(b)}_j-m_b}v^{(b)}_j\in\mathbb{R}^{d_v}.
+$$
+
+如果某个块被完全掩码，则每个分数均为 $-\infty$。我们采用空集约定：
+
+$$
+M_0=-\infty\in\mathbb{R},
+\qquad
+E_0=0\in\mathbb{R},
+\qquad
+W_0=0\in\mathbb{R}^{d_v}.
+$$
+
+此类块不产生任何贡献。它是一个特例，并非通用递推的输入。
+
+**来源。** Dao 等人，[FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135)，介绍了感知 I/O 的精确分块算法并分析了其 HBM 访问情况。
+
+## 3. 推导过程
+
+### D-M4.2-01 · 在线 Softmax 在实数运算中是精确的
+
+**定理。** 假设处理后的前缀具有状态 $(m,\ell,O)\in\mathbb{R}\times\mathbb{R}_{\ge0}\times\mathbb{R}^{d_v}$，其中 $O/\ell$ 是在 $\ell>0$ 时的精确 Softmax 加权值总和。对于一个具有局部统计量 $(m_b,\ell_b,O_b)$ 的非空有限块，定义
+
+$$
+m'=\max(m,m_b)\in\mathbb{R},
+$$
+
+$$
+\ell'
+=e^{m-m'}\ell+e^{m_b-m'}\ell_b\in\mathbb{R}_{\ge0},
+$$
+
+$$
+O'
+=e^{m-m'}O+e^{m_b-m'}O_b\in\mathbb{R}^{d_v}.
+$$
+
+则 $O'/\ell'$ 等于旧前缀和新块的精确 Softmax 加权总和。根据空集约定，完全掩码的块不会改变状态。
+
+**步骤。**
+
+1. 设旧前缀的分数为 $s_1,\ldots,s_a\in\mathbb{R}$，其中
+   $$
+   m=\max_{1\le j\le a}s_j,
+   \qquad
+   \ell=\sum_{j=1}^{a}e^{s_j-m}\in\mathbb{R}_{\ge0},
+   $$
+   $$
+   O=\sum_{j=1}^{a}e^{s_j-m}v_j\in\mathbb{R}^{d_v}.
+   $$
+   对于新块，记分数为 $t_1,\ldots,t_b\in\mathbb{R}$ 且
+   $$
+   m_b=\max_{1\le r\le b}t_r,
+   \qquad
+   \ell_b=\sum_{r=1}^{b}e^{t_r-m_b}\in\mathbb{R}_{\ge0},
+   $$
+   $$
+   O_b=\sum_{r=1}^{b}e^{t_r-m_b}u_r\in\mathbb{R}^{d_v}.
+   $$
+2. 将新的参考点设为较大的最大值：
+   $$
+   m'=\max(m,m_b).
+   $$
+   这仅是指数参考点的变化。对于每个旧分数，
+   $$
+   e^{s_j-m'}
+   =e^{m-m'}e^{s_j-m}.
+   $$
+   对于每个新分数，
+   $$
+   e^{t_r-m'}
+   =e^{m_b-m'}e^{t_r-m_b}.
+   $$
+3. 将旧贡献和新贡献相加至分母：
+   $$
+   \sum_{j=1}^{a}e^{s_j-m'}
+   +\sum_{r=1}^{b}e^{t_r-m'}
+   $$
+   $$
+   =e^{m-m'}\sum_{j=1}^{a}e^{s_j-m}
+   +e^{m_b-m'}\sum_{r=1}^{b}e^{t_r-m_b}
+   $$
+   $$
+   =e^{m-m'}\ell+e^{m_b-m'}\ell_b
+   =\ell'.
+   $$
+4. 对加权分子应用相同的参考点变化：
+   $$
+   \sum_{j=1}^{a}e^{s_j-m'}v_j
+   +\sum_{r=1}^{b}e^{t_r-m'}u_r
+   $$
+   $$
+   =e^{m-m'}\sum_{j=1}^{a}e^{s_j-m}v_j
+   +e^{m_b-m'}\sum_{r=1}^{b}e^{t_r-m_b}u_r
+   $$
+   $$
+   =e^{m-m'}O+e^{m_b-m'}O_b
+   =O'.
+   $$
+5. 如果旧集合和新集合均非空，则其并集上的精确稠密加权总和为
+   $$
+   \frac{
+   \sum_{j=1}^{a}e^{s_j-m'}v_j
+   +\sum_{r=1}^{b}e^{t_r-m'}u_r
+   }{
+   \sum_{j=1}^{a}e^{s_j-m'}
+   +\sum_{r=1}^{b}e^{t_r-m'}
+   }
+   =\frac{O'}{\ell'}\in\mathbb{R}^{d_v}.
+   $$
+6. 这证明了归纳步骤。基础状态是空集 $(M_0,E_0,W_0)=(-\infty,0,0)$，因此第一个非空块初始化 $m=m_b$、$\ell=\ell_b$ 和 $O=O_b$。
+7. 如果块中的所有分数均为 $-\infty$，则 $m_b=-\infty$ 且 $\ell_b=0$，但表达式 $e^{m-m'}$ 可能变为不定式 $e^{-\infty-(-\infty)}$。因此，实现会立即返回旧状态。如果旧状态为空，则保持为 $(-\infty,0,0)$ 且不贡献任何值。
+8. 该检查将随机的块级输出与稠密 Softmax 进行比较，从最终的 $(m,\ell)$ 重建概率，并包含两个完全掩码的块。它得到的最大输出误差为 $5.551115123125783\times10^{-17}$，最大概率误差为 $0$。
+
+**检查。** checks/M4/D-M4.2-01.py 验证了精确的块递推、归纳不变量以及全 $-\infty$ 特殊情况；它输出 passed: True。
+
+**浮点注意事项，范围正确。** 该恒等式在精确实数运算中是精确的。在 float64 或更低精度下，可能会发生普通的舍入和下溢，包括向量分子 $O$ 中的下溢。这是实现层面的数值效应。在线/块级恒等式本身并非近似，本课也不声称提供通用的有界相对误差保证。
+
+**直观理解。** 每个块选择其自身稳定的原点。递推公式在相加之前将旧统计量和新统计量重新缩放到一个共享原点。
+
+### D-M4.2-02 · 分块与 IO 复杂度
+
+**近似，已标注。** 本推导中的渐近 HBM 读取估计使用了两级内存模型。它们描述的是数据移动，而非通用的墙钟时间。
+
+**步骤。**
+
+1. 对于长度为 $n$ 且头维度为 $d$ 的序列，稠密分数矩阵的形状为
+   $$
+   S=QK^\top\in\mathbb{R}^{n\times n},
+   \qquad
+   Q,K\in\mathbb{R}^{n\times d}.
+   $$
+   实例化 $S$ 需要 $\Theta(n^2)$ 个元素。读取或写入查询、键、值和输出张量贡献了 $\Theta(nd)$ 个元素。因此，朴素的实例化算法的粗略估计为
+   $$
+   R_{\mathrm{naive}}
+   =O(n^2+nd),
+   \qquad
+   R_{\mathrm{naive}}\in\mathbb{R}_{\ge0}.
+   $$
+2. 设 SRAM 可容纳 $M$ 个标量元素。选择一个具有 $B_r$ 行的查询块和一个具有 $B_c$ 行的键/值块。它们的分数块形状为
+   $$
+   S_{\mathrm{tile}}\in\mathbb{R}^{B_r\times B_c}.
+   $$
+   块的计算集包含 $Q_{\mathrm{tile}}\in\mathbb{R}^{B_r\times d}$、$K_{\mathrm{tile}}\in\mathbb{R}^{B_c\times d}$、$V_{\mathrm{tile}}\in\mathbb{R}^{B_c\times d}$、分数块以及位于 $\mathbb{R}^{B_r\times d}$ 中的输出块。适配条件为
+   $$
+   B_rB_c+(B_r+B_c)d+O((B_r+B_c)d)\le M.
+   $$
+3. 在平衡模式下，取 $B_r\asymp B_c\asymp B$。主导的计算集项给出 $Bd\lesssim M$，因此
+   $$
+   B\asymp\frac{M}{d}.
+   $$
+4. 大约有 $(n/B)^2$ 个查询 - 键块对。每个块读取和写入 $O(Bd)$ 个向量元素。将块数乘以每块的流量：
+   $$
+   R_{\mathrm{tile}}
+   =O\left(\left(\frac{n}{B}\right)^2Bd\right)
+   =O\left(\frac{n^2d}{B}\right).
+   $$
+   代入 $B\asymp M/d$：
+   $$
+   R_{\mathrm{tile}}
+   =O\left(\frac{n^2d}{M/d}\right)
+   =O\left(\frac{n^2d^2}{M}\right).
+   $$
+   在此简化表达式中，输出和边界项增加了低阶的 $O(nd)$ 项。
+5. 来自 D-M4.2-01 的在线递推仅保留形状为 $m\in\mathbb{R}^{B_r}$、$\ell\in\mathbb{R}^{B_r}$ 和 $O\in\mathbb{R}^{B_r\times d}$ 的行统计量。它消耗一个块，更新这些统计量，并写入输出，而无需将 $n\times n$ 分数或概率矩阵写入 HBM。
+6. 在反向传播中，每查询行存储 $(m,\ell)$ 的成本为 $O(n)$ 个值。给定查询块和键块，重新计算分数块 $S_{\mathrm{tile}}\in\mathbb{R}^{B_r\times B_c}$，重建
+   $$
+   P_{\mathrm{tile},ij}
+   =\frac{e^{S_{\mathrm{tile},ij}-m_i}}{\ell_i},
+   \qquad
+   P_{\mathrm{tile}}\in\mathbb{R}^{B_r\times B_c},
+   $$
+   （针对未掩码条目），然后形成局部梯度。因此，完整的注意力矩阵是从紧凑的行统计量中重新计算的，而不是存储在 HBM 中。
+7. 该检查直接评估 $O(n^2d^2/M)$ 和 $O(n^2+nd)$，验证与 $M$ 的反比缩放关系，并将重新计算的加权值输出与稠密注意力进行比较。它得到的分块读取次数为 $1048576$，朴素读取次数为 $1114112$，重建误差为 $0$。
+
+**检查。** checks/M4/D-M4.2-02.py 验证了 IO 缩放以及从 $(m,\ell)$ 进行的反向重建；它输出 passed: True。
+
+**主张，范围正确。** FlashAttention 在使用相同的分数和值时，相对于注意力代数是精确的。其实际速度取决于块大小、内核实现、硬件和内存层次结构。
+
+## 4。数值验证
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M4.2-01 | 最大输出误差 $5.551115123125783\times10^{-17}$；最大权重误差 $0$；两个掩码块 | pass |
+| D-M4.2-02 | 分块读取 $1048576$；朴素读取 $1114112$；重算输出误差 $0$ | pass |
+
+从 course/目录运行 python checks/M4/D-M4.2-01.py 和 python checks/M4/D-M4.2-02.py。小部件测试和仓库测试套件执行相同的边界情况约定。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M4-b" />
+
+**V-M4-b — Online-softmax 步进器。** 规范位于 viz/specs/V-M4-b.yaml，纯计算模块为 viz/compute/online_softmax.ts。该组件展示每个块的运行 $m$、$\ell$ 和 $O$，随后显示 $O/\ell$。它包含一个完全屏蔽的块，以便读者观察到状态未发生改变，而非看到 NaN。
+
+该组件的公式为 D-M4.2-01。其洞察句指出，分块结果等同于稠密 softmax，而完整的注意力矩阵从未被实例化。现有的前端可以利用其既定的 MDX/Canvas2D 或 SVG 约定来渲染步骤表以及紧凑的分子/分母追踪。
+
+## 6。结语
+
+**反直觉的问题。** 算法如何在不存储注意力矩阵的情况下，仍能返回完全相同的输出？
+
+**解答示例。** D-M4.2-01 表明，输出仅需每个查询行的两个充分统计量：分母 $\ell\in\mathbb{R}$ 和加权分子 $O\in\mathbb{R}^{d_v}$，以及用于稳定指数计算的运行参考最大值 $m\in\mathbb{R}$。一个分块（tile）会改变参考点，但因子 $e^{m-m'}$ 和 $e^{m_b-m'}$ 会在相加前将这两部分转换到同一参考系。因此，$O/\ell$ 与稠密注意力具有相同的归一化加权和。随后，D-M4.2-02 利用分块技术将这些统计量保留在芯片上，从而避免了对 $n\times n$ 矩阵的 HBM 流量。
+
+**作业 A-M4。** 将在线 Softmax 实现添加到 code/minilm/ 或 code/efficiency/ 目录中，使用随机块将其与稠密注意力进行测试对比，包含一个全 $-\infty$ 因果块，并导出 V-M4-b 步骤追踪。在作业报告中记录 IO 约定和浮点注意事项。
+
+**核心检查。** 从架构上看，注意力机制仍然定义了相同的前缀条件加权值分布。从计算角度看，该算法改变了累加顺序和内存路径，而非所计算的分布本身。

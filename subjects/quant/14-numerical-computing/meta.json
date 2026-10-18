@@ -1,0 +1,13 @@
+{
+  "id": "QUANT-P1", "subject": "quant", "module": "Quant pricing · numerical foundations (1/4)",
+  "title": { "en": "Numerical foundations for option Greeks", "zh": "期权 Greeks 的数值计算基础" },
+  "prereqs": ["Calculus", "Taylor expansion", "C++17 or Python basics"],
+  "estimatedHours": 8,
+  "spine": {
+    "en": { "a": "Separate conditioning, truncation and floating-point rounding.", "b": "Derive the corrected 45° complex-step result and test the approximate CDF's limit." },
+    "zh": { "a": "分清条件数、截断误差与浮点舍入。", "b": "推导正确的 45° 复步公式，并检验近似 CDF 的精度界限。" }
+  },
+  "derivations": ["Finite-difference step laws", "Complex-step Delta", "45° Gamma Taylor series"],
+  "assignment": "Black–Scholes Delta/Gamma step-size sweeps",
+  "references": ["Goldberg 1991", "Higham 2002", "Squire & Trapp 1998", "Martins et al. 2003", "NIST DLMF", "Cody 1969"]
+}

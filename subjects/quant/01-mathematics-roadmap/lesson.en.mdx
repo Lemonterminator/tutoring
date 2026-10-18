@@ -1,0 +1,55 @@
+import { QuantRoadmap } from '../../../framework/quant/QuantRoadmap';
+import { QuantChapterIndex } from '../../../framework/quant/QuantChapterIndex';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## Browse quantitative chapters
+
+<QuantChapterIndex lang="en" />
+
+## Scope and evidence
+
+This is a learning plan inferred from university curricula and the material in this collection, researched on 1 October 2026. It is not an official admission or degree requirement, and available material does not establish personal mastery.
+
+[Oxford](https://www.ox.ac.uk/admissions/graduate/courses/msc-mathematical-and-computational-finance) names linear algebra, analysis, probability, statistics and differential equations as background, with stochastic calculus and numerical methods in its finance curriculum. [CMU MSCF](https://www.cmu.edu/mscf/academics/curriculum) includes financial time series, statistical learning, optimization and simulation. Together these support a foundation followed by a role-specific specialization.
+
+## Foundations and material gaps
+
+<QuantRoadmap lang="en" />
+
+Find the six university course packages and original lecture files in the <a href={quantLessonHref('QUANT-3')}>course materials library</a>.
+
+## Suggested sequence
+
+For the courses currently in the graph, use this navigation order:
+
+1. **MIT 18.06SC Linear Algebra**: review systems, eigenvalues, projections and SVD through problems.
+2. **MIT 18.02SC Multivariable Calculus**: review gradients, Hessians, multiple integrals and changes of variables.
+3. **MIT 6.041SC Applied Probability**: conditional probability, joint distributions, conditional expectation and limit theorems.
+4. **Aalto MS-C1620 Statistical Inference (Chinese translation)**: estimation, tests, regression and diagnostics.
+5. **MIT 18.650 Statistical Inference**: deepen likelihood, asymptotic theory, Bayesian methods and statistical models; enter directly if step 4 is already familiar.
+6. **MIT 18.065 Matrix Methods for Data Analysis**: matrix factorizations, least squares, PCA and regularization.
+7. **Aalto MS-C2105 Introduction to Optimization**: objectives, constraints and basic solution methods.
+8. **Aalto ELEC-E5424 Convex Optimization**: convexity, duality and KKT; then practice portfolio optimization.
+9. **Aalto MS-C2111 Stochastic Processes**: Markov chains and evolving random models.
+10. **Aalto MS-E1600 Measure-Theoretic Probability**: convergence, conditional expectation and theoretical conditions for stochastic analysis.
+11. **Aalto MS-E1604 Brownian Motion and Stochastic Analysis**: martingales, Itô integration and SDEs.
+12. **Aalto ELEC-E8425 Energy Systems Modeling and Optimization**: domain practice in optimization and stochastic modeling.
+13. **Aalto ELEC-E8125 Reinforcement Learning**: sequential decision-making after probability, optimization and Markov models.
+
+Review the first two through problems. Choose the depth of steps 4–5 according to mastery; steps 7–8 and step 9 can run in parallel. Prediction research should add **time series, chronological validation and risk evaluation** after inference. Pricing should prioritize steps 9–11, then numerical methods and financial pricing. Numbers describe the recommended navigation route, rather than strict prerequisites between every adjacent course.
+
+This is a study recommendation. The [MIT 18.650 syllabus](https://ocw.mit.edu/courses/18-650-statistics-for-applications-fall-2016/pages/syllabus/) specifies probability theory and some linear algebra; the [MIT Analytics of Finance syllabus](https://ocw.mit.edu/courses/15-450-analytics-of-finance-fall-2010/pages/syllabus/) also assumes calculus, probability and statistics. These requirements support studying probability and statistics before financial modeling.
+
+For **prediction and quantitative research**, first strengthen linear algebra/calculus and probability/statistics; then study regression, time series, chronological validation, model evaluation and portfolio optimization. The new regression-to-risk reading fits after basic regression and distributions. Reinforcement learning is a later specialization once evaluation assumptions are understood.
+
+For **derivatives pricing and financial modeling**, strengthen analysis and probability; then study martingales, stochastic calculus, numerical simulation/PDEs, and financial pricing/hedging. Statistical evaluation remains useful, while the continuous-time branch deserves more emphasis.
+
+The **Black–Scholes pricing track** now has four connected courses. Start with <a href={quantLessonHref('QUANT-P1')}>numerical foundations</a> before refactoring code, continue to <a href={quantLessonHref('QUANT-P2')}>pricing, parity and Greeks</a>, study <a href={quantLessonHref('QUANT-P3')}>implied volatility and root finding</a> before implementing IV, and finish with <a href={quantLessonHref('QUANT-P4')}>C++ numerical engineering</a>. Each course contains source-checked reading, derivations and exercises tied to the Delta/Gamma assignment and library plan. The numerical course corrects the earlier review of the assignment's 45° Gamma formula.
+
+For **portfolio risk**, study covariance estimation and dependence alongside marginal forecasting. Read the joint-calibration counterexample before concluding that individually calibrated forecasts imply correct portfolio risk.
+
+## Aalto material and next study task
+
+The local collection already contains MS-C2128 time-series material, which is not yet integrated in the graph. Integrating that material is a practical next step. The [Aalto teaching page](https://math.aalto.fi/en/research/stochastics/teaching/) lists Probability Theory, Multivariate Statistical Analysis, High-Dimensional Statistics and Prediction and Time Series Analysis; its displayed list is for **2024–2025**, so current teaching periods must be checked separately.
+
+Choose one path above. For each foundation, derive one result and implement one small example before treating it as mastered. Begin with a chronologically split return forecast; compare point error, predictive coverage and density scores, then explain how dependence changes uncertainty estimates.

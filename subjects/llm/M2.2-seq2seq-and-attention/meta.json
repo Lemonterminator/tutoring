@@ -1,0 +1,36 @@
+{
+  "subject": "llm",
+  "id": "M2.2",
+  "module": "M2",
+  "title": {
+    "en": "Seq2seq and attention",
+    "zh": "序列到序列与注意力机制"
+  },
+  "prereqs": [
+    "M2.1"
+  ],
+  "estimatedHours": 7,
+  "spine": {
+    "en": {
+      "a": "Replace a single fixed-length recurrent bottleneck with a differentiable, row-normalized read from all encoder states.",
+      "b": "Derive the encoder-state gradient through softmax alignment and distinguish attention path length from attention arithmetic cost."
+    },
+    "zh": {
+      "a": "用一个可微的、行归一化的读取操作替代单个固定长度的循环瓶颈，该操作从所有编码器状态中读取。",
+      "b": "通过 softmax 对齐推导编码器状态的梯度，并区分注意力路径长度与注意力算术成本。"
+    }
+  },
+  "derivations": [
+    "D-M2.2-01",
+    "D-M2.2-02",
+    "D-M2.2-03"
+  ],
+  "visualizations": [
+    "V-M2-c"
+  ],
+  "assignment": "A-M2",
+  "references": [
+    "bahdanau2014",
+    "luong2015"
+  ]
+}

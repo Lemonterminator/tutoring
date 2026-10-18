@@ -1,0 +1,167 @@
+## 1. Motivation
+
+An autoregressive model produces logits; a decoder turns those logits into the distribution from which the next token is sampled. Temperature, top-k, and top-p therefore change the sampling distribution without changing the model's learned conditional itself. This lesson derives temperature scaling and the monotonicity of entropy, then makes the truncation-and-renormalization operations explicit.
+
+## 2. Forward definition
+
+Let $z=(z_1,\ldots,z_K)\in\mathbb{R}^K$ be finite logits and let $T>0$ be a temperature. Define
+
+$$
+p_T=\operatorname{softmax}(z/T),
+\qquad
+(p_T)_i=\frac{\exp(z_i/T)}{\sum_{j=1}^{K}\exp(z_j/T)}.
+$$
+
+Top-k keeps the $k$ largest probabilities, sets the rest to zero, and renormalizes. Top-p sorts probabilities from largest to smallest, keeps the smallest prefix whose cumulative mass reaches $p$, sets the rest to zero, and renormalizes. These are **decoding rules**, not changes to the parameterized model distribution $p_\theta$.
+
+## 3. Derivations
+
+### D-M0.5.8-01 · Temperature-scaled softmax and its limits
+
+**Claim.** For $p_T=\operatorname{softmax}(z/T)$, a unique largest logit becomes a point mass as $T\to0^+$, while $p_T$ tends to the uniform distribution as $T\to\infty$.
+
+**Steps.**
+
+1. Let $z_{\max}=\max_i z_i$ and subtract it from every logit:
+   $$
+   (p_T)_i=
+   \frac{\exp((z_i-z_{\max})/T)}
+   {\sum_{j=1}^{K}\exp((z_j-z_{\max})/T)}.
+   $$
+   (Subtracting a common value does not change a softmax, and it avoids unnecessary overflow.)
+2. Suppose the maximum is unique at index $i^\star$. Then $z_{i^\star}-z_{\max}=0$, while $z_i-z_{\max}<0$ for $i\ne i^\star$. Therefore, as $T\to0^+$,
+   $$
+   \exp((z_{i^\star}-z_{\max})/T)=1,
+   \qquad
+   \exp((z_i-z_{\max})/T)\to0\quad(i\ne i^\star).
+   $$
+   (A negative gap divided by a temperature approaching zero tends to negative infinity.)
+3. Take the ratio:
+   $$
+   \lim_{T\to0^+}p_T=e_{i^\star},
+   $$
+   where $e_{i^\star}$ is the one-hot distribution at the argmax. (If several logits tie for the maximum, the limit is uniform over the maximizing indices.)
+4. For $T\to\infty$, use the first-order exponential expansion for each finite $z_i$:
+   $$
+   \exp(z_i/T)=1+\frac{z_i}{T}+O(T^{-2}).
+   $$
+   The denominator is
+   $$
+   \sum_{j=1}^{K}\exp(z_j/T)
+   =K+\frac1T\sum_{j=1}^{K}z_j+O(T^{-2}).
+   $$
+   (Every numerator and the denominator approach finite nonzero values.)
+5. Divide numerator by denominator and take the limit:
+   $$
+   \lim_{T\to\infty}(p_T)_i=\frac1K.
+   $$
+   (All logits become negligible relative to the temperature.)
+6. For the checked logits $z=(2.0,0.5,-1.0)$, $T=10^{-6}$ gives the numerical argmax limit and $T=10^9$ gives the numerical uniform limit. (The check uses stable max-shifting in float64.)
+
+**Check.** checks/M0.5/D-M0.5.8-01.py reports argmax-limit error 0.0 and uniform-limit error 5.000000413701855e-10; passed = True.
+
+**Intuition.** Temperature controls how much relative logit gaps matter. Low temperature turns the largest gap into a near-deterministic choice; high temperature makes all finite gaps small and flattens the distribution.
+
+### D-M0.5.8-02 · Entropy is monotone in temperature
+
+**Theorem.** For finite logits, with $p_T=\operatorname{softmax}(z/T)$ and $T>0$,
+
+$$
+\frac{dH(p_T)}{dT}=\frac{\operatorname{Var}_{p_T}(z)}{T^3}\ge0.
+$$
+
+Equivalently, suppressing the argument, $\frac{dH}{dT}=\frac{\operatorname{Var}_p(z)}{T^3}\ge0$.
+
+Equality holds exactly when the logits have zero variance under $p_T$, which includes the all-equal-logit case.
+
+**Steps.**
+
+1. Set $\beta=1/T$ and define the partition function
+   $$
+   Z(\beta)=\sum_{i=1}^{K}\exp(\beta z_i),
+   \qquad
+   p_i(\beta)=\frac{\exp(\beta z_i)}{Z(\beta)}.
+   $$
+   (This is the same distribution as $p_T$ under the change of variables $\beta=1/T$.)
+2. Write entropy in terms of $\beta$:
+   $$
+   H=-\sum_i p_i\log p_i
+   =-\sum_i p_i(\beta z_i-\log Z)
+   =\log Z(\beta)-\beta\mathbb{E}_{p}[z].
+   $$
+   (Use $\log p_i=\beta z_i-\log Z$ and $\sum_i p_i=1$.)
+3. Differentiate the log partition function:
+   $$
+   \frac{d\log Z}{d\beta}
+   =\frac1Z\sum_i z_i\exp(\beta z_i)
+   =\mathbb{E}_{p}[z].
+   $$
+   (The derivative of the partition function is the unnormalized first moment.)
+4. Differentiate the expected logit directly:
+   $$
+   \frac{dp_i}{d\beta}
+   =p_i\left(z_i-\mathbb{E}_p[z]\right),
+   $$
+   so
+   $$
+   \frac{d\mathbb{E}_p[z]}{d\beta}
+   =\sum_i z_i\frac{dp_i}{d\beta}
+   =\sum_i p_i z_i(z_i-\mathbb{E}_p[z])
+   =\operatorname{Var}_p(z).
+   $$
+   (The final equality expands the centered second moment.)
+5. Differentiate the entropy with respect to $\beta$:
+   $$
+   \frac{dH}{d\beta}
+   =\mathbb{E}_p[z]-\left(\mathbb{E}_p[z]+\beta\operatorname{Var}_p(z)\right)
+   =-\beta\operatorname{Var}_p(z).
+   $$
+   (The first-moment terms cancel.)
+6. Since $\beta=T^{-1}$,
+   $$
+   \frac{d\beta}{dT}=-\frac1{T^2}=-\beta^2.
+   $$
+   Apply the chain rule:
+   $$
+   \frac{dH}{dT}
+   =\frac{dH}{d\beta}\frac{d\beta}{dT}
+   =(-\beta\operatorname{Var}_p(z))(-\beta^2)
+   =\frac{\operatorname{Var}_p(z)}{T^3}\ge0.
+   $$
+   (Variance is nonnegative and $T^3>0$.)
+7. For the checked logits $z=(1.7,-0.3,0.4)$, the float64 entropies at $T=(0.4,0.8,1.5,3.0)$ are
+   $$
+   (0.1972606234471401,\ 0.6567055815608713,\ 0.9461934982752733,\ 1.0592194318872865).
+   $$
+   The maximum central-difference derivative error is 5.558578042297313e-10, and the entropy identity error is 1.1102230246251565e-16. (The numerical sequence is increasing, as the theorem predicts.)
+
+**Check.** checks/M0.5/D-M0.5.8-02.py verifies the derivative, the partition-function identity, and monotonicity; passed = True.
+
+**Comparison, labeled.** Top-k and top-p are not temperature limits. They delete probability support and renormalize it. Thus each produces a distribution different from $p_\theta$ even when $T=1$: modeling determines logits, while decoding chooses how to sample from them.
+
+**Intuition.** Temperature changes the softness of every choice. Truncation makes a discrete support decision. Both can improve a chosen generation behavior, but neither is evidence that the underlying conditional likelihood has changed.
+
+## 4. Numerical verification
+
+The two deterministic float64 checks cover the low- and high-temperature limits, the entropy identity $H=\log Z(\beta)-\beta\mathbb{E}_p[z]$, the derivative $dH/dT=\operatorname{Var}_p(z)/T^3$, and monotonicity on a temperature grid. V-M0.5-d applies top-k and top-p with explicit renormalization.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M0.5.8-01 | argmax error 0.0; uniform error 5.000000413701855e-10 | pass |
+| D-M0.5.8-02 | max derivative error 5.558578042297313e-10; identity error 1.1102230246251565e-16; monotone True | pass |
+
+Run python -m pytest course/tests from the repository parent. The widget test additionally verifies normalization, support truncation, and the cold-versus-hot entropy ordering.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M0.5-d" />
+
+**V-M0.5-d — Distribution shaper.** The widget specification is viz/specs/V-M0.5-d.yaml, and its pure computation is viz/compute/distribution_shaper.ts. Adjust logits, temperature, top-k, and top-p. The widget reports the post-processing probabilities, entropy, and retained support. The existing frontend supplies the bar-chart layer; the compute contract keeps modeling logits and decoding transformations separate.
+
+## 6. Closing
+
+**Counterintuitive question.** Can a model with lower perplexity generate worse text than a model with higher perplexity? **Worked answer:** yes. D-M0.5.1-02 says likelihood training is mass-covering, while D-M0.5.8-02 says decoding can separately flatten or truncate the learned distribution. A generation comparison must state both the model score and the decoding rule.
+
+**Assignment A-M0.5.** Complete the assignment by reporting the temperature, top-k, and top-p settings alongside held-out perplexity and generated samples. Treat decoding as a separate experimental factor and reproduce the entropy curve numerically.
+
+**Spine check.** Architecture-wise, all earlier autoregressive architectures emit logits for their next-symbol conditional; temperature and truncation sit after that conditional. Probability-wise, sampling transforms are explicit changes to the rollout distribution, so they must not be conflated with MLE or with the model's learned $p_\theta$.

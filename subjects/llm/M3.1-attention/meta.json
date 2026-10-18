@@ -1,0 +1,38 @@
+{
+  "subject": "llm",
+  "id": "M3.1",
+  "module": "M3",
+  "title": {
+    "en": "Scaled dot-product and multi-head attention",
+    "zh": "缩放点积与多头注意力"
+  },
+  "prereqs": [
+    "M2.2"
+  ],
+  "estimatedHours": 8,
+  "spine": {
+    "en": {
+      "a": "Treat attention as a normalized, data-dependent linear map whose causal mask preserves the autoregressive factorization.",
+      "b": "Derive the scale, every backward matrix, masking equivalence, and the multi-head cost/path-length trade-off."
+    },
+    "zh": {
+      "a": "将注意力视为一种归一化的、数据依赖的线性映射，其因果掩码保留了自回归分解。",
+      "b": "推导缩放因子、每个反向传播矩阵、掩码等价性以及多头机制的成本与路径长度权衡。"
+    }
+  },
+  "derivations": [
+    "D-M3.1-01",
+    "D-M3.1-02",
+    "D-M3.1-03",
+    "D-M3.1-04",
+    "D-M3.1-05"
+  ],
+  "visualizations": [
+    "V-M3-a",
+    "V-M3-b"
+  ],
+  "assignment": "A-M3",
+  "references": [
+    "vaswani2017"
+  ]
+}

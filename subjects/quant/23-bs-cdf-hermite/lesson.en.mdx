@@ -1,0 +1,531 @@
+import { BSMaterials, bsMaterialHref } from "../../../framework/quant/BSPaperCourse";
+
+<div class="bs-paper-content">
+
+Goal: Understand how the truncation term of the CDF alters Gamma after price combination and division by $h^2$. Duration approximately 90 minutes. Prerequisites: 04; for Gaussian basics, read <a href={bsMaterialHref("complex_cdf_series.md")}>complete template</a> first.
+
+## 1. Gaussian, erfc, and derivative polynomials
+
+The standard normal density and CDF are
+
+$$
+\phi(x)=\frac{e^{-x^2/2}}{\sqrt{2\pi}},\quad\Phi(x)=\int_{-\infty}^x\phi(u)\,du.
+$$
+
+Let $u=t/\sqrt2$, which allows deriving from the definition of erf
+
+$$
+\Phi(x)=\frac12\operatorname{erfc}(-x/\sqrt2),\quad 1-\Phi(x)=\frac12\operatorname{erfc}(x/\sqrt2).
+$$
+
+Use the latter formula directly for the right tail to avoid first obtaining a CDF close to 1 and then subtracting. Specific accuracy is still determined by the erfc implementation; see [DLMF 7.2](https://dlmf.nist.gov/7.2).
+
+Starting from $\phi'=-x\phi$, repeatedly differentiate to obtain
+
+$$
+\phi^{(n)}=(-1)^n\operatorname{He}_n\phi,\quad\operatorname{He}_{n+1}=x\operatorname{He}_n-\operatorname{He}'_n.
+$$
+
+Here $\operatorname{He}_0=1$, $\operatorname{He}_1=x$, $\operatorname{He}_2=x^2-1$, $\operatorname{He}_3=x^3-3x$. Because $\Phi'=\phi$, therefore
+
+$$
+\Phi^{(n)}(x)=(-1)^{n-1}\operatorname{He}_{n-1}(x)\phi(x),\quad n\ge1.
+$$
+
+[DLMF 7.10.1](https://dlmf.nist.gov/7.10#E1) uses the physics version $H_n$; convert to $H_n(u)=2^{n/2}\operatorname{He}_n(\sqrt2u)$. The Gaussian exponent scales differ, so coefficients cannot be mixed directly.
+
+## 2. Insert complex Taylor, check signs term by term
+
+Let $z=a+ib$, replacing the increment with $ib$. The complete CDF is an entire function, but its complex values no longer represent the probability of being less than a complex number.
+
+$$
+\Phi(a+ib)=\Phi(a)+\sum_{n=1}^{\infty}\frac{(ib)^n}{n!}\Phi^{(n)}(a).
+$$
+
+Write up to the sixth order, separating real and imaginary parts for manual calculation:
+
+$$
+\operatorname{Re}\Phi(a+ib)=\Phi(a)+\phi(a)\left(\frac{ab^2}{2}+\frac{(3a-a^3)b^4}{24}+\frac{(a^5-10a^3+15a)b^6}{720}\right)+O(b^8).
+$$
+
+$$
+\operatorname{Im}\Phi(a+ib)=\phi(a)\left(b+\frac{(1-a^2)b^3}{6}+\frac{(a^4-6a^2+3)b^5}{120}\right)+O(b^7).
+$$
+
+**paper pause A:** Compute up to the third-order term using only $i^2=-1$ and the density derivative, without looking at the equation above. Why is the second-order term positive $ab^2/2$?
+
+<details class="bs-paper-answer">
+<summary> Pause A answer</summary>
+
+
+The second-order term is $(ib)^2\Phi''(a)/2=(-b^2)(-a\phi(a))/2$. The third-order term is $(-ib^3)(a^2-1)\phi(a)/6=i(1-a^2)b^3\phi(a)/6$.
+
+
+</details>
+
+## 3. Original Assignment P1 and Current P2-P6
+
+Let $P_N$ denote the above series truncated to $b^N$. The original assignment only had $P_1=\Phi(a)+ib\phi(a)$. The current API does not provide P1; the minimum is P2, with P3 as the default.
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Order
+
+</th>
+<th>
+
+Main added term
+
+</th>
+<th>
+
+CDF general local remainder
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+P1 (textbook diagnostic only)
+
+</td>
+<td>
+
+$ib\phi(a)$
+
+</td>
+<td>
+
+$O(b^2)$
+
+</td>
+</tr>
+<tr>
+<td>
+
+P2
+
+</td>
+<td>
+
+$ab^2\phi(a)/2$
+
+</td>
+<td>
+
+$O(b^3)$
+
+</td>
+</tr>
+<tr>
+<td>
+
+P3 (current default)
+
+</td>
+<td>
+
+$i(1-a^2)b^3\phi(a)/6$
+
+</td>
+<td>
+
+$O(b^4)$
+
+</td>
+</tr>
+<tr>
+<td>
+
+P4
+
+</td>
+<td>
+
+Real part fourth-order term
+
+</td>
+<td>
+
+$O(b^5)$
+
+</td>
+</tr>
+<tr>
+<td>
+
+P5
+
+</td>
+<td>
+
+Imaginary part fifth-order term
+
+</td>
+<td>
+
+$O(b^6)$
+
+</td>
+</tr>
+<tr>
+<td>
+
+P6
+
+</td>
+<td>
+
+Real part sixth-order term
+
+</td>
+<td>
+
+$O(b^7)$
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+A finite truncation dispatched by $a=\operatorname{Re}z,b=\operatorname{Im}z$ generally does not satisfy the conditions for a complete analytic function. It can approximate the local Taylor expansion, but this does not imply that the entire price automatically recovers full analyticity.
+
+## 4. Counterexample: P1 causes the CS-real Gamma to be doubled
+
+Fix the other parameters of the Call, replacing only $S$ with $S+ih$. Let $u=1/(S\tau)$, $v=-1/(S^2\tau)$. The $S$ derivatives of $d_1,d_2$ are all $u$, and the second-order derivatives are all $v$, so
+
+$$
+\operatorname{Re}d_j(S+ih)=d_j-\frac{h^2}2v+O(h^4),\quad\operatorname{Im}d_j(S+ih)=hu+O(h^3).
+$$
+
+Under P1, the real part of the CDF is only $\Phi(d_j)-h^2v\phi(d_j)/2+O(h^4)$, and the imaginary part is $hu\phi(d_j)+O(h^3)$. Multiplying by the complex $S+ih$, the quadratic coefficient of the real part of the Call is
+
+$$
+\operatorname{Re}C_{P1}(S+ih)-C(S)=-h^2 e^{-qT}\phi(d_1)u+O(h^4)=-h^2\Gamma+O(h^4).
+$$
+
+The $v$ term is canceled by $A\phi(d_1)=B\phi(d_2)$, but the $(ih)(ihu)$ in the multiplication leaves an additional real part. Thus
+
+$$
+-\frac2{h^2}(\operatorname{Re}C_{P1}(S+ih)-C(S))=2\Gamma+O(h^2).
+$$
+
+The algorithm converges to $2\Gamma$, not merely converging slowly. The missing quadratic real part term of the CDF determines the leading coefficient of the second-order derivative. After P2 supplements this term, the correct $\Gamma$ limit of CS-real can be restored.
+
+80-digit price calculations and the sequence in scenario 1 confirm this. The table shows "CS-real estimator / analytic Gamma", not the error:
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+h
+
+</th>
+<th>
+
+P1 Ratio
+
+</th>
+<th>
+
+P2 Ratio
+
+</th>
+<th>
+
+P3 Ratio
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+0.1
+
+</td>
+<td>
+
+1.9999990833
+
+</td>
+<td>
+
+0.9999997500
+
+</td>
+<td>
+
+1.00000799999
+
+</td>
+</tr>
+<tr>
+<td>
+
+0.01
+
+</td>
+<td>
+
+1.9999999908
+
+</td>
+<td>
+
+0.9999999975
+
+</td>
+<td>
+
+1.00000008000
+
+</td>
+</tr>
+<tr>
+<td>
+
+0.001
+
+</td>
+<td>
+
+1.9999999999
+
+</td>
+<td>
+
+0.999999999975
+
+</td>
+<td>
+
+1.00000000080
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+The same real-part differentiation template, with different CDF truncations, can change the limit or the error constant. Here, the finite-step error for P3 is larger than for P2, which also shows that "adding a term is always more accurate" is not a theorem. See `artifacts/bs-math/p1_gamma_limit.csv` for the full sequence.
+
+**Paper pause B:** Write out the two groups of $v$ terms in the price separately, then eliminate them using the density identity. Do not assume that "P1 is sufficient for Delta" implies "it is also sufficient for Gamma."
+
+<details class="bs-paper-answer">
+<summary>Pause B answer</summary>
+
+
+$-A\phi(d_1)vh^2/2+B\phi(d_2)vh^2/2=0$; the imaginary part of $S$ multiplied by the imaginary part of the CDF leaves $-e^{-qT}\phi(d_1)u h^2$. The teaching script reproduces this limit using 80-bit arithmetic.
+
+
+</details>
+
+## 5. Why does 45° fourth-order accuracy require P3?
+
+First, experiment with the standalone CDF to avoid the multiplicative confusion of composite prices. Let $t=h/\sqrt2$; the imaginary part of P2 is only $b\phi(a)$, and the 45° symmetric sum gives
+
+$$
+G_2(h)=\frac{t(\phi(x+t)-\phi(x-t))}{h^2}=\Phi''(x)+\frac{h^2}{12}\Phi^{(4)}(x)+\frac{h^4}{480}\Phi^{(6)}(x)+O(h^6).
+$$
+
+The new cubic imaginary part term added by P3 can be written as $-b^3\Phi^{(3)}(a)/6$. The contribution after adding the two points is
+
+$$
+-\frac{t^3}{6h^2}(\Phi^{(3)}(x+t)-\Phi^{(3)}(x-t))=-\frac{h^2}{12}\Phi^{(4)}(x)-\frac{h^4}{144}\Phi^{(6)}(x)+O(h^6).
+$$
+
+The second-order terms cancel exactly, and the fourth-order coefficient is $1/480-1/144=-7/1440$:
+
+$$
+G_3(h)=\Phi''(x)-\frac{7h^4}{1440}\Phi^{(6)}(x)+O(h^6).
+$$
+
+Adding the quintic imaginary term of P5 yields
+
+$$
+G_5(h)=\Phi''(x)-\frac{h^4}{360}\Phi^{(6)}(x)+O(h^6).
+$$
+
+The leading fourth-order coefficient of the full CDF is the same as P5, but the remainder term of the full formula is $O(h^8)$. Do not mistake "leading coefficients are the same" for "all higher-order terms are the same". The imaginary parts of P3/P4 for the standalone CDF are identical, and the 45° results are the same; however, the complex $S$ in BS prices mixes the real part of the CDF into the imaginary part, so one cannot infer that the P3/P4 results for BS are also the same.
+
+## 6. Paper pause using sequences for verification
+
+Take $x=0.3$, $h_n=0.04/2^n$, and the true second derivative is $\Phi''(x)=-x\phi(x)$. The original high-precision study gives:
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+n
+
+</th>
+<th>
+
+h
+
+</th>
+<th>
+
+P2 absolute error
+
+</th>
+<th>
+
+P3 absolute error
+
+</th>
+<th>
+
+Full CDF absolute error
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+0
+
+</td>
+<td>
+
+0.04
+
+</td>
+<td>
+
+4.438493e-5
+
+</td>
+<td>
+
+2.008111e-8
+
+</td>
+<td>
+
+1.147874e-8
+
+</td>
+</tr>
+<tr>
+<td>
+
+1
+
+</td>
+<td>
+
+0.02
+
+</td>
+<td>
+
+1.109785e-5
+
+</td>
+<td>
+
+1.255382e-9
+
+</td>
+<td>
+
+7.174210e-10
+
+</td>
+</tr>
+<tr>
+<td>
+
+2
+
+</td>
+<td>
+
+0.01
+
+</td>
+<td>
+
+2.774563e-6
+
+</td>
+<td>
+
+7.846629e-11
+
+</td>
+<td>
+
+4.483881e-11
+
+</td>
+</tr>
+<tr>
+<td>
+
+3
+
+</td>
+<td>
+
+0.005
+
+</td>
+<td>
+
+6.936470e-7
+
+</td>
+<td>
+
+4.904220e-12
+
+</td>
+<td>
+
+2.802426e-12
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+**Paper pause C:** Find the error ratio of the first two halvings and the $\log_2$ ratio.
+
+<details class="bs-paper-answer">
+<summary>Answer to pause C</summary>
+
+
+P2 is close to 4 and 2; P3 is close to 16 and 4. The full CDF is also close to fourth order; a more complete CDF does not automatically change the fourth-order upper limit of the differentiation template.
+
+See the latter part of the <a href={bsMaterialHref("complex_cdf_series.md")}>template</a> for an independent 80 digit study of the full BS composite price. P3-P6 can recover the fourth-order leading error of 45° in general local scenarios, but the error constants differ under finite step sizes, and higher-order truncation does not guarantee greater accuracy at every point.
+
+
+</details>
+
+## 7. Making engineering choices from mathematics
+
+Analytical Greeks are the preferred choice for current BS; CS is a comparison tool. When using 45°, the current default is P3, allowing P2-P6 for research trade-offs. P2 must be interpreted according to the usual second-order error; the production default of P3 does not represent the full complex CDF, nor does it guarantee accuracy for large imaginary parts. When used for new parameter directions or new Greeks, the truncation error of the composite operator should be re-analyzed.
+
+Beyond accuracy, there is a cost: adding CDF terms increases multiply-add operations; this repository already contains <a href={bsMaterialHref("cdf_performance.md")}>performance experiments</a>. Increased operand count, increased runtime, and reduced parallel efficiency are distinct issues and should be measured separately. Neither NumPy batch operations nor C++ `par_unseq` can prove SIMD or multicore benefits based on name alone.
+
+</div>
+
+<BSMaterials lang="en" lesson={5} />

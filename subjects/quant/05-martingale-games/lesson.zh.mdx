@@ -1,0 +1,42 @@
+import { MartingaleGame } from '../../../framework/quant/MartingaleGame';
+import { graphConceptHref, quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## 直接挑战
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+星图节点：<a href={graphConceptHref('martingale')}>Martingale／鞅</a>。这次难在推理：每一步都要先看**现在知道什么**。数值由固定规则随机生成；“换一局”会更换整套数字，无需本地模型生成题目。
+
+记号：$M_n$ 是当前值；$\mathcal F_n$ 是截至当前的全部可用信息；$E[\,\cdot\mid\mathcal F_n]$ 是在这些信息下，对仍可能的未来按概率取平均。你会用到 $1/2$、$1/4$ 和小整数，暂不需要测度论证明。
+
+<MartingaleGame lang="zh" />
+
+## 关卡路线
+
+1. 拼出鞅条件，算公平一步的条件期望。
+2. 换成偏置硬币，识别次鞅。
+3. 读四叶概率树，从终值倒推 Doob 鞅。
+4. 抓住“均值不变，但不是鞅”的反例。
+5. 判断赌注有没有偷看未来。
+6. 给平方过程补偿漂移。
+7. 枚举有界停止的终值，再判断无限等待的陷阱。
+
+## 通关后再看定义
+
+离散时间过程 $(M_n)$ 相对信息流 $(\mathcal F_n)$ 是鞅，需要同时满足：
+
+- **适应**：$M_n$ 在时刻 $n$ 已知，即对 $\mathcal F_n$ 可测。
+- **可积**：每个时刻 $E[|M_n|]<\infty$。
+- **条件均值保持**：$E[M_{n+1}\mid\mathcal F_n]=M_n$，几乎处处成立。
+
+本局有限时域、有限数值的例子满足前两项，让你集中检查第三项。鞅性质依赖信息流，也依赖所用的概率分布；更换其中任何一个都要重新检查。
+
+## 这次仍有什么局限
+
+概率树只有四叶，条件平均可以枚举；这还不能代表掌握一般条件期望、零概率事件或连续时间鞅。平方补偿关只练一个具体构造；停止关仅展示有界规则和一个失败例子，并未覆盖可选停止定理的所有版本。
+
+下次独立练习时，先不打开提示，并用自己的话解释“为什么不能对已经排除的分支继续平均”。最后一关的首次到达 $+1$ 是几乎必然有限，但期望时间无限；**几乎必然会停**不够保证停止后的期望仍等于初值。
+
+## 原始讲义
+
+可按需查 [MIT 18.445 条件期望与鞅（第 15 讲）](https://ocw.mit.edu/courses/18-445-introduction-to-stochastic-processes-spring-2015/resources/mit18_445s15_lecture15/) 和 [课程讲义目录](https://ocw.mit.edu/courses/18-445-introduction-to-stochastic-processes-spring-2015/pages/lecture-notes/)。先玩，遇到卡点再查定义与定理条件。

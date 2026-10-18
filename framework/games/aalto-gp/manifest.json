@@ -1,0 +1,1208 @@
+{
+ "course": "aalto-cs-e4895-gaussian-processes",
+ "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes",
+ "upstreamCommit": "383632fae0a12ddd2c3beaeb4690119b1eac5e5c",
+ "license": null,
+ "attribution": "Aalto University CS-E4895 Gaussian Processes (2023) and CS-E4075 Special course on Gaussian processes; slides © their lecturers. Mirror: github.com/SpringNuance/Gaussian-Processes. GPML © Rasmussen & Williams, MIT Press 2006.",
+ "units": [
+  [
+   "Multivariate Gaussians and Bayesian regression",
+   "多元高斯与贝叶斯回归"
+  ],
+  [
+   "Gaussian process regression",
+   "高斯过程回归"
+  ],
+  [
+   "Integration and model selection",
+   "积分与模型选择"
+  ],
+  [
+   "Kernel learning",
+   "核学习"
+  ],
+  [
+   "Classification and approximate inference",
+   "分类与近似推断"
+  ],
+  [
+   "Large-scale Gaussian processes",
+   "大规模高斯过程"
+  ],
+  [
+   "Theory: RKHS and neural networks",
+   "理论：RKHS 与神经网络"
+  ],
+  [
+   "Deep Gaussian processes",
+   "深度高斯过程"
+  ],
+  [
+   "Latent variables and multiple outputs",
+   "隐变量与多输出"
+  ],
+  [
+   "State-space Gaussian processes",
+   "状态空间高斯过程"
+  ],
+  [
+   "Sequential decision making",
+   "序贯决策"
+  ],
+  [
+   "Supplement: CS-E4075 special course",
+   "补充：CS-E4075 专题课"
+  ]
+ ],
+ "version": 1,
+ "games": [
+  {
+   "id": "GP-01",
+   "sequence": 1,
+   "unit": 1,
+   "session": "L1",
+   "kind": "topic",
+   "title": {
+    "en": "Covariance matrices and marginals",
+    "zh": "协方差矩阵与边缘分布"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%201%20Introduction.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 1: Introduction · pp. 47–58",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%201%20Introduction.pdf",
+     "filename": "Lecture 1 Introduction.pdf",
+     "page": 47
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 218
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 1 · Task 1",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-1/assignment1.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-02",
+   "sequence": 2,
+   "unit": 1,
+   "session": "L1–2",
+   "kind": "topic",
+   "title": {
+    "en": "Conditioning a Gaussian",
+    "zh": "高斯分布的条件化"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%201%20Introduction.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 1: Introduction · pp. 59–67",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%201%20Introduction.pdf",
+     "filename": "Lecture 1 Introduction.pdf",
+     "page": 59
+    },
+    {
+     "kind": "notes",
+     "title": "Lecture 2: Bayesian regression · pp. 2–4",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%202%20Bayesian%20regression.pdf",
+     "filename": "Lecture 2 Bayesian regression.pdf",
+     "page": 2
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 218
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 1 · Task 2",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-1/assignment1.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-03",
+   "sequence": 3,
+   "unit": 1,
+   "session": "L1",
+   "kind": "topic",
+   "title": {
+    "en": "Sampling with a Cholesky factor",
+    "zh": "用 Cholesky 因子采样"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%201%20Introduction.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 1: Introduction · p. 56",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%201%20Introduction.pdf",
+     "filename": "Lecture 1 Introduction.pdf",
+     "page": 56
+    },
+    {
+     "kind": "notes",
+     "title": "Lecture 1: Introduction · pp. 63–65",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%201%20Introduction.pdf",
+     "filename": "Lecture 1 Introduction.pdf",
+     "page": 63
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 218
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.4",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 220
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 2 · Task 2",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-2/assignment2.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-04",
+   "sequence": 4,
+   "unit": 1,
+   "session": "L2",
+   "kind": "topic",
+   "title": {
+    "en": "Bayesian linear regression",
+    "zh": "贝叶斯线性回归"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%202%20Bayesian%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 2: Bayesian regression · pp. 6–16",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%202%20Bayesian%20regression.pdf",
+     "filename": "Lecture 2 Bayesian regression.pdf",
+     "page": 6
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 25
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 1 · Tasks 2–3",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-1/assignment1.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-05",
+   "sequence": 5,
+   "unit": 1,
+   "session": "L2",
+   "kind": "topic",
+   "title": {
+    "en": "From weights to functions",
+    "zh": "从权重视角到函数视角"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%202%20Bayesian%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 2: Bayesian regression · pp. 17–44",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%202%20Bayesian%20regression.pdf",
+     "filename": "Lecture 2 Bayesian regression.pdf",
+     "page": 17
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.1.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 29
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 31
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 1 · Task 3",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-1/assignment1.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-06",
+   "sequence": 6,
+   "unit": 2,
+   "session": "L3",
+   "kind": "topic",
+   "title": {
+    "en": "The GP posterior from one or two observations",
+    "zh": "一两个观测下的 GP 后验"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%203%20Gaussian%20process%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 3: Gaussian process regression · pp. 4–9",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%203%20Gaussian%20process%20regression.pdf",
+     "filename": "Lecture 3 Gaussian process regression.pdf",
+     "page": 4
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 31
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 2 · Task 3",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-2/assignment2.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-07",
+   "sequence": 7,
+   "unit": 2,
+   "session": "L3",
+   "kind": "topic",
+   "title": {
+    "en": "Prior means and p(f*|y) versus p(y*|y)",
+    "zh": "先验均值与 p(f*|y)、p(y*|y)"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%203%20Gaussian%20process%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 3: Gaussian process regression · pp. 7–12",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%203%20Gaussian%20process%20regression.pdf",
+     "filename": "Lecture 3 Gaussian process regression.pdf",
+     "page": 7
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 33
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.7",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 45
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 2 · Task 4a",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-2/assignment2.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-08",
+   "sequence": 8,
+   "unit": 2,
+   "session": "L3",
+   "kind": "topic",
+   "title": {
+    "en": "Common covariance functions",
+    "zh": "常用协方差函数"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%203%20Gaussian%20process%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 3: Gaussian process regression · pp. 13–24",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%203%20Gaussian%20process%20regression.pdf",
+     "filename": "Lecture 3 Gaussian process regression.pdf",
+     "page": 13
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §4.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 99
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 2 · Task 1",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-2/assignment2.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-09",
+   "sequence": 9,
+   "unit": 2,
+   "session": "L3, L5",
+   "kind": "topic",
+   "title": {
+    "en": "Combining kernels and positive semi-definiteness",
+    "zh": "核的组合与半正定性"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%203%20Gaussian%20process%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 3: Gaussian process regression · pp. 25–33",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%203%20Gaussian%20process%20regression.pdf",
+     "filename": "Lecture 3 Gaussian process regression.pdf",
+     "page": 25
+    },
+    {
+     "kind": "notes",
+     "title": "Lecture 5: Kernel learning · pp. 22–23",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%205%20Kernel%20learning.pdf",
+     "filename": "Lecture 5 Kernel learning.pdf",
+     "page": 22
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §4.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 97
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §4.2.4",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 112
+    }
+   ]
+  },
+  {
+   "id": "GP-10",
+   "sequence": 10,
+   "unit": 2,
+   "session": "L3",
+   "kind": "topic",
+   "title": {
+    "en": "The marginal likelihood",
+    "zh": "边际似然"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%203%20Gaussian%20process%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 3: Gaussian process regression · pp. 34–44",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%203%20Gaussian%20process%20regression.pdf",
+     "filename": "Lecture 3 Gaussian process regression.pdf",
+     "page": 34
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §5.4.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 130
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 2 · Task 4",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-2/assignment2.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-11",
+   "sequence": 11,
+   "unit": 2,
+   "session": "L3, L7",
+   "kind": "topic",
+   "title": {
+    "en": "The cost of exact GP regression",
+    "zh": "精确 GP 回归的计算量"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%203%20Gaussian%20process%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 3: Gaussian process regression · pp. 45–47",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%203%20Gaussian%20process%20regression.pdf",
+     "filename": "Lecture 3 Gaussian process regression.pdf",
+     "page": 45
+    },
+    {
+     "kind": "notes",
+     "title": "Lecture 7: Large-scale Gaussian processes · pp. 4–10",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%207%20Large-scale%20Gaussian%20processes.pdf",
+     "filename": "Lecture 7 Large-scale Gaussian processes.pdf",
+     "page": 4
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §Alg. 2.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 37
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.4",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 220
+    }
+   ]
+  },
+  {
+   "id": "GP-12",
+   "sequence": 12,
+   "unit": 3,
+   "session": "L4",
+   "kind": "topic",
+   "title": {
+    "en": "Leave-one-out cross-validation in closed form",
+    "zh": "留一法交叉验证的闭式"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%204%20Integration%20and%20model%20selection.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 4: Integration and model selection · pp. 47–55",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%204%20Integration%20and%20model%20selection.pdf",
+     "filename": "Lecture 4 Integration and model selection.pdf",
+     "page": 47
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §5.4.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 134
+    }
+   ]
+  },
+  {
+   "id": "GP-13",
+   "sequence": 13,
+   "unit": 3,
+   "session": "L4",
+   "kind": "topic",
+   "title": {
+    "en": "Integration, heteroscedastic GPs and basis functions",
+    "zh": "积分、异方差 GP 与基函数近似"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%204%20Integration%20and%20model%20selection.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 4: Integration and model selection · pp. 7–46",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%204%20Integration%20and%20model%20selection.pdf",
+     "filename": "Lecture 4 Integration and model selection.pdf",
+     "page": 7
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.7",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 45
+    }
+   ]
+  },
+  {
+   "id": "GP-14",
+   "sequence": 14,
+   "unit": 4,
+   "session": "L5",
+   "kind": "topic",
+   "title": {
+    "en": "Kernels as inner products of features",
+    "zh": "核即特征的内积"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%205%20Kernel%20learning.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 5: Kernel learning · pp. 4–24",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%205%20Kernel%20learning.pdf",
+     "filename": "Lecture 5 Kernel learning.pdf",
+     "page": 4
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §4.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 97
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.1.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 29
+    }
+   ]
+  },
+  {
+   "id": "GP-15",
+   "sequence": 15,
+   "unit": 4,
+   "session": "L5",
+   "kind": "topic",
+   "title": {
+    "en": "Spectral densities and spectral kernels",
+    "zh": "谱密度与谱核"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%205%20Kernel%20learning.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 5: Kernel learning · pp. 30–64",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%205%20Kernel%20learning.pdf",
+     "filename": "Lecture 5 Kernel learning.pdf",
+     "page": 30
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §4.2.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 100
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §B.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 226
+    },
+    {
+     "kind": "assignment",
+     "title": "CS-E4075 lab 4 · Spectral mixture kernel",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Special%20Course%20in%20Gaussian%20Process%20Assignments/Assignment%204/lab4.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-16",
+   "sequence": 16,
+   "unit": 4,
+   "session": "L5",
+   "kind": "topic",
+   "title": {
+    "en": "Structured and non-stationary kernels",
+    "zh": "结构化核与非平稳核"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%205%20Kernel%20learning.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 5: Kernel learning · pp. 25–29",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%205%20Kernel%20learning.pdf",
+     "filename": "Lecture 5 Kernel learning.pdf",
+     "page": 25
+    },
+    {
+     "kind": "notes",
+     "title": "Lecture 5: Kernel learning · pp. 65–77",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%205%20Kernel%20learning.pdf",
+     "filename": "Lecture 5 Kernel learning.pdf",
+     "page": 65
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §4.2.3",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 108
+    }
+   ]
+  },
+  {
+   "id": "GP-17",
+   "sequence": 17,
+   "unit": 5,
+   "session": "L6",
+   "kind": "topic",
+   "title": {
+    "en": "Likelihoods, link functions and log-concavity",
+    "zh": "似然、链接函数与对数凹性"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%206%20Classification.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 6: Classification · pp. 3–25",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%206%20Classification.pdf",
+     "filename": "Lecture 6 Classification.pdf",
+     "page": 3
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §3.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 52
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §3.3",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 57
+    }
+   ]
+  },
+  {
+   "id": "GP-18",
+   "sequence": 18,
+   "unit": 5,
+   "session": "L6",
+   "kind": "topic",
+   "title": {
+    "en": "The Laplace approximation",
+    "zh": "Laplace 近似"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%206%20Classification.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 6: Classification · pp. 26–60",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%206%20Classification.pdf",
+     "filename": "Lecture 6 Classification.pdf",
+     "page": 26
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §3.4",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 59
+    }
+   ]
+  },
+  {
+   "id": "GP-19",
+   "sequence": 19,
+   "unit": 5,
+   "session": "L6",
+   "kind": "topic",
+   "title": {
+    "en": "Variational inference for classification",
+    "zh": "分类问题的变分推断"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%206%20Classification.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 6: Classification · pp. 61–80",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%206%20Classification.pdf",
+     "filename": "Lecture 6 Classification.pdf",
+     "page": 61
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.5",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 221
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 3 · Tasks 1a–1f",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-3/assignment-3.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-20",
+   "sequence": 20,
+   "unit": 6,
+   "session": "L7",
+   "kind": "topic",
+   "title": {
+    "en": "Grid structure and conjugate gradients",
+    "zh": "网格结构与共轭梯度"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%207%20Large-scale%20Gaussian%20processes.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 7: Large-scale Gaussian processes · pp. 11–24",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%207%20Large-scale%20Gaussian%20processes.pdf",
+     "filename": "Lecture 7 Large-scale Gaussian processes.pdf",
+     "page": 11
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.3",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 219
+    }
+   ]
+  },
+  {
+   "id": "GP-21",
+   "sequence": 21,
+   "unit": 6,
+   "session": "L7",
+   "kind": "topic",
+   "title": {
+    "en": "Nyström approximation and the Woodbury identity",
+    "zh": "Nyström 近似与 Woodbury 恒等式"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%207%20Large-scale%20Gaussian%20processes.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 7: Large-scale Gaussian processes · pp. 25–39",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%207%20Large-scale%20Gaussian%20processes.pdf",
+     "filename": "Lecture 7 Large-scale Gaussian processes.pdf",
+     "page": 25
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §8.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 189
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.3",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 219
+    }
+   ]
+  },
+  {
+   "id": "GP-22",
+   "sequence": 22,
+   "unit": 6,
+   "session": "L7",
+   "kind": "topic",
+   "title": {
+    "en": "Sparse variational GPs",
+    "zh": "稀疏变分 GP"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%207%20Large-scale%20Gaussian%20processes.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 7: Large-scale Gaussian processes · pp. 40–80",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%207%20Large-scale%20Gaussian%20processes.pdf",
+     "filename": "Lecture 7 Large-scale Gaussian processes.pdf",
+     "page": 40
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §8.3",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 193
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 4 · Task 1",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-4/assignment4.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-23",
+   "sequence": 23,
+   "unit": 7,
+   "session": "L8",
+   "kind": "topic",
+   "title": {
+    "en": "RKHS, the representer theorem and kernel ridge regression",
+    "zh": "RKHS、表示定理与核岭回归"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%208%20Theory%20%26%20Advanced%20Topics.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 8: Theory & Advanced Topics · pp. 2–12",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%208%20Theory%20%26%20Advanced%20Topics.pdf",
+     "filename": "Lecture 8 Theory & Advanced Topics.pdf",
+     "page": 2
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §6.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 147
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §6.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 150
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 4 · Task 2",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-4/assignment4.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-24",
+   "sequence": 24,
+   "unit": 7,
+   "session": "L8",
+   "kind": "topic",
+   "title": {
+    "en": "Infinitely wide networks and the neural tangent kernel",
+    "zh": "无限宽网络与神经正切核"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%208%20Theory%20%26%20Advanced%20Topics.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 8: Theory & Advanced Topics · pp. 13–27",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%208%20Theory%20%26%20Advanced%20Topics.pdf",
+     "filename": "Lecture 8 Theory & Advanced Topics.pdf",
+     "page": 13
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §4.2.3",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 109
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 4 · Task 3",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-4/assignment4.ipynb"
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 6 · Task 2",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-6/assignment6.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-25",
+   "sequence": 25,
+   "unit": 8,
+   "session": "L9",
+   "kind": "topic",
+   "title": {
+    "en": "Deep Gaussian processes",
+    "zh": "深度高斯过程"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%209%20Deep%20gaussian%20processes.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 9: Deep gaussian processes · pp. 1–74",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%209%20Deep%20gaussian%20processes.pdf",
+     "filename": "Lecture 9 Deep gaussian processes.pdf",
+     "page": 1
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 5 · Tasks 2–3",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-5/assignment5.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-26",
+   "sequence": 26,
+   "unit": 9,
+   "session": "L10",
+   "kind": "topic",
+   "title": {
+    "en": "From probabilistic PCA to the GPLVM",
+    "zh": "从概率 PCA 到 GPLVM"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%2010%20Latent%20modelling%20and%20unsupervised%20learning.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 10: Latent modelling and unsupervised learning · pp. 2–38",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%2010%20Latent%20modelling%20and%20unsupervised%20learning.pdf",
+     "filename": "Lecture 10 Latent modelling and unsupervised learning.pdf",
+     "page": 2
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §9.11",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 214
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 5 · Task 1",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-5/assignment5.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-27",
+   "sequence": 27,
+   "unit": 9,
+   "session": "L10",
+   "kind": "topic",
+   "title": {
+    "en": "Multi-output GPs and coregionalisation",
+    "zh": "多输出 GP 与协区域化"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%2010%20Latent%20modelling%20and%20unsupervised%20learning.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 10: Latent modelling and unsupervised learning · pp. 39–71",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%2010%20Latent%20modelling%20and%20unsupervised%20learning.pdf",
+     "filename": "Lecture 10 Latent modelling and unsupervised learning.pdf",
+     "page": 39
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §9.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 208
+    }
+   ]
+  },
+  {
+   "id": "GP-28",
+   "sequence": 28,
+   "unit": 10,
+   "session": "L11",
+   "kind": "topic",
+   "title": {
+    "en": "Three views of a stationary GP",
+    "zh": "平稳 GP 的三种视角"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%2011%20%20State-space%20GPs.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 11: State-space GPs · pp. 5–15",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%2011%20%20State-space%20GPs.pdf",
+     "filename": "Lecture 11  State-space GPs.pdf",
+     "page": 5
+    },
+    {
+     "kind": "notes",
+     "title": "State Space Representation of GPs (supplement) · pp. 7–17",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/State%20Space%20Representation%20of%20Gaussian%20Processes.pdf",
+     "filename": "State Space Representation of Gaussian Processes.pdf",
+     "page": 7
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §B.1",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 226
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §B.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 229
+    }
+   ]
+  },
+  {
+   "id": "GP-29",
+   "sequence": 29,
+   "unit": 10,
+   "session": "L11",
+   "kind": "topic",
+   "title": {
+    "en": "Kalman filtering and smoothing in O(n)",
+    "zh": "O(n) 的 Kalman 滤波与平滑"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%2011%20%20State-space%20GPs.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 11: State-space GPs · pp. 16–38",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%2011%20%20State-space%20GPs.pdf",
+     "filename": "Lecture 11  State-space GPs.pdf",
+     "page": 16
+    },
+    {
+     "kind": "notes",
+     "title": "State Space Representation of GPs (supplement) · pp. 18–25",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/State%20Space%20Representation%20of%20Gaussian%20Processes.pdf",
+     "filename": "State Space Representation of Gaussian Processes.pdf",
+     "page": 18
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §B.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 229
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §B.3",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 232
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 6 · Task 1",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-6/assignment6.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-30",
+   "sequence": 30,
+   "unit": 11,
+   "session": "L12",
+   "kind": "topic",
+   "title": {
+    "en": "Acquisition functions",
+    "zh": "采集函数"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%2012%20Sequential%20Decision%20Making.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 12: Sequential Decision Making · pp. 6–30",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%2012%20Sequential%20Decision%20Making.pdf",
+     "filename": "Lecture 12 Sequential Decision Making.pdf",
+     "page": 6
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §9.7",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 211
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 6 · Task 3",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-6/assignment6.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-31",
+   "sequence": 31,
+   "unit": 11,
+   "session": "L12",
+   "kind": "topic",
+   "title": {
+    "en": "The Bayesian optimisation loop and model-based RL",
+    "zh": "贝叶斯优化循环与基于模型的强化学习"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%2012%20Sequential%20Decision%20Making.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 12: Sequential Decision Making · pp. 30–41",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%2012%20Sequential%20Decision%20Making.pdf",
+     "filename": "Lecture 12 Sequential Decision Making.pdf",
+     "page": 30
+    },
+    {
+     "kind": "notes",
+     "title": "CS-E4075 Session 11: Dynamical GP models · pp. 17–27",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%20Session%2011.pdf",
+     "filename": "Lecture Session 11.pdf",
+     "page": 17
+    },
+    {
+     "kind": "assignment",
+     "title": "Assignment 6 · Task 3",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Assignments/assignment-6/assignment6.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-S1",
+   "sequence": 32,
+   "unit": 12,
+   "session": "S7",
+   "kind": "bonus",
+   "title": {
+    "en": "Convolutional likelihoods and kernels",
+    "zh": "卷积似然与卷积核"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Special%20Course%20in%20Gaussian%20Process%20Lectures/Lecture%20Session%207.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "CS-E4075 Session 7: Convolutional GPs · pp. 1–38",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%20Session%207.pdf",
+     "filename": "Lecture Session 7.pdf",
+     "page": 1
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §9.4",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 209
+    },
+    {
+     "kind": "assignment",
+     "title": "CS-E4075 lab 4 · Tasks 1–2",
+     "href": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Special%20Course%20in%20Gaussian%20Process%20Assignments/Assignment%204/lab4.ipynb"
+    }
+   ]
+  },
+  {
+   "id": "GP-S2",
+   "sequence": 33,
+   "unit": 12,
+   "session": "S11",
+   "kind": "bonus",
+   "title": {
+    "en": "Dynamical GP models and nonparametric ODEs",
+    "zh": "动力学 GP 模型与非参数 ODE"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Special%20Course%20in%20Gaussian%20Process%20Lectures/Lecture%20Session%2011.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "CS-E4075 Session 11: Dynamical GP models · pp. 1–63",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%20Session%2011.pdf",
+     "filename": "Lecture Session 11.pdf",
+     "page": 1
+    }
+   ]
+  }
+ ]
+}

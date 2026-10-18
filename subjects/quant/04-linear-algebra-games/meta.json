@@ -1,0 +1,25 @@
+{
+  "id": "QUANT-4",
+  "subject": "quant",
+  "kind": "game",
+  "module": "Linear algebra game pilot",
+  "title": {
+    "en": "Linear algebra games: dot products and four fundamental subspaces",
+    "zh": "线性代数小游戏：点积与四个基本子空间"
+  },
+  "prereqs": [],
+  "spine": {
+    "en": {
+      "a": "Build dot products and identify orthogonality.",
+      "b": "Relate the four fundamental subspaces to rank, nullity, solvability, and matrix spaces."
+    },
+    "zh": {
+      "a": "计算点积并识别正交。",
+      "b": "把四个基本子空间与秩、零度、方程可解性和矩阵空间联系起来。"
+    }
+  },
+  "references": [
+    "MIT OpenCourseWare: 18.02SC Dot Product notes",
+    "MIT OpenCourseWare: 18.06SC Fall 2011 Lecture 10, The four fundamental subspaces"
+  ]
+}

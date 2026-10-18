@@ -1,0 +1,37 @@
+{
+  "subject": "llm",
+  "id": "M3.3",
+  "module": "M3",
+  "title": {
+    "en": "Normalization, residuals, and gradient scale",
+    "zh": "归一化、残差与梯度尺度"
+  },
+  "prereqs": [
+    "M3.2"
+  ],
+  "estimatedHours": 6,
+  "spine": {
+    "en": {
+      "a": "Normalization and residual placement determine how an attention/FFN block writes into the residual stream and how depth changes the backward scale.",
+      "b": "The residual stream is still a conditional representation; normalization changes the coordinates in which each conditional read and gradient is parameterized, not the causal factorization."
+    },
+    "zh": {
+      "a": "归一化和残差位置决定了注意力/前馈块如何写入残差流，以及深度如何改变反向传播的尺度。",
+      "b": "残差流仍然是一种条件表示；归一化改变了每个条件读取和梯度的参数化坐标，而非因果分解。"
+    }
+  },
+  "derivations": [
+    "D-M3.3-01",
+    "D-M3.3-02",
+    "D-M3.3-03"
+  ],
+  "visualizations": [
+    "V-M3-d"
+  ],
+  "assignment": "A-M3",
+  "references": [
+    "xiong2020",
+    "elhage2021",
+    "rmsnorm2019"
+  ]
+}

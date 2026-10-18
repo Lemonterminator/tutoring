@@ -1,0 +1,465 @@
+import { BSMaterials, bsMaterialHref } from "../../../framework/quant/BSPaperCourse";
+import bsFigure0 from "../../../content/bs-math/assets/assignment_errors.png";
+
+<div class="bs-paper-content">
+
+Objective: Derive the error order from Taylor expansion, rather than guessing the algorithm after seeing the error curve. Time required: approximately 90 minutes. Prerequisite: Article 02. This section involves bumping parameters on a known price function to compute Greeks; it differs from solving the BS PDE using a finite difference grid.
+
+## 1. Start from the Same Taylor Table
+
+Fix other parameters and denote $f(x)=C(x)$. In a smooth region, write
+
+$$
+f(x+jh)=f+jhf'+\frac{j^2h^2}{2}f''+\frac{j^3h^3}{6}f^{(3)}+\frac{j^4h^4}{24}f^{(4)}+O(h^5).
+$$
+
+All derivatives on the right side are evaluated at $x$. Taking $j=1,2,-1$ yields the two forward formulas from the original assignment and the common central formula. $f^{(k)}$ denotes the k-th derivative.
+
+## 2. First-Order Differences
+
+Forward difference subtracts first then divides by $h$:
+
+$$
+D_f(h)=\frac{f(x+h)-f(x)}h=f'+\frac h2 f''+\frac{h^2}6 f^{(3)}+O(h^3).
+$$
+
+The leading error is $O(h)$, so when the step size is halved, the error should approximately halve in the truncation-dominated region. The odd-symmetric subtraction in central difference cancels even terms:
+
+$$
+D_c(h)=\frac{f(x+h)-f(x-h)}{2h}=f'+\frac{h^2}6 f^{(3)}+O(h^4).
+$$
+
+Its leading error is $O(h^2)$. Higher orders require better symmetry or weight combinations, not automatically obtained merely by "using more price points".
+
+**Paper pause A:** Write $f(x+h)$ and $f(x-h)$ up to the fourth-order term, and mark why the central formula does not contain $h f''$.
+
+<details class="bs-paper-answer">
+<summary> Paper pause A Answer</summary>
+
+
+Subtracting the $f,h^2f''/2,h^4f^{(4)}/24$ on both sides cancels them out, leaving $2hf'+h^3f^{(3)}/3$. Dividing by $2h$ yields the equation above.
+
+
+</details>
+
+## 3. The Gamma in the original assignment is a forward three-point
+
+Note that it is not a central second-order difference. Multiply the three rows of $j=2,1,0$ by $1,-2,1$ respectively:
+
+$$
+G_f(h)=\frac{f(x+2h)-2f(x+h)+f(x)}{h^2}=f''+h f^{(3)}+\frac{7h^2}{12}f^{(4)}+O(h^3).
+$$
+
+The `gamma_forward` in the original assignment is $O(h)$. The central second-order difference is
+
+$$
+G_c(h)=\frac{f(x+h)-2f(x)+f(x-h)}{h^2}=f''+\frac{h^2}{12}f^{(4)}+O(h^4).
+$$
+
+**Paper pause B:** Independently calculate the coefficients of the third and fourth terms in the forward Gamma. Hint: $2^k-2$.
+
+<details class="bs-paper-answer">
+<summary> Pause B Answer</summary>
+
+
+The third term is $(8-2)/6=1$, which becomes $h f^{(3)}$ after dividing by $h^2$; the fourth term is $(16-2)/24=7/12$. The first-order and constant terms cancel out, leaving $f''$ for the second-order term.
+
+
+</details>
+
+## 4. How does floating-point subtraction amplify errors?
+
+Let each calculated price be $\widehat f_j=f(x+jh)+\eta_j$, where $|\eta_j|\le\epsilon M$. $M$ is the absolute error scale of the price calculation, which is not necessarily equal to the small final price; for deep ITM/OTM cases or when terms in the pricing formula cancel out, consider the errors in intermediate terms and the pricing algorithm.
+
+The error perturbation for forward Delta is $(\eta_1-\eta_0)/h$, with an absolute upper bound of $2\epsilon M/h$. The perturbation for forward Gamma is $(\eta_2-2\eta_1+\eta_0)/h^2$, with an upper bound of $4\epsilon M/h^2$.
+
+$$
+E(h)\lesssim a h^p+\frac{b\epsilon M}{h^k}.
+$$
+
+Here $p$ is the truncation order, and $k$ is the differentiation order. The first term decreases as $h$ becomes smaller, while the second term increases. Additionally, $x+h$ may be rounded to $x$, causing the bump to disappear.
+
+In float64, `eps` is approximately $2.22\times10^{-16}$, and the unit roundoff for nearest rounding is half of that. The following analysis considers only the order of magnitude, denoted as $\epsilon$, and does not conflate the two concepts into exact constants.
+
+Differentiating the error model and setting the derivative to zero yields
+
+$$
+h_*^{p+k}=\frac{k b\epsilon M}{p a}.
+$$
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Estimator
+
+</th>
+<th>
+
+p
+
+</th>
+<th>
+
+k
+
+</th>
+<th>
+
+Step size power law ignoring scale constants
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+Forward Delta
+
+</td>
+<td>
+
+1
+
+</td>
+<td>
+
+1
+
+</td>
+<td>
+
+$\epsilon^{1/2}$
+
+</td>
+</tr>
+<tr>
+<td>
+
+Central Delta
+
+</td>
+<td>
+
+2
+
+</td>
+<td>
+
+1
+
+</td>
+<td>
+
+$\epsilon^{1/3}$
+
+</td>
+</tr>
+<tr>
+<td>
+
+Forward Gamma
+
+</td>
+<td>
+
+1
+
+</td>
+<td>
+
+2
+
+</td>
+<td>
+
+$\epsilon^{1/3}$
+
+</td>
+</tr>
+<tr>
+<td>
+
+Central Gamma
+
+</td>
+<td>
+
+2
+
+</td>
+<td>
+
+2
+
+</td>
+<td>
+
+$\epsilon^{1/4}$
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+These power laws must be dimensionally scaled: $h$ has units of underlying price, so $\epsilon^{1/4}$ cannot be directly treated as a dollar step size. For near-expiry ATM options, the local width $L=S\sigma\sqrt T$ from the previous article provides an initial scale, but final validation still requires scanning.
+
+**Paper pause C:** If $h$ is reduced by a factor of ten, by what factor does the roundoff amplification term for Gamma change?
+
+<details class="bs-paper-answer">
+<summary>Answer to pause C</summary>
+
+
+Approximately 100 times, not 10 times, because the denominator is $h^2$.
+
+
+</details>
+
+## 5. Determine entry into the asymptotic regime using a sequence
+
+Let $h_n=h_0/2^n$, $E_n=|G(h_n)-\Gamma_{ref}|$. Define
+
+$$
+R_n=\frac{E_n}{E_{n+1}},\quad p_n=\frac{\log R_n}{\log 2}.
+$$
+
+If $E_n\sim c h_n^p$ and $c\ne0$, then $R_n\to2^p$: first order corresponds to 2, second order corresponds to 4, and fourth order corresponds to 16. This pattern breaks down after entering the roundoff-dominated regime. Do not blindly compute this ratio when the error is exactly 0, the reference is biased, or the leading coefficient is 0.
+
+Richardson extrapolation is also derived from the same formula. If $G(h)=g+a h^p+O(h^{p+1})$, then
+
+$$
+G_R(h)=\frac{2^pG(h/2)-G(h)}{2^p-1}
+$$
+
+the leading error is eliminated. It also combines the noise from two computations, so it yields reliable benefits only in the truncation-dominated regime.
+
+## 6. Perform the experiment completely according to the original assignment
+
+Scenario 1 is $(100,100,0,0,0.2,1)$; scenario 2 is $(100,100,0,0,0.01,1/365)$, with the tuple order fixed as $(S,K,r,q,\sigma,T)$.
+
+Take 24 log-uniform $h_{rel}\in[10^{-16},10^{-4}]$, with absolute step size $h=S h_{rel}$. Compute analytic Delta/Gamma, forward Delta/Gamma, CS Delta, CS real part Gamma, and 45° Gamma. Currently using `order=3`; the P2 comparison should be stated separately.
+
+The exact CSV headers required by the original assignment are on one line; they may be wrapped for display:
+
+```text
+h_rel,h,Delta_analytic,Delta_fd,Delta_cs,err_D_fd,err_D_cs,Gamma_analytic,Gamma_fd,Gamma_cs_real,Gamma_cs_45,err_G_fd,err_G_cs_real,err_G_cs_45
+```
+
+`err` are the absolute differences between the corresponding numerical estimates and the analytic float64 reference. For example, $err\_G\_fd=|\Gamma_{fd}-\Gamma_{analytic}|$. This error cannot be automatically interpreted as the exact error relative to the true value.
+
+<Figure id="bs-03-figure-0">
+
+<img class="bs-paper-image" src={bsFigure0} alt="Error curves for the two scenarios in the original assignment" />
+
+<figcaption>Error curves for the two scenarios in the original assignment</figcaption>
+
+</Figure>
+
+The figure was recomputed by the teaching script calling the existing Python kernel, including all five numerical estimates; CS CDF is P3. Points with zero error are omitted on the log scale; zero is not replaced by a fabricated positive error. The production function was not modified.
+
+The Gamma comparison summary for the current teaching run is as follows. It is the result among these 24 step sizes; in particular, the minimum error of 45° in scenario 1 occurs at the upper bound of the scan, so one cannot claim to have located the optimal step size in the continuous sense based on this.
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Scenario / Method
+
+</th>
+<th>
+
+Grid minimum absolute error
+
+</th>
+<th>
+
+Corresponding h/S
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+1 / Forward FD
+
+</td>
+<td>
+
+5.9720e-8
+
+</td>
+<td>
+
+2.7213e-6
+
+</td>
+</tr>
+<tr>
+<td>
+
+1 / CS-real
+
+</td>
+<td>
+
+2.1223e-10
+
+</td>
+<td>
+
+3.0079e-5
+
+</td>
+</tr>
+<tr>
+<td>
+
+1 / 45° P3
+
+</td>
+<td>
+
+2.0935e-14
+
+</td>
+<td>
+
+1.0000e-4
+
+</td>
+</tr>
+<tr>
+<td>
+
+2 / Forward FD
+
+</td>
+<td>
+
+1.0972e-5
+
+</td>
+<td>
+
+2.4621e-7
+
+</td>
+</tr>
+<tr>
+<td>
+
+2 / CS-real
+
+</td>
+<td>
+
+1.5641e-6
+
+</td>
+<td>
+
+8.1855e-7
+
+</td>
+</tr>
+<tr>
+<td>
+
+2 / 45° P3
+
+</td>
+<td>
+
+4.7610e-10
+
+</td>
+<td>
+
+2.7213e-6
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+All grid values for the five methods in this run across both scenarios are finite, but a Gamma that is 'too small to resolve' may return 0 rather than NaN. Passing a finite value check does not substitute for an accuracy check. The above scan covers only the original assignment scenarios and does not represent the ranking over the entire parameter domain.
+
+**Paper pause D:** Before looking at the curves, sketch the predicted FD Gamma error profile, labeling "large step truncation dominant" and "small step roundoff dominant." Then explain the changes in scenario 2.
+
+<details class="bs-paper-answer">
+<summary>Pause D answer</summary>
+
+
+The error is typically U-shaped, but on a finite grid it may exhibit jaggedness, local cancellation, and plateaus, and is not necessarily smooth. In scenario 2, the price curvature is concentrated in a narrow range, altering both the truncation coefficient and the optimal scale. The optimal $h$ found in one scenario cannot be unconditionally applied to another.
+
+
+</details>
+
+## 7. Original assignment deliverables, converted to learning acceptance criteria
+
+1. Source code must locate analytic Delta/Gamma, forward FD, complex price, CS Delta, and two types of CS Gamma. Entry point is on the course homepage.
+2. One CSV per scenario, 24 rows with the headers above, with finite values/NaN/Inf counted separately.
+3. Each scenario has Delta and Gamma error plots; report max, median, p99, and separately report the best step size and best error. The full-grid median is not the accuracy of the optimal algorithm.
+4. Report accuracy ranking, step size sensitivity, differences between the two scenarios, anomalies, and causes. First describe observations, then explain using truncation/roundoff models.
+5. Provide method and step size recommendations. For standard BS production calculations, prioritize analytic Greeks; use numerical methods for independent verification or models without analytic formulas. Do not describe a scan point with zero error as "no error."
+
+Course script outputs `scenario1.csv`, `scenario2.csv`, `error_summary.csv` to `artifacts/bs-math/`; the formal scan entry for the original assignment remains `experiments/assignment/black_scholes_sweep.py`. The next article explains why the two complex-step Gamma methods in the figure do not have the same type of stability.
+
+## 8. Extension: Placing Discrete Greeks Back into the BS Diffusion Equation
+
+Previously, derivatives were taken on closed-form prices. If no closed-form solution exists, prices can still be computed over the entire Spot/maturity grid. Take a uniform Spot grid $S_i=i\,\delta S$, and march forward from the payoff at maturity $V_i^0$ along the remaining time to maturity $T$. Central differences directly yield grid Greeks:
+
+$$
+\Delta_i^n\approx\frac{V_{i+1}^n-V_{i-1}^n}{2\delta S},\quad\Gamma_i^n\approx\frac{V_{i+1}^n-2V_i^n+V_{i-1}^n}{(\delta S)^2}.
+$$
+
+Substitute into the $V_T$ equation from Part 01, and advance one step using explicit Euler:
+
+$$
+V_i^{n+1}=V_i^n+\delta T\left(\frac12\sigma^2S_i^2\Gamma_i^n+(r-q)S_i\Delta_i^n-rV_i^n\right).
+$$
+
+This connects the computation of Greeks and prices into the same discrete model: curvature drives diffusion, slope drives drift, and the price itself undergoes discounting. Rearranged as a weighted sum of three neighboring points:
+
+$$
+V_i^{n+1}=a_iV_{i-1}^n+b_iV_i^n+c_iV_{i+1}^n.
+$$
+
+$$
+a_i=\frac{\delta T}{2}\left(\frac{\sigma^2S_i^2}{(\delta S)^2}-\frac{(r-q)S_i}{\delta S}\right).
+$$
+
+$$
+b_i=1-\delta T\left(\frac{\sigma^2S_i^2}{(\delta S)^2}+r\right).
+$$
+
+$$
+c_i=\frac{\delta T}{2}\left(\frac{\sigma^2S_i^2}{(\delta S)^2}+\frac{(r-q)S_i}{\delta S}\right).
+$$
+
+One can check $a_i+b_i+c_i=1-r\delta T$. In cases where $r\ge0$ and boundary conditions are handled correctly, requiring non-negative weights and controlling their sum is an easily understood sufficient condition for maximum norm stability. $b_i\ge0$ restricts the time step size at each point; $a_i,c_i\ge0$ also requires that the drift is not too strong relative to grid diffusion. Simply reducing the time step size does not automatically resolve negative weights at all spatial points.
+
+**Paper pause E:** Take $r=q=0,\sigma=0.2,S_i=100,\delta S=1,\delta T=0.001$, and calculate the three weights. What happens if the time step size is changed to 0.01?
+
+<details class="bs-paper-answer">
+<summary>Answer to Pause E</summary>
+
+
+$\sigma^2S_i^2/(\delta S)^2=400$. The first set $a_i=c_i=0.2,b_i=0.6$ is a non-negative average of neighboring points; the second set $a_i=c_i=2,b_i=-3$ causes explicit iteration to amplify certain grid oscillations. The constraints for the entire grid are determined by conditions such as the maximum Spot; checking only $S=100$ is insufficient.
+
+The local error of central spatial differences in smooth regions is $O((\delta S)^2)$, and the time error of explicit Euler is first-order. Kinks at maturity, finite boundaries, and re-differentiating grid prices also contribute to the error. Using closed-form BS as a reference allows one to first learn to distinguish between “pricing error” and “price differentiation error,” and then transfer the same method to models without closed-form solutions. This section is a mathematical extension; the repository currently does not have a production PDE grid solver.
+
+</details>
+
+</div>
+
+<BSMaterials lang="en" lesson={3} />

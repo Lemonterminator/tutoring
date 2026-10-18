@@ -1,0 +1,32 @@
+{
+  "subject": "llm",
+  "id": "M3.4",
+  "module": "M3",
+  "title": {
+    "en": "GELU, GLU variants, and SwiGLU width",
+    "zh": "GELU、GLU 变体与 SwiGLU 宽度"
+  },
+  "prereqs": [
+    "M3.3"
+  ],
+  "estimatedHours": 4,
+  "spine": {
+    "en": {
+      "a": "The feed-forward sublayer is the pointwise nonlinear write that follows attention, and its activation/gating choice changes the block's parameter allocation.",
+      "b": "The FFN transforms each prefix-conditioned residual representation independently at a position, so it changes the conditional map without introducing a new cross-position dependency."
+    },
+    "zh": {
+      "a": "前馈子层是紧随注意力机制之后的逐点非线性写入，其激活/门控选择会改变块的参数分配。",
+      "b": "FFN 在位置处独立转换每个前缀条件化的残差表示，因此它改变了条件映射，而不会引入新的跨位置依赖。"
+    }
+  },
+  "derivations": [
+    "D-M3.4-01"
+  ],
+  "visualizations": [],
+  "assignment": "A-M3",
+  "references": [
+    "gelu2016",
+    "shazeer2020"
+  ]
+}

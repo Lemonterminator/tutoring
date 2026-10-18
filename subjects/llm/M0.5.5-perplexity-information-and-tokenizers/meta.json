@@ -1,0 +1,32 @@
+{
+  "subject": "llm",
+  "id": "M0.5.5",
+  "module": "M0.5",
+  "title": {
+    "en": "Perplexity, information, and tokenizer dependence",
+    "zh": "困惑度、信息量与分词器依赖性"
+  },
+  "prereqs": [
+    "M0.5.4"
+  ],
+  "estimatedHours": 3,
+  "spine": {
+    "en": {
+      "a": "Interpret a language-model score as an information rate rather than as a tokenizer-free quality number.",
+      "b": "Separate per-token reporting from the underlying cross-entropy measured per byte or character."
+    },
+    "zh": {
+      "a": "将语言模型评分解释为信息率，而非与分词器无关的质量数值。",
+      "b": "将每 token 的报告与底层按字节或字符计算的交叉熵区分开来。"
+    }
+  },
+  "derivations": [
+    "D-M0.5.5-01",
+    "D-M0.5.5-02"
+  ],
+  "visualizations": [],
+  "assignment": "A-M0.5",
+  "references": [
+    "shannon1951"
+  ]
+}

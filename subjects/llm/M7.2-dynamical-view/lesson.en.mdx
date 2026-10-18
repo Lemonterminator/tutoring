@@ -1,0 +1,249 @@
+## 1. Motivation
+
+The operator view in M7.1 classified a sequence mixer by its matrix structure. It did not explain what depth does to the token representations. This lesson treats the rows of a token matrix as interacting particles. RMSNorm places them on a sphere, attention makes the interaction graph depend on their current positions, and depth becomes a discrete time variable.
+
+Two shortcuts are unsafe. Row-stochastic matrices do not generically collapse rank: fixing $A=I$ or a permutation gives no collapse. Also, “attention is a Wasserstein gradient flow” is not one statement. Raw symmetric kernels, row-softmax kernels, and Sinkhorn kernels correspond to three different regimes. The derivations keep these scopes separate.
+
+## 2. Forward definition
+
+Let $X\in\mathbb{R}^{N\times d}$ contain one token row $x_i^\top\in\mathbb{R}^{1\times d}$ per particle. For unit-norm states $x_i\in\mathbb{S}^{d-1}$, define the self-attention weights
+
+$$
+A_{ij}(X)=
+\frac{\exp(\beta q_i^\top k_j)}
+{\sum_{r=1}^{N}\exp(\beta q_i^\top k_r)},
+\qquad A(X)\in\mathbb{R}^{N\times N}.
+$$
+
+Every entry is nonnegative and every row sums to one. With $Q=K=X$ and a value map $V\in\mathbb{R}^{d\times d}$, the pre-normalization field is
+
+$$
+F_i(X)=\sum_{j=1}^{N}A_{ij}(X)Vx_j\in\mathbb{R}^{d},
+\qquad F(X)\in\mathbb{R}^{N\times d}.
+$$
+
+The [mathematical perspective on Transformers](https://arxiv.org/abs/2312.10794) and the [cluster-dynamics paper](https://arxiv.org/abs/2305.05465) use this interacting-particle viewpoint. The phrase “dynamic graph” is exact here: $A(X)$ is a transition matrix of a weighted complete graph, and $I_N-A(X)$ is its random-walk Laplacian. It is not a claim that a trained Transformer is literally an autonomous homogeneous ODE.
+
+## 3. Derivations
+
+### D-M7.2-01 · RMSNorm gives a sphere Euler step and a dynamic graph
+
+**Theorem, local differential statement.** Write the scalar-radius RMSNorm map as
+
+$$
+\mathcal{N}_r(z)=r\frac{z}{\lVert z\rVert_2},
+\qquad z\in\mathbb{R}^{d},\quad \mathcal{N}_r(z)\in\mathbb{S}^{d-1}_r.
+$$
+
+For a point $x\in\mathbb{S}^{d-1}_r$ and perturbation $h\in\mathbb{R}^{d}$, the first-order map is
+
+$$
+D\mathcal{N}_r(x)[h]
+=\left(I_d-\frac{xx^\top}{r^2}\right)h
+=P_x^\perp h.
+$$
+
+**Steps.**
+
+1. Let $g(\varepsilon)=\lVert x+\varepsilon h\rVert_2$. Since $g(0)=r$,
+   $$
+   g'(0)=\frac{x^\top h}{r}.
+   $$
+2. Differentiate $r(x+\varepsilon h)/g(\varepsilon)$ at $\varepsilon=0$:
+   $$
+   D\mathcal{N}_r(x)[h]
+   =h-\frac{x^\top h}{r^2}x
+   =\left(I_d-\frac{xx^\top}{r^2}\right)h.
+   $$
+3. Set $h=F_i(X)$ and use a small step $\eta>0$:
+   $$
+   \mathcal{N}_r\bigl(x_i+\eta F_i(X)\bigr)
+   =x_i+\eta P_{x_i}^\perp F_i(X)+O(\eta^2).
+   $$
+   Thus the normalized layer is a first-order Euler step of
+   $$
+   \dot{x}_i=P_{x_i}^\perp\sum_{j=1}^{N}A_{ij}(X)Vx_j,
+   \qquad x_i(t)\in\mathbb{S}^{d-1}_r.
+   $$
+4. Because $A_{ij}\ge 0$ and $\sum_jA_{ij}=1$, $A$ is a random-walk transition matrix. The graph Laplacian in this convention is $L_{\mathrm{rw}}=I_N-A$; its rows sum to zero.
+5. The float64 check compares the finite difference of $\mathcal{N}_r$ with $P_x^\perp F$, and checks the row sums and sphere constraint.
+
+**Interpretation, sourced and scoped.** This is the rigorous content behind “attention is a dynamic graph”: the weights are graph edges, but the edges are recomputed from the current token state. The ODE analogy applies to the small-step limit, not automatically to a finite trained layer.
+
+### D-M7.2-02 · Self-attention rank collapse is a cubic feedback mechanism
+
+**Theorem, scoped.** The doubly-exponential collapse result is for pure self-attention under bounded-weight assumptions and without a residual path or FFN safeguard. It is not a theorem about arbitrary compositions of row-stochastic matrices.
+
+Let $x_*\in\mathbb{R}^{d}$ minimize $\lVert X-\mathbf{1}x_*^\top\rVert$ for the chosen residual quantity and write
+
+$$
+X=\mathbf{1}x_*^\top+R,
+\qquad \operatorname{res}(X)=R,
+\qquad R\in\mathbb{R}^{N\times d}.
+$$
+
+For $W_{QK}\in\mathbb{R}^{d\times d}$ and $d_{qk}$ query-key width, the score matrix is
+
+$$
+S=\frac{XW_{QK}X^\top}{\sqrt{d_{qk}}}\in\mathbb{R}^{N\times N}.
+$$
+
+**Steps.**
+
+1. Expand the score using $X=\mathbf{1}x_*^\top+R$:
+   $$
+   S=\frac{x_*W_{QK}x_*^\top}{\sqrt{d_{qk}}}\mathbf{1}\mathbf{1}^\top
+   +\mathbf{1}r^\top
+   +c\mathbf{1}^\top
+   +E,
+   $$
+   where $r^\top=x_*W_{QK}R^\top/\sqrt{d_{qk}}\in\mathbb{R}^{1\times N}$,
+   $c=RW_{QK}x_*^\top/\sqrt{d_{qk}}\in\mathbb{R}^{N\times 1}$, and
+   $$
+   E=\frac{RW_{QK}R^\top}{\sqrt{d_{qk}}}\in\mathbb{R}^{N\times N}.
+   $$
+2. Softmax is invariant to adding a constant to every entry of a row. The first and third terms are therefore row shifts. The effective score is $\mathbf{1}r^\top+E$, with $E=O(\lVert R\rVert^2)$.
+3. Let $P=\operatorname{softmax}_{\mathrm{row}}(S)$ and $P_0=\mathbf{1}p^\top$ with $p=\operatorname{softmax}(r)\in\mathbb{R}^{N}$. Smoothness of row-softmax gives $\Delta P=P-P_0=O(\lVert R\rVert^2)$, and every row of $\Delta P$ sums to zero.
+4. Multiply by $X$:
+   $$
+   PX=P_0(\mathbf{1}x_*^\top+R)+\Delta P(\mathbf{1}x_*^\top+R)
+   =\mathbf{1}x_*^\top+\mathbf{1}p^\top R+\Delta P R.
+   $$
+   The first two terms have identical rows. The residual therefore satisfies
+   $$
+   \operatorname{res}(PX)=\operatorname{res}(\Delta P R)=O(\lVert R\rVert^3).
+   $$
+   The third power is not a slogan: the score perturbation is quadratic, and it multiplies one additional residual factor.
+5. The paper uses the positive, absolutely homogeneous composite quantity
+   $$
+   \lVert X\rVert_{1,\infty}=\sqrt{\lVert X\rVert_1\lVert X\rVert_\infty},
+   $$
+   which is not a true norm because it does not satisfy the triangle inequality. If $e_\ell$ is this quantity on the residual and $\beta$ bounds $\lVert W_{QK}\rVert_1\lVert W_V\rVert_{1,\infty}$, their bound has
+   $$
+   e_{\ell+1}\le c e_\ell^3,
+   \qquad c=\frac{4\beta}{\sqrt{d_{qk}}}.
+   $$
+   Induction gives
+   $$
+   e_L\le c^{(3^L-1)/2}e_0^{3^L}.
+   $$
+6. Writing $\rho=\sqrt{c}\,e_0<1$ gives $e_L\asymp\rho^{3^L}$. Since $3^L=\exp(L\log 3)$, the exponent is exponential in depth: this is the precise “doubly exponential” statement. With $H$ heads, $H$ changes the prefactor, not the $3^L$ exponent. An FFN with $\ell_{1,\infty}$-Lipschitz constant at most $\lambda$ changes the prefactor to
+   $$
+   \left(\frac{4\beta H\lambda}{\sqrt{d_{qk}}}\right)^{(3^L-1)/2}e_0^{3^L}.
+   $$
+7. Residual and FFN roles differ. The residual stack contains paths of attention lengths $0,1,\ldots,L$; the length-zero identity path survives. In particular, $W_V=0$ leaves $\operatorname{res}(X^L)=\operatorname{res}(X^0)$, so residual connections structurally break a universal-collapse guarantee. A nonlinear FFN only changes the Lipschitz prefactor in the stated bound; it does not remove the cubic exponent.
+8. The [rank-collapse paper](https://arxiv.org/abs/2103.03404) supplies the theorem and its hypotheses. The check verifies the row-shift reduction, the exact residual identity, the cubic scaling slope, the closed-form recurrence, and the $A=I$/permutation counterexamples.
+
+**Check.** checks/M7/D-M7.2-02.py reports three adjacent cubic slopes in $[2.9967867060411364,2.9994842815079292]$ (central slope $2.9987898128495525$), $\Delta P=O(R^2)$ and $\operatorname{res}(PX)=O(R^3)$ ratios, plus zero residual change for identity/permutation mixing.
+
+### D-M7.2-03 · Three mean-field regimes are three different functionals
+
+**Theorem, regime (i): raw symmetric kernel.** On $\mathbb{S}^{d-1}$, let
+
+$$
+K_\beta(x,y)=e^{\beta\langle x,y\rangle},
+\qquad
+E_\beta[\mu]=\frac{1}{2\beta}\iint K_\beta(x,y)\,d\mu(x)d\mu(y).
+$$
+
+The first variation is
+
+$$
+\frac{\delta E_\beta}{\delta\mu}(x)=\frac{1}{\beta}\int K_\beta(x,y)\,d\mu(y),
+$$
+
+and its sphere-tangent gradient is
+
+$$
+v_E[\mu](x)=P_x^\perp\int K_\beta(x,y)y\,d\mu(y).
+$$
+
+With $Q=K$ and $V=I_d$, the standard attractive particle field is gradient ascent on $E_\beta$; $V=-I_d$ gives descent. The finite check differentiates the empirical energy in a tangent direction and matches this field.
+
+**Obstruction, regime (ii): row-softmax.** Let
+
+$$
+Z_\mu(x)=\int K_\beta(x,y)\,d\mu(y),
+\qquad
+a_\mu^{\mathrm{row}}(x,y)=\frac{K_\beta(x,y)}{Z_\mu(x)}.
+$$
+
+For fixed $\mu$,
+
+$$
+v_{\mathrm{row}}(x)=\frac{1}{\beta}\nabla_{\mathbb{S}^{d-1}}\log Z_\mu(x)
+$$
+
+looks like a gradient in $x$. That is not enough for a Wasserstein potential. A global first variation also requires the second-variation symmetry
+
+$$
+\frac{K_\beta(x,y)}{Z_\mu(x)}
+=
+\frac{K_\beta(x,y)}{Z_\mu(y)}.
+$$
+
+Whenever $Z_\mu(x)\ne Z_\mu(y)$, this fails. The check reports a nonzero obstruction for a generic finite empirical measure.
+
+**Sourced theorem, regime (iii): Sinkhorn.** Exact doubly-stochastic normalization has
+
+$$
+a_\mu^\infty(x,y)=s_\mu(x)K_\beta(x,y)s_\mu(y),
+$$
+
+which is symmetric by construction and is the Wasserstein gradient flow of the different entropic functional
+
+$$
+F_\infty[\mu]
+=-\frac12\iint a_\mu^\infty(x,y)
+\log\frac{a_\mu^\infty(x,y)}{K_\beta(x,y)}\,d\mu(x)d\mu(y).
+$$
+
+It is not the plain $E_\beta$. [Sinkformers](https://arxiv.org/abs/2110.11773), Proposition 2–3, establish the three-way distinction: $k^0$ raw and $k^\infty$ Sinkhorn have Wasserstein structure, while $k^1$ row-softmax does not. Clustering claims apply only in the stated parameter regimes.
+
+**Check.** checks/M7/D-M7.2-03.py reports raw-energy directional-derivative error $4.036349379732407\times10^{-11}$, row second-variation obstruction $0.17647229778942708$, and doubly-stochastic/symmetry errors below $3\times10^{-16}$.
+
+### D-M7.2-04 · Noise gives a Fokker–Planck connection
+
+**Connection, no derivation requested.** Adding tangent Brownian noise to the sphere dynamics gives the schematic Stratonovich SDE
+
+$$
+dx_i=P_{x_i}^\perp F_i(X)\,dt+\sqrt{2\tau}\,P_{x_i}^\perp\circ dW_i(t),
+\qquad x_i(t)\in\mathbb{S}^{d-1},
+$$
+
+and the corresponding density equation is
+
+$$
+\partial_t\mu+\operatorname{div}_{\mathbb{S}}(\mu X[\mu])=\tau\Delta_{\mathbb{S}}\mu.
+$$
+
+The check only verifies tangent projection, sphere preservation, and empirical mass conservation. The Fokker–Planck line is a connection to diffusion-model analysis, not a derivation of a trained diffusion model.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Status |
+| --- | --- | --- |
+| D-M7.2-01 | RMSNorm finite-difference error $1.4551445864929846\times10^{-7}$; row/Laplacian sum errors below $2\times10^{-16}$ | pass |
+| D-M7.2-02 | cubic-slope range $[2.9967867060411364,2.9994842815079292]$; exact residual identity error $4.3521230456283755\times10^{-16}$ | pass |
+| D-M7.2-03 | raw derivative error $4.036349379732407\times10^{-11}$; row obstruction $0.17647229778942708$; Sinkhorn errors below $3\times10^{-16}$ | pass |
+| D-M7.2-04 | tangent error $1.1102230246251565\times10^{-16}$; sphere error $1.1102230246251565\times10^{-16}$ | pass |
+
+Run checks/M7/D-M7.2-01.py through checks/M7/D-M7.2-04.py. The checks use float64 arithmetic. They verify the local differential identities and finite-particle witnesses; they do not turn the scoped convergence theorems into claims about all trained Transformers.
+
+## 5. Interactive visualization
+
+<CourseWidget id="V-M7-b" />
+
+**V-M7-b — Particles on S².** The specification is viz/specs/V-M7-b.yaml and the pure compute module is viz/compute/particles_sphere.ts. Set $\beta$, depth, $Q=K$, residual, FFN, length, and seed. The widget shows particle positions, the strongest attention edges, centered rank, cluster count, and their layer histories.
+
+The insight is scoped: pure self-attention can contract the centered representation rapidly in the theorem's setting, while the identity residual path can preserve diversity. The widget's FFN is a deterministic toy perturbation; it is not a claim about a particular production FFN.
+
+## 6. Closing
+
+**Counterintuitive question.** If attention is row-stochastic in every layer, why does row-stochasticity alone not prove rank collapse?
+
+**Worked answer.** A fixed $A=I_N$ is row-stochastic and leaves every representation unchanged. A permutation is also row-stochastic and only reorders rows. D-M7.2-02 identifies the missing mechanism: in self-attention, $A^{(\ell)}$ is regenerated from $X^{(\ell)}$ by a bilinear score. The score perturbation is quadratic in the residual, and multiplying by the residual makes the next residual cubic. Residual paths can preserve the length-zero identity path; FFNs change the prefactor but not the cubic exponent in the scoped bound.
+
+**Assignment A-M7.** On V-M7-b's setup, implement Sinkhorn attention and compare its depth dynamics with row-softmax attention. Plot centered rank and cluster count. Keep the three D-M7.2-03 regimes in separate columns. Reuse the M7.1 random-feature and semiseparable checks in the final report.
+
+**Spine check.** A token layer is a state-dependent graph update on a sphere after RMSNorm. The dynamic view explains a precise rank-collapse feedback loop and separates three variational regimes. It leaves open the behavior of fully trained, residual, multi-head, finite-depth models outside those hypotheses.

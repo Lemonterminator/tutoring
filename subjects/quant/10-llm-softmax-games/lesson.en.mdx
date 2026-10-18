@@ -1,0 +1,18 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { softmaxCards } from '../../../framework/games/llm-foundations-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+
+## Start practicing
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to game library</a>
+
+Given exponential values, normalize them and calculate Jacobian entries and cross-entropy gradients. Covers D-M0.1-01 and D-M0.1-02; cross entropy uses natural logs.
+
+<PracticeGame generate={softmaxCards} lang="en" />
+
+## Limits and source lesson
+
+Two-class fractions reduce arithmetic load. Actual Softmax also needs numerical stability; a symmetric Jacobian does not change the general transpose convention.
+
+<SourceLessonLink source="llm:M0.1" lang="en" />

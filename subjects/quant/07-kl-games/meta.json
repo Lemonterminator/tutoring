@@ -1,0 +1,12 @@
+{
+  "id": "GAME-KL",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "variational",
+  "module": "Math practice",
+  "title": {
+    "en": "KL divergence: probability, direction and support",
+    "zh": "KL 散度：概率、方向与支撑集"
+  },
+  "prereqs": []
+}

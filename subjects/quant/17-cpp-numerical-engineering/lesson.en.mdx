@@ -1,0 +1,49 @@
+## Place in the pricing track
+
+Course 4 of 4 turns the mathematics into a C++17 library contract. The intended implementation sequence is: one terms kernel; put and parity; all Greeks; implied volatility; Python mirror and golden cases. The assignment's Delta/Gamma sweep is a case study, not proof that one method is always best.
+
+## One numerical contract for all entry points
+
+Define the accepted domain first: finite $S,K,r,q,\sigma,T$ with $S,K>0$, $T,\sigma\ge0$ is one defensible choice. Document any different choice explicitly. An internal `bs_terms` result can hold $D,F,\sigma\sqrt T,d_1,d_2$ plus a status, but `d_1,d_2` do not exist as ordinary finite values at every degenerate input. Prefer a tagged result or status-aware branch over a struct of plausible-looking NaNs.
+
+All scalar, vector, `par_unseq` and Python paths must share the same price convention. For $\sigma=0$, use the discounted forward intrinsic price; at $T=0$, use terminal payoff. At the forward ATM kink, a returned Delta/Gamma is a chosen API value, not a classical derivative. List the choice in the public contract and keep C++ and Python aligned. A typo alias such as `detla_forward` can remain a deprecated wrapper until callers migrate.
+
+Keep the analytic price used in production separate from experimental complex continuations. A `std::complex<double>` price only supports complex-step if every primitive, including the normal CDF, is analytically extended to the required order. The assignment's first-order complex CDF is sufficient to study Delta but cannot certify fourth-order 45° Gamma. Compare Gamma experiments against the analytic formula and, where needed, a validated full complex special function.
+
+## Parallel execution and performance
+
+`std::execution::par_unseq` allows operations on different elements to interleave and forbids vectorization-unsafe standard-library calls, especially synchronization. An uncaught exception from an element operation calls `std::terminate`. Avoid shared mutable state; pre-size output and write a distinct slot per input. A helper that receives an explicit index is easier to audit than recovering an index via `&slot - base`; either design must ensure the address actually lies in the same contiguous array.
+
+`std::exp` and `std::erfc` can set floating-point status or `errno` under implementation rules. That fact alone does not establish a standard violation. `errno` is thread-local in C++11 and later; behavior under an unsequenced implementation still deserves a target-library audit. `par_unseq` is a permission to parallelize/vectorize, not a performance guarantee. Benchmark scalar, `par` and `par_unseq` for the actual MSVC build and input sizes before promising speedups.
+
+## Validation evidence that catches different mistakes
+
+Use several independent checks: exact payoff/parity identities, analytic Greek relationships, price monotonicity in volatility, boundary statuses, a small curated golden CSV, and a Python reference. A generated CSV and C++ implementation using the same formula can share a bug. Store parameter units and generation provenance with the CSV; choose tolerances from absolute output scale, relative scale and conditioning. Near a zero-valued tail, relative error alone is meaningless.
+
+For the assignment, the required CSV columns and both scenarios are a useful regression artifact. A max/median/p99 error summary across a *chosen* grid is not a universal accuracy ranking: it depends on grid limits, included unresolved points and the complex CDF approximation. Report the best stable step range and failed/degenerate points explicitly. A conclusion such as “45° complex-step is always production Gamma” would exceed the evidence; analytic Gamma remains available and is simplest for this model.
+
+## Five-week implementation and study route
+
+| Week, about 8 hours | Read and do | Library milestone |
+| --- | --- | --- |
+| 1 | Course 1 floating-point and FD sections; reproduce both assignment error curves. | Record the existing API, degenerate cases and observed behavior before the kernel refactor. |
+| 2 | Course 1 complex step/CDF; Course 2 forward notation and parity; derive the corrected 45° expansion. | Introduce `bs_terms` and put pricing with parity checks. |
+| 3 | Course 2 PDE, risk-neutral route and Greeks; make Delta/Gamma/Vega/Theta/Rho plots. | Add `Greeks` and document units and kink conventions. |
+| 4 | Course 3 price bounds, conditioning and bracketed root finding; compare solvers. | Implement IV statuses and safeguarded solver. |
+| 5 | This course on parallel semantics and independent checks; review Jäckel as a benchmark. | Add Python mirror, curated golden cases and a concise validation report. |
+
+The route supports interview explanations: give one derivation, one numerical failure mode, one test identity and one clear API decision for each milestone.
+
+## Practice with this repository
+
+1. Write a one-page behavior table for $S=0$, $K=0$, $\sigma=0$, $T=0$, forward ATM, NaN and infinity. Compare the current scalar, vector, parallel and Python paths; mark each observed output separately from the proposed API rule.
+2. For the 40,000-point stress grid, compare scalar, vector and parallel outputs with a scale-aware tolerance. Check that each parallel iteration writes one distinct output slot and no callback uses shared mutable state.
+3. Generate a small golden CSV from independent Python calculations with nonzero $r,q$, call and put, several $T$ values and explicit boundary statuses. Add parity, monotonicity and Vega–Gamma identity checks so shared formula errors cannot pass silently.
+
+## Reading, in order
+
+1. C++ working draft, [`[algorithms.parallel]`](https://timsong-cpp.github.io/cppwp/std20/algorithms.parallel), and cppreference, [`std::execution` policies](https://en.cppreference.com/cpp/algorithm/execution_policy_tag_t). Read the `par_unseq`, vectorization-safety and uncaught-exception rules. Open access; confirm implementation-specific behavior against your MSVC version.
+2. cppreference, [`math_errhandling`](https://en.cppreference.com/cpp/numeric/math/math_errhandling) and [`errno`](https://en.cppreference.com/cpp/error/errno). Read to distinguish C++ exceptions from floating-point flags and `errno`.
+3. Michael J. Wichura (1988), “Algorithm AS 241: The Percentage Points of the Normal Distribution,” *Journal of the Royal Statistical Society Series C* 37(3), 477–484, [journal](https://academic.oup.com/jrsssc/article/37/3/477/6985522). Optional when reviewing the repository's inverse normal CDF; it does not by itself verify any added Halley refinement.
+
+Hull and Shreve are the core pricing texts; Higham, Goldberg, Squire–Trapp, Martins, Cody, Brent and Jäckel support the numerical track. Gatheral's *The Volatility Surface* (Wiley, 2006, [publisher](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119202073)) is an advanced follow-up after this constant-volatility library, not a prerequisite. Joshi's C++ design book, an unspecified Kahan handout and *Numerical Recipes* are omitted from the core path until an exact edition or accessible section is needed.

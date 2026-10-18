@@ -1,0 +1,249 @@
+## 1. 动机
+
+M7.1 中的算子视角根据矩阵结构对序列混合器进行了分类，但并未解释深度如何影响 token 表示。本课将 token 矩阵的行视为相互作用的粒子。RMSNorm 将它们置于球面上，注意力机制使相互作用图依赖于它们的当前位置，而深度则成为一个离散时间变量。
+
+两种捷径是不安全的。行随机矩阵通常不会导致秩坍缩：固定 $A=I$ 或一个置换并不会产生坍缩。此外，“注意力是 Wasserstein 梯度流”并非单一陈述。原始对称核、行 Softmax 核和 Sinkhorn 核对应于三种不同的机制。推导过程将保持这些范围的区分。
+
+## 2. 前向定义
+
+设 $X\in\mathbb{R}^{N\times d}$ 包含每个粒子一行令牌 $x_i^\top\in\mathbb{R}^{1\times d}$。对于单位范数状态 $x_i\in\mathbb{S}^{d-1}$，定义自注意力权重为：
+
+$$
+A_{ij}(X)=
+\frac{\exp(\beta q_i^\top k_j)}
+{\sum_{r=1}^{N}\exp(\beta q_i^\top k_r)},
+\qquad A(X)\in\mathbb{R}^{N\times N}.
+$$
+
+每个条目均为非负，且每行之和为一。给定 $Q=K=X$ 和值映射 $V\in\mathbb{R}^{d\times d}$，归一化前的场为：
+
+$$
+F_i(X)=\sum_{j=1}^{N}A_{ij}(X)Vx_j\in\mathbb{R}^{d},
+\qquad F(X)\in\mathbb{R}^{N\times d}.
+$$
+
+《Transformers 的数学视角》](https://arxiv.org/abs/2312.10794) 和《集群动力学论文》](https://arxiv.org/abs/2305.05465) 均采用了这种相互作用粒子的观点。此处“动态图”一词是精确的：$A(X)$ 是一个加权完全图的转移矩阵，而 $I_N-A(X)$ 是其随机游走拉普拉斯算子。这并非声称经过训练的 Transformer 本质上就是一个自治齐次常微分方程（ODE）。
+
+## 3。推导过程
+
+### D-M7.2-01 · RMSNorm 给出球面欧拉步与动态图
+
+**定理，局部微分陈述。** 将标量半径 RMSNorm 映射写为
+
+$$
+\mathcal{N}_r(z)=r\frac{z}{\lVert z\rVert_2},
+\qquad z\in\mathbb{R}^{d},\quad \mathcal{N}_r(z)\in\mathbb{S}^{d-1}_r.
+$$
+
+对于点 $x\in\mathbb{S}^{d-1}_r$ 和扰动 $h\in\mathbb{R}^{d}$，一阶映射为
+
+$$
+D\mathcal{N}_r(x)[h]
+=\left(I_d-\frac{xx^\top}{r^2}\right)h
+=P_x^\perp h.
+$$
+
+**步骤。**
+
+1. 设 $g(\varepsilon)=\lVert x+\varepsilon h\rVert_2$。由于 $g(0)=r$，
+   $$
+   g'(0)=\frac{x^\top h}{r}.
+   $$
+2. 在 $r(x+\varepsilon h)/g(\varepsilon)$ 处对 $\varepsilon=0$ 求导：
+   $$
+   D\mathcal{N}_r(x)[h]
+   =h-\frac{x^\top h}{r^2}x
+   =\left(I_d-\frac{xx^\top}{r^2}\right)h.
+   $$
+3. 设 $h=F_i(X)$ 并使用小步长 $\eta>0$：
+   $$
+   \mathcal{N}_r\bigl(x_i+\eta F_i(X)\bigr)
+   =x_i+\eta P_{x_i}^\perp F_i(X)+O(\eta^2).
+   $$
+   因此，归一化层是以下式的一阶欧拉步：
+   $$
+   \dot{x}_i=P_{x_i}^\perp\sum_{j=1}^{N}A_{ij}(X)Vx_j,
+   \qquad x_i(t)\in\mathbb{S}^{d-1}_r.
+   $$
+4. 由于 $A_{ij}\ge 0$ 且 $\sum_jA_{ij}=1$，$A$ 是一个随机游走转移矩阵。在此约定下，图拉普拉斯算子为 $L_{\mathrm{rw}}=I_N-A$；其行和为零。
+5. float64 检查比较了 $\mathcal{N}_r$ 的有限差分与 $P_x^\perp F$，并验证了行和及球面约束。
+
+**解释，来源与范围。** 这是“注意力机制即动态图”背后的严谨内容：权重是图的边，但这些边是根据当前 token 状态重新计算的。ODE 类比适用于小步长极限，并不自动适用于有限训练层。
+
+### D-M7.2-02 · 自注意力秩崩溃是一种立方反馈机制
+
+**定理，限定范围。** 双重指数崩溃结果针对的是在权重有界假设下、且无残差路径或 FFN 保护机制的纯自注意力。它并非关于任意行随机矩阵组合的定理。
+
+设 $x_*\in\mathbb{R}^{d}$ 最小化选定残差量的 $\lVert X-\mathbf{1}x_*^\top\rVert$，并写为
+
+$$
+X=\mathbf{1}x_*^\top+R,
+\qquad \operatorname{res}(X)=R,
+\qquad R\in\mathbb{R}^{N\times d}.
+$$
+
+对于 $W_{QK}\in\mathbb{R}^{d\times d}$ 和 $d_{qk}$ 的查询 - 键宽度，分数矩阵为
+
+$$
+S=\frac{XW_{QK}X^\top}{\sqrt{d_{qk}}}\in\mathbb{R}^{N\times N}.
+$$
+
+**步骤。**
+
+1. 使用 $X=\mathbf{1}x_*^\top+R$ 展开分数：
+   $$
+   S=\frac{x_*W_{QK}x_*^\top}{\sqrt{d_{qk}}}\mathbf{1}\mathbf{1}^\top
+   +\mathbf{1}r^\top
+   +c\mathbf{1}^\top
+   +E,
+   $$
+   其中 $r^\top=x_*W_{QK}R^\top/\sqrt{d_{qk}}\in\mathbb{R}^{1\times N}$，
+   $c=RW_{QK}x_*^\top/\sqrt{d_{qk}}\in\mathbb{R}^{N\times 1}$，以及
+   $$
+   E=\frac{RW_{QK}R^\top}{\sqrt{d_{qk}}}\in\mathbb{R}^{N\times N}.
+   $$
+2. Softmax 对向每一行添加常数具有不变性。因此第一项和第三项是行平移。有效分数为 $\mathbf{1}r^\top+E$，其中 $E=O(\lVert R\rVert^2)$。
+3. 设 $P=\operatorname{softmax}_{\mathrm{row}}(S)$ 且 $P_0=\mathbf{1}p^\top$，满足 $p=\operatorname{softmax}(r)\in\mathbb{R}^{N}$。行 Softmax 的光滑性给出 $\Delta P=P-P_0=O(\lVert R\rVert^2)$，且 $\Delta P$ 的每一行和为零。
+4. 乘以 $X$：
+   $$
+   PX=P_0(\mathbf{1}x_*^\top+R)+\Delta P(\mathbf{1}x_*^\top+R)
+   =\mathbf{1}x_*^\top+\mathbf{1}p^\top R+\Delta P R.
+   $$
+   前两项具有相同的行。因此残差满足
+   $$
+   \operatorname{res}(PX)=\operatorname{res}(\Delta P R)=O(\lVert R\rVert^3).
+   $$
+   三次方并非口号：分数扰动是二次的，且它乘以了一个额外的残差因子。
+5. 该论文使用了正齐次复合量
+   $$
+   \lVert X\rVert_{1,\infty}=\sqrt{\lVert X\rVert_1\lVert X\rVert_\infty},
+   $$
+   这不是真正的范数，因为它不满足三角不等式。若 $e_\ell$ 是残差上的该量，且 $\beta$ 界定了 $\lVert W_{QK}\rVert_1\lVert W_V\rVert_{1,\infty}$，则其界限为
+   $$
+   e_{\ell+1}\le c e_\ell^3,
+   \qquad c=\frac{4\beta}{\sqrt{d_{qk}}}.
+   $$
+   归纳法给出
+   $$
+   e_L\le c^{(3^L-1)/2}e_0^{3^L}.
+   $$
+6. 写为 $\rho=\sqrt{c}\,e_0<1$ 可得 $e_L\asymp\rho^{3^L}$。由于 $3^L=\exp(L\log 3)$，指数随深度呈指数增长：这正是精确的“双重指数”陈述。对于 $H$ 个头，$H$ 改变的是前置因子，而非 $3^L$ 指数。若 FFN 的 $\ell_{1,\infty}$-Lipschitz 常数至多为 $\lambda$，则前置因子变为
+   $$
+   \left(\frac{4\beta H\lambda}{\sqrt{d_{qk}}}\right)^{(3^L-1)/2}e_0^{3^L}.
+   $$
+7. 残差与 FFN 的作用不同。残差堆栈包含长度为 $0,1,\ldots,L$ 的注意力路径；长度为零的单位路径得以保留。特别是，$W_V=0$ 使 $\operatorname{res}(X^L)=\operatorname{res}(X^0)$ 保持不变，因此残差连接在结构上打破了通用崩溃保证。非线性 FFN 仅改变所述界限中的 Lipschitz 前置因子；它并未消除立方指数。
+8. [秩崩溃论文](https://arxiv.org/abs/2103.03404) 提供了该定理及其假设。检查验证了行平移简化、精确残差恒等式、立方缩放斜率、闭式递推关系以及 $A=I$/置换反例。
+
+**检查。** checks/M7/D-M7.2-02.py 报告了在 $[2.9967867060411364,2.9994842815079292]$（中心斜率 $2.9987898128495525$）、$\Delta P=O(R^2)$ 和 $\operatorname{res}(PX)=O(R^3)$ 比率中的三个相邻立方斜率，以及单位/置换混合下的零残差变化。
+
+### D-M7.2-03 · 三种平均场机制对应三种不同的泛函
+
+**定理，机制 (i)：原始对称核。** 在 $\mathbb{S}^{d-1}$ 上，设
+
+$$
+K_\beta(x,y)=e^{\beta\langle x,y\rangle},
+\qquad
+E_\beta[\mu]=\frac{1}{2\beta}\iint K_\beta(x,y)\,d\mu(x)d\mu(y).
+$$
+
+其一阶变分为
+
+$$
+\frac{\delta E_\beta}{\delta\mu}(x)=\frac{1}{\beta}\int K_\beta(x,y)\,d\mu(y),
+$$
+
+其球面切向梯度为
+
+$$
+v_E[\mu](x)=P_x^\perp\int K_\beta(x,y)y\,d\mu(y).
+$$
+
+当 $Q=K$ 且 $V=I_d$ 时，标准吸引粒子场是 $E_\beta$ 上的梯度上升；$V=-I_d$ 给出下降。有限检查在切向方向上对经验能量求导，并与该场匹配。
+
+**障碍，机制 (ii)：行 Softmax。** 设
+
+$$
+Z_\mu(x)=\int K_\beta(x,y)\,d\mu(y),
+\qquad
+a_\mu^{\mathrm{row}}(x,y)=\frac{K_\beta(x,y)}{Z_\mu(x)}.
+$$
+
+对于固定的 $\mu$，
+
+$$
+v_{\mathrm{row}}(x)=\frac{1}{\beta}\nabla_{\mathbb{S}^{d-1}}\log Z_\mu(x)
+$$
+
+看起来像是 $x$ 中的梯度。但这不足以构成 Wasserstein 势。全局一阶变分还需要二阶变分的对称性：
+
+$$
+\frac{K_\beta(x,y)}{Z_\mu(x)}
+=
+\frac{K_\beta(x,y)}{Z_\mu(y)}.
+$$
+
+只要 $Z_\mu(x)\ne Z_\mu(y)$，此条件即失效。检查报告了对于一般有限经验测度的非零障碍。
+
+**来源定理，机制 (iii)：Sinkhorn。** 精确的双随机归一化具有
+
+$$
+a_\mu^\infty(x,y)=s_\mu(x)K_\beta(x,y)s_\mu(y),
+$$
+
+该式由构造保证对称性，且是不同熵泛函的 Wasserstein 梯度流：
+
+$$
+F_\infty[\mu]
+=-\frac12\iint a_\mu^\infty(x,y)
+\log\frac{a_\mu^\infty(x,y)}{K_\beta(x,y)}\,d\mu(x)d\mu(y).
+$$
+
+它不是简单的 $E_\beta$。[Sinkformers](https://arxiv.org/abs/2110.11773)，命题 2–3 确立了这三者的区别：$k^0$ 原始形式和 $k^\infty$ Sinkhorn 具有 Wasserstein 结构，而 $k^1$ 行 Softmax 则没有。聚类主张仅适用于所述参数机制。
+
+**检查。** checks/M7/D-M7.2-03.py 报告了原始能量方向导数误差 $4.036349379732407\times10^{-11}$、行二阶变分障碍 $0.17647229778942708$，以及双随机/对称性误差低于 $3\times10^{-16}$。
+
+### D-M7.2-04 · 噪声建立了 Fokker–Planck 联系
+
+**联系，无需推导。** 向球面动力学添加切向布朗噪声给出了示意图 Stratonovich SDE：
+
+$$
+dx_i=P_{x_i}^\perp F_i(X)\,dt+\sqrt{2\tau}\,P_{x_i}^\perp\circ dW_i(t),
+\qquad x_i(t)\in\mathbb{S}^{d-1},
+$$
+
+对应的密度方程为
+
+$$
+\partial_t\mu+\operatorname{div}_{\mathbb{S}}(\mu X[\mu])=\tau\Delta_{\mathbb{S}}\mu.
+$$
+
+检查仅验证切向投影、球面保持性和经验质量守恒。Fokker–Planck 行是通向扩散模型分析的联系，而非对训练好的扩散模型的推导。
+
+## 4。数值验证
+
+| 推导 | 数值输出 | 状态 |
+| --- | --- | --- |
+| D-M7.2-01 | RMSNorm 有限差分误差 $1.4551445864929846\times10^{-7}$；行/Laplacian 求和误差低于 $2\times10^{-16}$ | pass |
+| D-M7.2-02 | cubic-slope 范围 $[2.9967867060411364,2.9994842815079292]$；精确残差恒等式误差 $4.3521230456283755\times10^{-16}$ | pass |
+| D-M7.2-03 | 原始导数误差 $4.036349379732407\times10^{-11}$；行阻塞 $0.17647229778942708$；Sinkhorn 误差低于 $3\times10^{-16}$ | pass |
+| D-M7.2-04 | 切线误差 $1.1102230246251565\times10^{-16}$；球面误差 $1.1102230246251565\times10^{-16}$ | pass |
+
+运行 checks/M7/D-M7.2-01.py 至 checks/M7/D-M7.2-04.py。这些检查使用 float64 算术。它们验证局部微分恒等式和有限粒子见证；它们并未将作用域收敛定理转化为关于所有训练好的 Transformers 的断言。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M7-b" />
+
+**V-M7-b —— S² 上的粒子。** 规范位于 viz/specs/V-M7-b.yaml，纯计算模块为 viz/compute/particles_sphere.ts。设置 $\beta$、depth、$Q=K$、residual、FFN、length 和 seed。该组件显示粒子位置、最强的注意力边、中心化秩、聚类数量及其层历史。
+
+该洞察具有特定范围：在定理设定的条件下，纯自注意力机制可以快速收缩中心化表示，而恒等残差路径可以保持多样性。组件中的 FFN 是一种确定性的玩具扰动；它并非针对某个特定生产级 FFN 的主张。
+
+## 6。结语
+
+**反直觉的问题。** 如果每一层的注意力机制都是行随机（row-stochastic）的，为什么仅凭行随机性不足以证明秩崩溃（rank collapse）？
+
+**解答示例。** 一个固定的 $A=I_N$ 是行随机的，且保持所有表示不变。置换矩阵也是行随机的，它仅重新排列行。D-M7.2-02 指出了缺失的机制：在自注意力中，$A^{(\ell)}$ 是通过双线性分数从 $X^{(\ell)}$ 重新生成的。分数扰动相对于残差是二次的，而乘以残差使得下一个残差变为三次。残差路径可以保留零长度恒等路径；前馈网络（FFN）会改变前置系数，但不会改变作用域界限中的三次指数。
+
+**作业 A-M7。** 在 V-M7-b 的设置下，实现 Sinkhorn 注意力机制，并将其深度动态与行 Softmax 注意力进行比较。绘制中心化秩（centered rank）和聚类数量图。将三个 D-M7.2-03 区域分别置于不同的列中。在最终报告中复用 M7.1 的随机特征和半分离（semiseparable）检查。
+
+**核心验证。** 经过 RMSNorm 后，一个 token 层是球面上的状态依赖图更新。动态视角解释了精确的秩崩溃反馈回路，并区分了三个变分区域。它尚未阐明完全训练好的、带残差的、多头且有限深度的模型在这些假设之外的行为。

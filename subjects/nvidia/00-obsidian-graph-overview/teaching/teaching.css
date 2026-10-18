@@ -1,0 +1,159 @@
+.nvidia-teaching {
+  display: grid;
+  gap: 1rem;
+  color: inherit;
+}
+
+.nvidia-teaching__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nvidia-teaching__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--muted, currentColor);
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}
+
+.nvidia-teaching__header h3,
+.nvidia-teaching__section h3,
+.nvidia-teaching__worked-example h3,
+.nvidia-teaching__transfer h3,
+.nvidia-teaching__checks h3,
+.nvidia-teaching__recap h3,
+.nvidia-teaching__sources h3,
+.nvidia-teaching__terms h3,
+.nvidia-teaching__prerequisites h3 {
+  margin-top: 0;
+}
+
+.nvidia-teaching__question {
+  max-width: 70ch;
+  margin-bottom: 0;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.nvidia-teaching__recap-button,
+.nvidia-teaching__node-buttons button {
+  border: 1px solid var(--border, currentColor);
+  border-radius: 0.45rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.45rem 0.7rem;
+}
+
+.nvidia-teaching__recap-button:hover,
+.nvidia-teaching__recap-button:focus-visible,
+.nvidia-teaching__node-buttons button:hover,
+.nvidia-teaching__node-buttons button:focus-visible {
+  background: color-mix(in srgb, currentColor 9%, transparent);
+}
+
+.nvidia-teaching__node-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nvidia-teaching__terms dl {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+}
+
+.nvidia-teaching__terms dl > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.35fr) 1fr;
+  gap: 0.75rem;
+}
+
+.nvidia-teaching__terms dt {
+  font-weight: 700;
+}
+
+.nvidia-teaching__terms dd {
+  margin: 0;
+}
+
+.nvidia-teaching__section p,
+.nvidia-teaching__worked-example p,
+.nvidia-teaching__transfer p,
+.nvidia-teaching__check-body p,
+.nvidia-teaching__sources li {
+  max-width: 78ch;
+  line-height: 1.65;
+}
+
+.nvidia-teaching__equation {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  border-inline-start: 0.2rem solid var(--accent, currentColor);
+  margin: 0.85rem 0;
+  padding: 0.65rem 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.nvidia-teaching__note,
+.nvidia-teaching__checkpoint,
+.nvidia-teaching__boundary {
+  padding-inline-start: 0.8rem;
+  border-inline-start: 0.2rem solid var(--border, currentColor);
+}
+
+.nvidia-teaching__check {
+  border-block-start: 1px solid var(--border, currentColor);
+  padding-block: 0.75rem;
+}
+
+.nvidia-teaching__check:last-child {
+  border-block-end: 1px solid var(--border, currentColor);
+}
+
+.nvidia-teaching__check summary {
+  cursor: pointer;
+  line-height: 1.55;
+}
+
+.nvidia-teaching__check-body {
+  padding: 0.7rem 0 0.2rem 1.25rem;
+}
+
+.nvidia-teaching__check-body h4 {
+  margin: 0.85rem 0 0.25rem;
+}
+
+.nvidia-teaching__check-body h4:first-child {
+  margin-top: 0;
+}
+
+.nvidia-teaching__recap {
+  scroll-margin-top: 4.5rem;
+}
+
+.nvidia-teaching__source-note {
+  color: var(--muted, currentColor);
+}
+
+@media (max-width: 520px) {
+  .nvidia-teaching__header {
+    display: block;
+  }
+
+  .nvidia-teaching__recap-button {
+    margin-top: 0.75rem;
+  }
+
+  .nvidia-teaching__terms dl > div {
+    display: block;
+  }
+
+  .nvidia-teaching__terms dt {
+    margin-bottom: 0.2rem;
+  }
+}

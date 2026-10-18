@@ -1,0 +1,338 @@
+## 1. 动机
+
+M3 使一个 Transformer 可执行。下一个缺陷是成本核算。一次训练运行包含参数路径、Token 路径和内存路径。如果其中任何一项计数错误，模型间的比较可能看似精确，却分配了错误的资源。
+
+本课将恒等式与经验拟合区分开来。主流的 FLOP 计数是一种会计惯例。Chinchilla 曲线是一种经验损失拟合。其约束最优解仅在该拟合曲线内部精确成立。激活数是一个具有明确声明的保存张量约定的显式估计值。
+
+## 2. 前向定义
+
+设 $N\in\mathbb{R}_{>0}$ 为可训练参数数量，$D\in\mathbb{R}_{>0}$ 为训练 token 数量，$C\in\mathbb{R}_{>0}$ 为以 FLOPs 计的训练计算预算。本课程采用的主流稠密 Transformer 惯例为：
+
+$$
+C \approx 6ND,\qquad
+C\in\mathbb{R}_{>0},\;N\in\mathbb{R}_{>0},\;D\in\mathbb{R}_{>0}.
+$$
+
+因子 6 是一个标注近似值：前向传播每参数每 token 约需 2 FLOPs，反向传播则需 4。当注意力项不可忽略时，可将其加入计算。
+
+对于模型宽度 $d\in\mathbb{N}$、深度 $L\in\mathbb{N}$、上下文长度 $n\in\mathbb{N}$、查询头数量 $h\in\mathbb{N}$ 以及头宽度 $d_h\in\mathbb{N}$，M3 中使用的单 token 解码器估算公式为：
+
+$$
+F_{\mathrm{decode}}
+\approx 2N+4Lnhd_h,\qquad
+F_{\mathrm{decode}}\in\mathbb{R}_{>0}.
+$$
+
+第一项统计参数路径的计算量。第二项统计查询 - 键点积及加权值求和的计算量。这是一个估算值，而非与硬件无关的运行时间定理。
+
+Hoffmann 等人在其训练运行中拟合了以下损失模型：
+
+$$
+\mathcal{L}(N,D)
+=E+\frac{A}{N^\alpha}+\frac{B}{D^\beta},
+\qquad
+\mathcal{L},E,A,B,\alpha,\beta\in\mathbb{R},
+\quad \alpha,\beta>0.
+$$
+
+在此方程中，$\mathcal{L}(N,D)\in\mathbb{R}$ 为标量损失。拟合常数属于特定实验和分词器，并非所有语言模型的通用常数。主要来源是 Hoffmann 等人，《Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)》。早期的对比参考点是 Kaplan 等人，《Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361)》。
+
+对于混合精度 Adam，设 $\theta\in\mathbb{R}^{N}$ 为参数向量。存储惯例如下：
+
+$$
+M_{\mathrm{Adam}}
+\approx
+N(2+2+4+4+4)\ \mathrm{bytes}
+=16N\ \mathrm{bytes}.
+$$
+
+这五项分别为 fp16 权重、fp16 梯度、一个 fp32 主副本，以及两个 fp32 矩向量。这是在所示数据类型惯例下的选定状态会计恒等式；它不包含激活值、临时工作区或优化器分片。
+
+对于层隐藏状态 $H_\ell\in\mathbb{R}^{n\times d}$、$L$ 层、元素大小 $b\in\mathbb{N}$ 字节，以及每 token 保存的向量数 $s\in\mathbb{N}$，声明的激活估算值为：
+
+$$
+M_{\mathrm{act}}
+\approx sLndb\ \mathrm{bytes},
+\qquad
+M_{\mathrm{act}}\in\mathbb{R}_{>0}.
+$$
+
+本课参考代码使用 $s=6$ 表示残差、归一化输入、Q、K、V 以及一个 FFN 中间向量。$\mathbb{R}^{n\times n}$ 中的注意力分数工作区未包含在此估算中。
+
+## 3. 推导过程
+
+### D-M4.1-01 · 训练与推理的 FLOPs
+
+**近似，已标注。** 按照本课程定义的乘加约定，训练计算量约为 $6ND$，单 token 解码器计算量约为 $2N+4Lnhd_h$。这些是主导项估算值，而非精确的指令计数。
+
+**步骤。**
+
+1. 考虑一次矩阵乘法，输入为 $x\in\mathbb{R}^{d_{\mathrm{in}}}$，权重为 $W\in\mathbb{R}^{d_{\mathrm{in}}\times d_{\mathrm{out}}}$，输出为 $y\in\mathbb{R}^{d_{\mathrm{out}}}$。一个输出坐标的计算为
+   $$
+   y_j=\sum_{i=1}^{d_{\mathrm{in}}}x_iW_{ij},
+   \qquad
+   y\in\mathbb{R}^{d_{\mathrm{out}}}.
+   $$
+   它包含 $d_{\mathrm{in}}$ 次乘法和 $d_{\mathrm{in}}-1$ 次加法。因此，主导项计数为每个输出坐标 $2d_{\mathrm{in}}$ FLOPs，整个矩阵为 $2d_{\mathrm{in}}d_{\mathrm{out}}$ FLOPs。
+2. 该矩阵拥有 $N_W=d_{\mathrm{in}}d_{\mathrm{out}}$ 个参数。因此其主导项前向计算量为 $2N_W$ FLOPs。对所有矩阵求和，得到参数路径每 token 的计算量为 $2N$ FLOPs，此处忽略了较小的偏置和归一化项。
+3. 反向传播必须将梯度传播至 $x$ 以及 $W$。对于 $W$，微分形式为
+   $$
+   dL
+   =\langle \nabla_yL,\;dW^\top x\rangle
+   =\langle x(\nabla_yL)^\top,\;dW\rangle,
+   \qquad
+   \nabla_yL\in\mathbb{R}^{d_{\mathrm{out}}},\;x\in\mathbb{R}^{d_{\mathrm{in}}}.
+   $$
+   计算权重梯度的外积和输入梯度的矩阵乘积，在相同的主导约定下贡献约 $2N_W+2N_W=4N_W$ FLOPs。求和后得到反向传播 FLOPs 约为 $4N$。
+4. 对于 $D$ 个 token，将每 token 估算值乘以 $D$ 得到
+   $$
+   C_{\mathrm{train}}
+   \approx D(2N+4N)
+   =6ND,
+   \qquad
+   C_{\mathrm{train}},N,D\in\mathbb{R}_{>0}.
+   $$
+5. 在解码阶段，参数路径仅针对新 token 评估一次，因此贡献约 $2N$ FLOPs。对于单层、单查询头、一个缓存键 $k_j\in\mathbb{R}^{d_h}$ 和查询 $q\in\mathbb{R}^{d_h}$，
+   $$
+   s_j=q^\top k_j,\qquad
+   s_j\in\mathbb{R},\quad q,k_j\in\mathbb{R}^{d_h}.
+   $$
+   分数点积成本约为 $2d_h$ FLOPs。带有 $v_j\in\mathbb{R}^{d_h}$ 的加权值求和对于单个位置的成本也约为 $2d_h$ FLOPs。跨越 $n$ 个缓存位置、$L$ 层以及 $h$ 个查询头，主导的注意力项为 $4Lnhd_h$。
+6. 将两条路径相加得到
+   $$
+   F_{\mathrm{decode}}
+   \approx 2N+4Lnhd_h,
+   \qquad
+   F_{\mathrm{decode}}\in\mathbb{R}_{>0}.
+   $$
+7. 该检查使用整数值维度评估两个恒等式。它得出针对所述玩具层堆栈的 $12{,}000{,}000{,}000$ 训练 FLOPs（对应 $N=10^6,D=2000$）和 $2{,}004{,}096$ 解码 FLOPs。
+
+**检查。** checks/M4/D-M4.1-01.py 打印两项结果并显示 passed: True。
+
+**直觉。** 训练需要为每个 token 上的每个参数付费。解码仅需对参数路径支付一次，随后需为缓存上下文支付线性增长的读取成本。
+
+### D-M4.1-02 · 固定预算下的 Chinchilla 分配
+
+**定理，限定于拟合损失。** 若 $\alpha,\beta,A,B>0$ 且 $C=6ND$，则沿预算曲面显示拟合损失的唯一最小化器具有
+
+$$
+N_{\mathrm{opt}}
+\propto C^{\frac{\beta}{\alpha+\beta}},
+\qquad
+D_{\mathrm{opt}}
+\propto C^{\frac{\alpha}{\alpha+\beta}}.
+$$
+
+这是针对经验曲线的解析结果。它并非表明所有数据集、分词器、架构或训练制度都具有相同的指数。
+
+**步骤。**
+
+1. 将乘数保留为符号 $k>0$ 并写出预算约束：
+   $$
+   C=kND,
+   \qquad
+   C,k,N,D\in\mathbb{R}_{>0}.
+   $$
+   求解 token 数量得到
+   $$
+   D=\frac{C}{kN},
+   \qquad
+   D\in\mathbb{R}_{>0}.
+   $$
+2. 将此表达式代入损失函数：
+   $$
+   \mathcal{L}(N)
+   =E+\frac{A}{N^\alpha}
+   +\frac{B}{(C/(kN))^\beta}.
+   $$
+   由于 $(C/(kN))^{-\beta}=(kN/C)^\beta$，这变为
+   $$
+   \mathcal{L}(N)
+   =E+AN^{-\alpha}
+   +B\left(\frac{k}{C}\right)^\beta N^\beta,
+   \qquad
+   N\in\mathbb{R}_{>0}.
+   $$
+3. 对每一项求导：
+   $$
+   \frac{d}{dN}E=0,
+   \qquad
+   \frac{d}{dN}AN^{-\alpha}=-\alpha AN^{-\alpha-1},
+   $$
+   $$
+   \frac{d}{dN}
+   \left[
+   B\left(\frac{k}{C}\right)^\beta N^\beta
+   \right]
+   =\beta B\left(\frac{k}{C}\right)^\beta N^{\beta-1}.
+   $$
+   因此
+   $$
+   \frac{d\mathcal{L}}{dN}
+   =-\alpha AN^{-\alpha-1}
+   +\beta B\left(\frac{k}{C}\right)^\beta N^{\beta-1}.
+   $$
+4. 令导数为零并将负项移至等式另一边：
+   $$
+   \alpha AN^{-\alpha-1}
+   =\beta B\left(\frac{k}{C}\right)^\beta N^{\beta-1}.
+   $$
+   两边同乘 $N^{\alpha+1}>0$：
+   $$
+   \alpha A
+   =\beta B\left(\frac{k}{C}\right)^\beta N^{\alpha+\beta}.
+   $$
+5. 除以正系数并取预算比的倒数：
+   $$
+   N^{\alpha+\beta}
+   =\frac{\alpha A}{\beta B}
+   \left(\frac{C}{k}\right)^\beta.
+   $$
+   取正的 $(\alpha+\beta)$ 次方根得到
+   $$
+   N_{\mathrm{opt}}
+   =
+   \left(\frac{\alpha A}{\beta B}\right)^{\frac{1}{\alpha+\beta}}
+   \left(\frac{C}{k}\right)^{\frac{\beta}{\alpha+\beta}},
+   \qquad
+   N_{\mathrm{opt}}\in\mathbb{R}_{>0}.
+   $$
+6. 通过代入 $D_{\mathrm{opt}}$ 恢复 $D=C/(kN)$：
+   $$
+   D_{\mathrm{opt}}
+   =
+   \left(\frac{\beta B}{\alpha A}\right)^{\frac{1}{\alpha+\beta}}
+   \left(\frac{C}{k}\right)^{\frac{\alpha}{\alpha+\beta}},
+   \qquad
+   D_{\mathrm{opt}}\in\mathbb{R}_{>0}.
+   $$
+   因此，$C$ 的幂次对于参数为 $\beta/(\alpha+\beta)$，对于 token 为 $\alpha/(\alpha+\beta)$。
+7. 为了验证驻点是唯一最小值，对导数进行因式分解：
+   $$
+   \frac{d\mathcal{L}}{dN}
+   =N^{-\alpha-1}
+   \left[
+   -\alpha A
+   +\beta B\left(\frac{k}{C}\right)^\beta N^{\alpha+\beta}
+   \right].
+   $$
+   前置系数为正。括号项在 $N$ 上严格递增，因为 $\alpha+\beta>0$，起始为负且仅穿过零点一次。导数在穿过零点前为负，穿过零点后为正。
+8. Hoffmann 等人报告拟合的参数指数接近 $\alpha=0.34$ 和 $\beta=0.28$。代入得到
+   $$
+   \frac{\beta}{\alpha+\beta}
+   =\frac{0.28}{0.34+0.28}
+   =0.45161290322580644,
+   $$
+   $$
+   \frac{\alpha}{\alpha+\beta}
+   =\frac{0.34}{0.34+0.28}
+   =0.5483870967741935.
+   $$
+   该论文的前两种经验方法报告约为 $0.50/0.50$ 和 $0.49/0.51$，而其参数化方法报告约为 $0.46/0.54$。这些是相关的估算值，而非可互换的恒等式。
+9. float64 检查使用 $k=6$ 和拟合 $E=1.69,A=406.4,B=410.7,\alpha=0.34,\beta=0.28$。在 $C=6\times10^{12}$ 处得到
+   $$
+   N_{\mathrm{opt}}=353169.89874250407,
+   \qquad
+   D_{\mathrm{opt}}=2831498.3908894775,
+   $$
+   其约束数值导数为 $-1.6095204903703447\times10^{-14}$。
+
+**检查。** checks/M4/D-M4.1-02.py 验证预算等式、闭式指数、有限差分驻点导数以及局部损失比较；它打印 passed: True。
+
+**近似，已标注。** 常数和指数描述了特定拟合语料库和训练设置。选择该拟合后的代数推导是精确的；将该拟合转移到不同设置则是一种近似。
+
+### D-M4.1-03 · 混合精度优化器与激活内存
+
+**定理，限定于存储约定。** 如果五个优化器数组具有显示的 dtype 且每个参数包含一个值，则选定的 Adam 状态成本恰好为 $16N$ 字节。
+
+**步骤。**
+
+1. 参数向量为 $\theta\in\mathbb{R}^{N}$。fp16 权重数组的形状为 $[N]$，成本为
+   $$
+   M_{\mathrm{weight}}=2N\ \mathrm{bytes}.
+   $$
+2. fp16 梯度数组具有相同形状 $[N]$，成本为
+   $$
+   M_{\mathrm{grad}}=2N\ \mathrm{bytes}.
+   $$
+3. fp32 主副本的形状为 $[N]$，成本为
+   $$
+   M_{\mathrm{master}}=4N\ \mathrm{bytes}.
+   $$
+4. Adam 的一阶和二阶矩 $m,v\in\mathbb{R}^{N}$ 均使用 fp32：
+   $$
+   M_m=4N\ \mathrm{bytes},
+   \qquad
+   M_v=4N\ \mathrm{bytes}.
+   $$
+5. 将这五个数组相加得到
+   $$
+   M_{\mathrm{Adam}}
+   =M_{\mathrm{weight}}+M_{\mathrm{grad}}+M_{\mathrm{master}}+M_m+M_v
+   =(2+2+4+4+4)N
+   =16N\ \mathrm{bytes}.
+   $$
+6. 对于激活值，一个保存的向量形状为 $[n,d]$，成本为 $ndb$ 字节。如果 $L$ 层中的每一层都保存 $s$ 个此类向量，则数组数量的乘积法则给出
+   $$
+   M_{\mathrm{act}}
+   =s\cdot L\cdot n\cdot d\cdot b
+   \ \mathrm{bytes}.
+   $$
+   参考约定设定 $s=6$。它故意排除了形状为 $[n,n]$ 的独立注意力分数矩阵。
+7. 平方根检查点调度存储约 $q=\lceil\sqrt{L}\rceil$ 个层边界，而非所有 $L$ 个边界：
+   $$
+   M_{\mathrm{ckpt}}
+   \approx qndsb
+   =\lceil\sqrt{L}\rceil ndsb\ \mathrm{bytes}.
+   $$
+   在此约定下，内存缩放从 $O(Lnd)$ 变为 $O(\sqrt{L}nd)$。匹配的重新计算成本取决于实现；标准权衡在相同的粗粒度 $O(\sqrt{L})$ 级别描述，而非作为精确的墙钟时间恒等式。
+8. 对于 $N=10000$，检查得到 $160000$ 字节，即每个参数恰好 16 字节。使用 $s=6$、$n=32$、$d=64$ 和 fp16，在 $1572864$ 处的完整激活估算值为 $L=64$ 字节，而平方根检查点估算值为 $196608$ 字节。
+
+**检查。** checks/M4/D-M4.1-03.py 验证五个数组之和、$L$ 中的线性全激活缩放以及平方根检查点估算值；它打印 passed: True。
+
+**近似，已标注。** 实际训练内存还包含临时内核、通信缓冲区、分配器碎片、框架元数据以及可能的分片状态。显示的数值是一个透明的核算基线。
+
+## 4. 数值验证
+
+M4.1 检查对解析公式使用 float64 算术，对计数恒等式使用整数算术。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M4.1-01 | 训练 $12{,}000{,}000{,}000$ FLOPs；解码 $2{,}004{,}096$ FLOPs | pass |
+| D-M4.1-02 | $N_{\mathrm{opt}}=353169.89874250407$；$D_{\mathrm{opt}}=2831498.3908894775$；指数 $0.45161290322580644/0.5483870967741935$ | pass |
+| D-M4.1-03 | Adam $160000$ 字节用于 $N=10000$；完整 $L=64$ 激活值 $1572864$ 字节；检查点化 $196608$ 字节 | pass |
+
+从 course/ 目录运行 python checks/M4/D-M4.1-01.py、python checks/M4/D-M4.1-02.py 和 python checks/M4/D-M4.1-03.py。仓库测试套件也会执行这些检查。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M4-a" />
+
+**V-M4-a — Chinchilla iso-FLOP 探索器。** 规范位于 viz/specs/V-M4-a.yaml；纯计算模块为 viz/compute/chinchilla.ts。该组件评估
+
+$$
+\mathcal{L}(N,C/(6N)),
+\qquad
+N,C\in\mathbb{R}_{>0},
+$$
+
+并绘制拟合损失，同时 $N/N_{\mathrm{opt}}$ 从 $0.25$ 变化至 $4$。它还报告 $N_{\mathrm{opt}}$、$D_{\mathrm{opt}}$、两个计算指数以及 $D_{\mathrm{opt}}/N_{\mathrm{opt}}$。可见的洞察语句必须说明该曲线为经验拟合，且解析最优解依赖于该拟合。渲染器可将这些纯输出绑定到所有者现有的 Preact/MDX 绘图约定中，而无需更改前端。
+
+该组件的方程为 D-M4.1-02。其线条和端点测试通过 node --experimental-strip-types viz/compute/chinchilla.test.mjs 运行。
+
+## 6。结语
+
+**反直觉的问题。** 如果训练预算 $C$ 是固定的，为什么增加数据反而能使模型变小，而不是仅仅让运行成本更高？
+
+**解答过程。** D-M4.1-02 始于 $C=6ND$。求解数据量得到 $D=C/(6N)$。因此，增加 $N$ 会迫使 $D$ 沿同一预算曲面下降，而减少 $N$ 则能释放 token。损失拟合对参数不足和 token 不足分别施加惩罚。最优解是这两个导数贡献相互平衡的点：
+
+$$
+\alpha A N^{-\alpha-1}
+=\beta B\left(\frac{6}{C}\right)^\beta N^{\beta-1}.
+$$
+
+这就是为什么“更多参数”并不是固定预算设计问题的完整答案。该方程比较了两种稀缺资源；它并未声称在计算资源不固定的情况下，较小的模型总是更好。
+
+**作业 A-M4。** 完整作业将扩展 code/minilm/ 并包含六条 M4 效率曲线。对于本课，请记录两个 FLOP 项、选定预算下的 Chinchilla 最优值、16 字节的 Adam 基线，以及完整的/带检查点的激活估计值。后续 M4 课程中的门控部分将添加针对在线 softmax、MLA 和循环线性注意力形式的等价性检查。
+
+**核心检查。** 在架构上，下一个 token 的分布保持不变，但其可行的训练路径受限于 $N$、$D$、$C$ 和内存。从概率角度看，缩放定律是关于该分布损失的实证陈述；而会计恒等式则说明了获得该分布所需的计算和存储资源。

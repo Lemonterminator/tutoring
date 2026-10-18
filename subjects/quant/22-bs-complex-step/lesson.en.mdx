@@ -1,0 +1,130 @@
+import { BSMaterials, bsMaterialHref } from "../../../framework/quant/BSPaperCourse";
+
+<div class="bs-paper-content">
+
+Goal: Derive CS Delta, CS-real Gamma, and 45° Gamma yourself, and correct the Taylor notation in the original assignment. Time required: approximately 75 minutes. Prerequisites: Part 03, $i^2=-1$.
+
+## 1. Clarify the analyticity conditions first
+
+Assume $f$ is analytic in a complex neighborhood of the real number $x$ and takes real values on the real axis. All Taylor coefficients $f^{(n)}(x)$ below are therefore real numbers. BS can select a consistent log/sqrt branch locally at $S,K,\sigma,T>0$; the CDF for complex prices must also support the required extension.
+
+Forcing complex inputs back to real numbers, using abs, or rewriting smooth prices with real max typically destroys the required analyticity. Real-valued boundary checks and smooth branch selection can be interface behavior; the local path actually being differentiated must still satisfy the conditions.
+
+## 2. First derivative: Read only the imaginary part signal
+
+Replace the Taylor increment with $ih$:
+
+$$
+f(x+ih)=f+ihf'-\frac{h^2}2f''-\frac{ih^3}6f^{(3)}+\frac{h^4}{24}f^{(4)}+O(h^5).
+$$
+
+Read the imaginary part and divide by $h$:
+
+$$
+D_{cs}(h)=\frac{\operatorname{Im}f(x+ih)}{h}=f'-\frac{h^2}6f^{(3)}+O(h^4).
+$$
+
+It does not require subtracting two close real prices. If the internal imaginary part can retain the $O(h)$ signal with relative precision, dividing by $h$ keeps the noise at the $O(\epsilon)$ level, and the $O(\epsilon/h)$ term of FD does not automatically appear.
+
+However, if the internal imaginary part itself contains cancellation, is truncated to zero, underflows, or if the true derivative is close to zero, precision may still be lost. Therefore, the statement that 'CS has no roundoff error' is incorrect.
+
+**Paper pause A:** Write $\operatorname{Im}e^{x+ih}/h$ for $f(x)=e^x$.
+
+<details class="bs-paper-answer">
+<summary>Pause A answer</summary>
+
+
+$e^x\sin(h)/h=e^x(1-h^2/6+O(h^4))$。
+
+
+</details>
+
+## 3. The second-order real part method still requires subtraction
+
+Read the real part:
+
+$$
+\operatorname{Re}f(x+ih)=f-\frac{h^2}2f''+\frac{h^4}{24}f^{(4)}+O(h^6).
+$$
+
+Construct the estimator
+
+$$
+G_{cs,r}(h)=-\frac2{h^2}(\operatorname{Re}f(x+ih)-f(x))=f''-\frac{h^2}{12}f^{(4)}+O(h^4).
+$$
+
+On page 2 of the original assignment, when solving for the true second derivative, the sign of the fourth derivative term was written incorrectly. The correct rearrangement is
+
+$$
+f''=G_{cs,r}(h)+\frac{h^2}{12}f^{(4)}+O(h^4).
+$$
+
+The $O(1)$ real part of the price still requires subtraction to obtain the $O(h^2)$ signal, so there is $O(\epsilon M/h^2)$ roundoff amplification. Although it uses complex numbers, it does not automatically gain the cancellation advantage of first-order CS.
+
+**Paper pause B:** Take $f(x)=x^4$, directly compute the estimator, and confirm the error sign.
+
+<details class="bs-paper-answer">
+<summary>Pause B answer</summary>
+
+
+$G_{cs,r}=12x^2-2h^2$, the true second derivative is $12x^2$.
+
+
+</details>
+
+## 4. 45° direction: even terms enter different phases
+
+Let $\omega=(1+i)/\sqrt2=e^{i\pi/4}$. Note that the two points are $x+h\omega$ and $x-h\omega$. The second increment is $-h\omega$, not $h\omega^{-1}$.
+
+Symmetric addition, odd powers vanish:
+
+$$
+f(x+h\omega)+f(x-h\omega)=2f+\omega^2h^2f''+\frac{\omega^4h^4}{12}f^{(4)}+\frac{\omega^6h^6}{360}f^{(6)}+O(h^8).
+$$
+
+Here the coefficients of the even terms come from $2/(2j)!$. The original assignment wrote $\omega^{2j}+\omega^{-2j}$, which causes the quadratic term phase to be incorrect; for example $\omega^2+\omega^{-2}=i-i=0$, it is impossible to extract Gamma again.
+
+List the power table yourself: $\omega^2=i$, $\omega^4=-1$, $\omega^6=-i$, $\omega^8=1$, $\omega^{10}=i$. Take the imaginary part:
+
+$$
+G_{45}(h)=\frac{\operatorname{Im}(f(x+h\omega)+f(x-h\omega))}{h^2}.
+$$
+
+$$
+G_{45}(h)=f''-\frac{h^4}{360}f^{(6)}+\frac{h^8}{1814400}f^{(10)}+O(h^{12}).
+$$
+
+The fourth and eighth powers are real, so they do not enter the estimator. The ideal formula has a fourth-order leading error; the remainder written after the leading term is $O(h^8)$. This stronger remainder depends on the complete analytic function and cannot be applied as-is to finite-order CDF dispatch.
+
+**paper pause C:** use $f(x)=x^6$ to verify the leading error.
+
+<details class="bs-paper-answer">
+<summary>pause C answer</summary>
+
+
+$f^{(6)}=720$, so $G_{45}=30x^4-2h^4$. If your hand calculation produces a $h^2$ term, check the phase and symmetric summation.
+
+
+</details>
+
+## 5. 45° also has imaginary part cancellation
+
+The imaginary parts of the two prices have leading terms of $+h f'/\sqrt2$ and $-h f'/\sqrt2$. Only after addition does $h^2f''$ remain. If the computational error in each imaginary part is approximately $\epsilon h M_1$, division by $h^2$ may result in an amplification of $O(\epsilon M_1/h)$.
+
+This model is typically milder than the $O(\epsilon M/h^2)$ obtained by directly subtracting $O(1)$ prices, but this does not imply that $h$ can be reduced indefinitely. The magnitude of local derivatives, CDF implementation, complex multiplication, and input distinguishability all affect the plateau.
+
+Therefore, the $h=10^{-5}$ in the existing API is a default parameter, not a guarantee of the optimal step size for all maturities, volatilities, and moneyness. The logarithmic scan from the original assignment remains necessary.
+
+## 6. From template prices to the real interface
+
+The mathematical chain is "complex increment → log/exp/sqrt → $d_1,d_2$ → complex CDF → price → extract imaginary or real part". Type support must permeate this entire chain.
+
+Python: `delta_cs(..., h=..., order=3)`, `gamma_cs_real(..., h=..., order=3)`, `gamma_45_deg(..., h=..., order=3)`, all forwarding `order` to `Phi_t` via `bs_price_call_t`. See `BS_cpp/complex_step.h` for the corresponding public C++ entry points.
+
+The current C++ public complex pricing function only allows $S$ to be complex, while other parameters remain double. Therefore, the complex Vega/Rho/Theta in Part 06 are mathematical extensions and cannot be presented as callable features of the current C++ implementation. See the <a href={bsMaterialHref("complex_step_api.md")}>API documentation</a> for full API details.
+
+Method background: [Martins et al. institutional paper record](https://mdolab.engin.umich.edu/bibliography/Martins2003a). The next section explains why the first-order CDF approximation in the original assignment can even cause the CS-real Gamma to converge to an incorrect value.
+
+</div>
+
+<BSMaterials lang="en" lesson={4} />

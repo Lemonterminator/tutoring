@@ -1,0 +1,18 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { softmaxCards } from '../../../framework/games/llm-foundations-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+
+## 开始练习
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+题目给出指数值，你负责归一化、雅可比条目和交叉熵梯度。对应 D-M0.1-01 与 D-M0.1-02；交叉熵使用自然对数。
+
+<PracticeGame generate={softmaxCards} lang="zh" />
+
+## 边界与原始课程
+
+这里用两类小分数减少算术负担。实际 Softmax 还需要数值稳定实现；对称雅可比不改变一般反向传播中的转置约定。
+
+<SourceLessonLink source="llm:M0.1" lang="zh" />

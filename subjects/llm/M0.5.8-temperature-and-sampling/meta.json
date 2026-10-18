@@ -1,0 +1,32 @@
+{
+  "subject": "llm",
+  "id": "M0.5.8",
+  "module": "M0.5",
+  "title": {
+    "en": "Temperature and sampling",
+    "zh": "温度与采样"
+  },
+  "prereqs": [
+    "M0.5.7"
+  ],
+  "estimatedHours": 3,
+  "spine": {
+    "en": {
+      "a": "Treat temperature and truncation as decoding transformations applied after the model has produced logits.",
+      "b": "Use the entropy derivative to explain why higher temperature flattens a non-degenerate distribution."
+    },
+    "zh": {
+      "a": "将温度和截断视为在模型生成 logits 后应用的解码转换。",
+      "b": "利用熵的导数解释为何较高的温度会使非退化分布趋于平坦。"
+    }
+  },
+  "derivations": [
+    "D-M0.5.8-01",
+    "D-M0.5.8-02"
+  ],
+  "visualizations": [
+    "V-M0.5-d"
+  ],
+  "assignment": "A-M0.5",
+  "references": []
+}

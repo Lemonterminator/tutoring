@@ -1,0 +1,297 @@
+import { BSMaterials, bsMaterialHref } from "../../../framework/quant/BSPaperCourse";
+
+<div class="bs-paper-content">
+
+Objective: Extend the Call derivation to the Put, rather than memorizing a separate set of formulas. Time required: approximately 75 minutes. Prerequisites: 01, 02, 06.
+
+## 1. Maturity Payoff Identity
+
+For any terminal value $s$, considering the two cases $s\ge K$ and $s<K$, one can verify
+
+$$
+(s-K)^+-(K-s)^+=s-K.
+$$
+
+Under the same underlying, strike price, maturity, continuous dividend yield, and European exercise convention, take the risk-neutral expectation and discount:
+
+$$
+C-P=e^{-rT}(F-K)=A-B.
+$$
+
+This is put-call parity. It arises from the exact identity of terminal payoffs and the no-arbitrage principle that identical payoffs must have identical present values. The Put is
+
+$$
+P=C-A+B=B\Phi(-d_2)-A\Phi(-d_1).
+$$
+
+The next step uses $1-\Phi(x)=\Phi(-x)$. One can also directly integrate $Z<-d_2$: the cash part is $B\Phi(-d_2)$, and the asset-weighted part becomes $A\Phi(-d_1)$ via completing the square.
+
+**Paper Pause A:** Verify the payoff parity by considering the two terminal value cases, then manually derive the Put from the closed-form Call expression.
+
+<details class="bs-paper-answer">
+<summary> Answer to Pause A</summary>
+
+
+When $s\ge K$, it is $(s-K)-0=s-K$; when $s<K$, it is $0-(K-s)=s-K$. Expanding $C-A+B$ and changing $1-\Phi$ to a negative parameter CDF yields the Put.
+
+
+</details>
+
+## 2. Differentiating with respect to spot: Delta/Gamma/Vega
+
+Differentiating with respect to $S$: $\Delta_C-\Delta_P=e^{-qT}$, so
+
+$$
+\Delta_P=e^{-qT}(\Phi(d_1)-1)=-e^{-qT}\Phi(-d_1).
+$$
+
+The right-hand side of the price parity is a linear function of $S$, and the second derivative is 0:
+
+$$
+\Gamma_P=\Gamma_C=\frac{e^{-qT}\phi(d_1)}{S\sigma\sqrt T}.
+$$
+
+The right-hand side of the price parity does not depend on $\sigma$, so $\nu_P=\nu_C$. Call and Put have different slopes, but under the same parameters, their curvature and volatility sensitivity are identical.
+
+## 3. Rho, dividend sensitivity, Theta
+
+Holding $S,q,\sigma,T$ fixed, take the derivative with respect to $r$:
+
+$$
+\rho_C-\rho_P=TB,\quad\rho_P=-TB\Phi(-d_2).
+$$
+
+Holding $S,r,\sigma,T$ fixed, take the derivative with respect to $q$:
+
+$$
+\psi_C-\psi_P=-TA,\quad\psi_P=TA\Phi(-d_1).
+$$
+
+First differentiate with respect to $T$ and then change the sign: $-\partial_T(A-B)=qA-rB$, so
+
+$$
+\Theta_C-\Theta_P=qA-rB.
+$$
+
+$$
+\Theta_P=-\frac{A\phi(d_1)\sigma}{2\sqrt T}+rB\Phi(-d_2)-qA\Phi(-d_1).
+$$
+
+**paper pause B:** derive the Theta difference from put-call parity under non-zero $r,q$. A common error is omitting the negative sign of $\Theta=-V_T$.
+
+<details class="bs-paper-answer">
+<summary> paper pause B answer</summary>
+
+
+$\partial_T(A-B)=-qA+rB$, after changing sign it is $qA-rB$. Therefore $\Theta_P=\Theta_C-qA+rB$, substituting into Call Theta yields the above expression.
+
+
+</details>
+
+## 4. A common numerical card
+
+Take $S=K=100,r=0.03,q=0.01,\sigma=0.2,T=1$. At this point $F=100e^{0.02}$, $d_1=0.2,d_2=0$, $A\approx99.00498337$, $B\approx97.04455335$.
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Item
+
+</th>
+<th>
+
+Call
+
+</th>
+<th>
+
+Put
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+Price
+
+</td>
+<td>
+
+approx. 8.82732123
+
+</td>
+<td>
+
+approx. 6.86689121
+
+</td>
+</tr>
+<tr>
+<td>
+
+Delta
+
+</td>
+<td>
+
+approx. 0.57349598
+
+</td>
+<td>
+
+approx. -0.41655385
+
+</td>
+</tr>
+<tr>
+<td>
+
+Gamma
+
+</td>
+<td>
+
+approx. 0.01935759
+
+</td>
+<td>
+
+Same
+
+</td>
+</tr>
+<tr>
+<td>
+
+Vega, per 1.00
+
+</td>
+<td>
+
+approx. 38.71517542
+
+</td>
+<td>
+
+Same
+
+</td>
+</tr>
+<tr>
+<td>
+
+Rho, per 1.00
+
+</td>
+<td>
+
+approx. 48.52227668
+
+</td>
+<td>
+
+approx. -48.52227668
+
+</td>
+</tr>
+<tr>
+<td>
+
+Dividend sensitivity, per 1.00
+
+</td>
+<td>
+
+approx. -57.34959790
+
+</td>
+<td>
+
+approx. 41.65538547
+
+</td>
+</tr>
+<tr>
+<td>
+
+Theta, per annum
+
+</td>
+<td>
+
+approx. -4.75368986
+
+</td>
+<td>
+
+approx. -2.83240310
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+Price difference approx. 1.96043002, Delta difference approx. 0.99004983. Table values are displayed with rounding; see `artifacts/bs-math/greeks_reference.csv` for reproducible high-precision values. Do not demand machine-level residuals using values that have been truncated for display.
+
+## 5. Two Put calculation paths and cancellation
+
+"Compute Call first then apply $P=C-A+B$" is suitable for constructing mathematical consistency checks, but if the Put is very small, it may involve subtracting two large quantities and losing relative precision. The direct formula uses $\Phi(-d_1),\Phi(-d_2)$, which can avoid certain parity transformation cancellations; however, the two terms themselves may also be close, and extreme parameters still require specialized stable algorithms.
+
+Similarly, do not always write the $\Phi(-d)$ in the extreme tail as $1-\Phi(d)$. Use the direct negative parameter CDF/erfc, or the corresponding tail primitives.
+
+Numerical Greeks can be obtained by independently bumping the Put price or derived from the Call and parity. When cross-comparing the two paths, they should not completely share the same differentiation code, otherwise errors may not be sufficiently detected.
+
+## 6. No-arbitrage bounds and degenerate limits
+
+For non-negative terminal values, $0\le(s-K)^+\le s$, $0\le(K-s)^+\le K$. Then use convexity to obtain the lower bound:
+
+$$
+\max(A-B,0)\le C\le A,\quad\max(B-A,0)\le P\le B.
+$$
+
+When $\sigma\to0$, the terminal value becomes a deterministic forward $F$; the price limit is the discounted intrinsic value $C=(A-B)^+$, $P=(B-A)^+$. When $T=0$, the price equals the spot at maturity.
+
+At the kink point $A=B$, the classical derivative of Delta does not exist. Gamma under zero volatility cannot be represented by an ordinary finite number at the kink point. Engineering interfaces may stipulate that Delta takes the midpoint and Gamma takes 0, but that is a return rule. Even the boundary of Vega requires independent analysis: for zero carry ATM with a fixed positive maturity, the right-hand Vega limit of $\sigma\downarrow0$ is $S\sqrt T/\sqrt{2\pi}$, not 0.
+
+**Paper pause C:** Fix zero carry ATM, prove that the Call price is approximately $\sigma$ for small $S\sigma\sqrt T/\sqrt{2\pi}$; explain why the blanket statement "sigma=0 all Greeks are 0" does not hold.
+
+<details class="bs-paper-answer">
+<summary>Pause C answer</summary>
+
+
+$C=S(2\Phi(\sigma\sqrt T/2)-1)$. Using $\Phi(x)=1/2+\phi(0)x+O(x^3)$, we obtain $C=S\phi(0)\sigma\sqrt T+O(\sigma^3)$, where the right-hand side Vega is non-zero. Boundary derivatives must be discussed separately with respect to variables, direction, and whether they are located at kink points.
+
+
+</details>
+
+## 7. Turn parity into a checking system
+
+Price parity, Delta difference, Gamma equality, Vega equality, Rho difference, and Theta difference can form a set of residuals. Additionally, check the PDE residuals and no-arbitrage intervals for both prices, as well as the numerical partial derivatives of independent high-precision prices.
+
+The current production API does not implement Put. The Put/Greeks in the teaching scripts are independent reference materials; do not treat them as released modules within the calling system. European style and continuous dividend yield software conventions can be compared with [MathWorks blsprice](https://www.mathworks.com/help/finance/blsprice.html). American exercise, discrete cash dividends, and real market quotes cannot be handled solely by this set of parity formulas.
+
+## 8. Four independent shock cards for Put
+
+Return to the non-zero interest rate/dividend parameters in Section 4. Keep other inputs fixed and study four independent scenarios separately; do not combine them into a single joint shock without mixed derivative corrections.
+
+**Paper pause D:** Predict the Put price change and sign: underlying drops 1 (retain second-order Spot term); volatility rises by one percentage point (keep only Vega); interest rate rises by 10 basis points (keep only Rho); dividend yield rises by 10 basis points (keep only dividend sensitivity). First write out the actual decimal change for each input, then calculate.
+
+<details class="bs-paper-answer">
+<summary>Pause D answer</summary>
+
+
+The change in spot is $s=-1$, $\delta P\approx\Delta_Ps+\Gamma s^2/2\approx0.42623265$. The change in volatility is 0.01, and the linear change in price is approximately 0.38715175. 10 basis points is 0.001, so the interest rate shock is approximately -0.04852228, and the dividend shock is approximately +0.04165539.
+
+After calculating, reprice item by item using the educational Put price and observe the difference between the approximate and exact price changes. The first card already retains Gamma; the other cards retain only first-order sensitivities, so exact equality under finite shocks is not required. Being able to first determine the four signs and then explain the omitted terms is the paper pause acceptance criterion for this section.
+
+</details>
+
+</div>
+
+<BSMaterials lang="en" lesson={7} />

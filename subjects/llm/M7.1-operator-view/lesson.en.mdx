@@ -1,0 +1,283 @@
+## 1. Motivation
+
+The earlier lessons used finite matrices because a sequence has finitely many tokens. That notation hides a useful distinction. Softmax attention changes its kernel when the query or key changes. An LTI SSM applies one time-invariant causal kernel. Linear attention and selective SSMs sit between these extremes: one uses a finite feature state, and the other makes its transition input-dependent.
+
+This lesson puts those facts into operator language. A theorem is labeled as a theorem. A structural identity is not promoted to a convergence result. A random-feature representation is labeled as an approximation. The operator view leaves one practical defect: an operator classification does not by itself predict quality or hardware throughput.
+
+## 2. Forward definition
+
+Let $(\mathcal{X},\mu)$ be a measured input domain, let $q\in\mathcal{X}$ be a query, let $k(x')\in\mathbb{R}^{d_k}$ be a key map, and let $v(x')\in\mathbb{R}^{d_v}$ be a value map. For a scalar kernel $\kappa$ with nonnegative denominator, define
+
+$$
+\mathcal{A}_{\mu}[v](q)
+=
+\frac{\int_{\mathcal{X}}\kappa(q,k(x'))v(x')\,d\mu(x')}
+{\int_{\mathcal{X}}\kappa(q,k(x'))\,d\mu(x')}
+\in\mathbb{R}^{d_v}.
+$$
+
+For softmax attention,
+
+$$
+\kappa_\beta(q,k)=e^{\beta q^\top k},
+\qquad
+\beta=\frac{1}{\sqrt{d_k}},
+$$
+
+and the measure is the empirical token measure. The [Neural Operator paper](https://arxiv.org/abs/2108.08481) studies learned maps between function spaces. The [Galerkin Transformer paper](https://arxiv.org/abs/2105.14995) gives a projection-based operator-learning view of attention; “Petrov–Galerkin” is the sourced architectural interpretation, not a claim that every Transformer layer is a Galerkin discretization.
+
+An LTI state-space system has
+
+$$
+\dot x(t)=Ax(t)+Bu(t),\qquad y(t)=Cx(t),
+$$
+
+with $x(t)\in\mathbb{R}^{N}$, $u(t)\in\mathbb{R}^{m}$, and $y(t)\in\mathbb{R}^{p}$. Its causal input-output operator has a lag kernel. The derivations below connect the finite attention matrix, the integral operator, and this Green's-function kernel without identifying them as the same operator.
+
+## 3. Derivations
+
+### D-M7.1-01 · Empirical measure attention is finite softmax attention
+
+**Theorem.** Let
+
+$$
+\mu_N=\frac{1}{N}\sum_{j=1}^{N}\delta_{x_j}.
+$$
+
+Then $\mathcal{A}_{\mu_N}[v](q)$ is exactly the normalized finite kernel sum, not a stochastic approximation:
+
+$$
+\mathcal{A}_{\mu_N}[v](q)
+=
+\frac{\sum_{j=1}^{N}\kappa(q,k(x_j))v(x_j)}
+{\sum_{j=1}^{N}\kappa(q,k(x_j))}.
+$$
+
+**Steps.**
+
+1. Apply the defining property of a Dirac measure:
+   $$
+   \int f(x')\,d\delta_{x_j}(x')=f(x_j).
+   $$
+2. Substitute the empirical measure in the numerator:
+   $$
+   \int \kappa(q,k(x'))v(x')\,d\mu_N(x')
+   =\frac{1}{N}\sum_{j=1}^{N}\kappa(q,k(x_j))v(x_j).
+   $$
+3. Apply the same substitution to the denominator:
+   $$
+   \int \kappa(q,k(x'))\,d\mu_N(x')
+   =\frac{1}{N}\sum_{j=1}^{N}\kappa(q,k(x_j)).
+   $$
+4. Divide. The common factor $1/N$ cancels:
+   $$
+   \mathcal{A}_{\mu_N}[v](q)
+   =
+   \frac{\sum_j\kappa(q,k(x_j))v(x_j)}
+   {\sum_j\kappa(q,k(x_j))}.
+   $$
+5. With $\kappa_\beta(q,k)=e^{\beta q^\top k}$, these normalized weights are the softmax weights of the finite sequence. The float64 check compares both implementations with an independently formed finite softmax reference; the two maximum errors are $2.7755575615628914\times10^{-17}$.
+
+**Check.** checks/M7/D-M7.1-01.py verifies the identity on random keys and values with a uniform empirical measure.
+
+**Interpretation.** Calling this a Monte Carlo discretization describes how a finite sample can approximate a continuous measure in another experiment. For the fixed empirical measure above, the equality is exact algebra.
+
+### D-M7.1-02 · Kernel factorization and finite random features
+
+**Theorem.** For $\beta=1$,
+
+$$
+e^{q^\top k}
+=
+e^{-\lVert q-k\rVert^2/2}
+e^{\lVert q\rVert^2/2}
+e^{\lVert k\rVert^2/2}.
+$$
+
+**Steps.**
+
+1. Expand the squared distance:
+   $$
+   -\frac12\lVert q-k\rVert^2
+   =-\frac12\lVert q\rVert^2+q^\top k-\frac12\lVert k\rVert^2.
+   $$
+2. Add $\lVert q\rVert^2/2+\lVert k\rVert^2/2$ to the exponent. The remaining exponent is $q^\top k$, which proves the factorization.
+3. In a softmax row, the query-only factor $e^{\lVert q\rVert^2/2}$ multiplies every key score equally and cancels during normalization. The key-only factor does not cancel across keys.
+4. If QK-norm fixes $\lVert q\rVert=\lVert k\rVert=r$, and $q^\top k=r^2\cos\theta$, the kernel is
+   $$
+   e^{r^2\cos\theta},
+   $$
+   the von Mises–Fisher-shaped angular kernel. This is an exact rewrite under the norm constraint.
+5. Let $\omega\sim\mathcal{N}(0,I)$ and define
+   $$
+   \varphi_\omega(x)
+   =e^{\omega^\top x-\lVert x\rVert^2/2}.
+   $$
+   Completing the Gaussian square gives
+   $$
+   e^{q^\top k}
+   =
+   \mathbb{E}_{\omega}
+   \left[
+   e^{\omega^\top q-\lVert q\rVert^2/2}
+   e^{\omega^\top k-\lVert k\rVert^2/2}
+   \right].
+   $$
+6. Replacing the expectation with $m$ samples produces a finite feature map and a finite-rank approximation. The [Performer paper](https://arxiv.org/abs/2009.14794) supplies the random-feature attention context. Approximation error is not an identity and depends on the feature draw and input scale.
+7. The check verifies the exact factorization, the query-factor cancellation in normalized weights, and one finite random-feature estimate. The random-feature error is reported rather than silently called zero.
+
+**Check.** checks/M7/D-M7.1-02.py reports independent direct and factorized errors $0$, QK-normalization error $2.7755575615628914\times10^{-17}$, and random-feature error $0.0012643508065883768$.
+
+### D-M7.1-03 · Causal attention as Volterra; residual iteration as Picard
+
+**Structural identity.** For a finite sequence, a causal kernel matrix is lower triangular. A bidirectional kernel is a full matrix. In the continuous analogue these are Volterra and Fredholm operator patterns, respectively.
+
+**Steps.**
+
+1. Let $K\in\mathbb{R}^{T\times T}$ and $V\in\mathbb{R}^{T\times d_v}$. The causal operator is
+   $$
+   \mathcal{V}[V]=\operatorname{tril}(K)V,
+   $$
+   while the noncausal operator is $\mathcal{F}[V]=KV$.
+2. Future entries $K_{ts}$ with $s>t$ are removed by the causal mask. The check counts these entries and compares the lower-triangular and full outputs.
+3. Consider the second-kind equation
+   $$
+   u=f+\mathcal{K}u.
+   $$
+   A Picard step from $u^{(0)}$ is
+   $$
+   u^{(r+1)}=f+\mathcal{K}u^{(r)}.
+   $$
+   With $u^{(0)}=0$, the first nontrivial iterates are $f$ and $f+\mathcal{K}f$.
+4. If a contraction condition such as $\lVert\mathcal{K}\rVert<1$ holds, repeated substitution gives the convergent Neumann series
+   $$
+   u=\sum_{j=0}^{\infty}\mathcal{K}^j f.
+   $$
+   The algebraic finite partial sums exist without that convergence condition; convergence is a separate claim.
+5. Weight-shared stacking reuses the same operator and therefore has a Neumann-series interpretation when the contraction assumptions hold. A deep-equilibrium limit additionally needs a fixed-point existence and a valid implicit differentiation condition.
+
+**Check.** checks/M7/D-M7.1-03.py verifies the causal mask, the Fredholm comparison, the contraction bound $\lVert\mathcal{K}\rVert_2<1$, and the 80-term Neumann sum against the solved fixed point; it also checks the first two Picard terms.
+
+### D-M7.1-04 · SSM Green's function
+
+**Theorem.** For
+
+$$
+\dot x(t)=Ax(t)+Bu(t),\qquad y(t)=Cx(t),\qquad x(0)=0,
+$$
+
+the causal solution is
+
+$$
+y(t)=\int_0^t C e^{A(t-s)}B\,u(s)\,ds.
+$$
+
+Thus
+
+$$
+K(t-s)=C e^{A(t-s)}B
+$$
+
+is the Green's function of the causal operator $\frac{d}{dt}-A$.
+
+**Steps.**
+
+1. Multiply the state equation by $e^{-At}$ and use
+   $$
+   \frac{d}{dt}\left(e^{-At}x(t)\right)=e^{-At}Bu(t).
+   $$
+2. Integrate from $0$ to $t$ and multiply by $e^{At}$:
+   $$
+   x(t)=e^{At}x(0)+\int_0^t e^{A(t-s)}Bu(s)\,ds.
+   $$
+3. Set $x(0)=0$ and apply $C$:
+   $$
+   y(t)=\int_0^t C e^{A(t-s)}B\,u(s)\,ds.
+   $$
+4. Under zero-order hold, M4.6 gives $\overline A=e^{\Delta A}$ and $\overline B=\Delta\phi_1(A\Delta)B$. The discrete Green kernel is
+   $$
+   \overline K_k=C\overline A^k\overline B.
+   $$
+5. The S4 report [Efficiently Modeling Long Sequences with Structured State Spaces](https://arxiv.org/abs/2111.00396) studies structured state-space sequence models. HiPPO's [Online Legendre Memory Units](https://arxiv.org/abs/2008.07669) derives a state matrix from a polynomial projection. These are sourced architectural connections; the Green's-function identity itself follows from the ODE above.
+6. A selective SSM makes $A$, $B$, or $C$ depend on the input token. The Green kernel then depends on the intervening sequence and is no longer one fixed lag-only convolution kernel. This is the selective-scan point in M4.6.
+
+**Check.** checks/M7/D-M7.1-04.py compares a scalar Green kernel with its matrix-exponential value, exercises a defective Jordan block, and compares recurrent ZOH evaluation with a dense convolution, including a zero eigenvalue.
+
+### D-M7.1-05 · Structured matrices and the exact gated-linear equivalence
+
+**Theorem.** A state dimension $N$ bounds the semiseparable rank of a general selective SSM sequence matrix, but the scalar decay mask alone is 1-semiseparable. The full content-bearing matrix is not generally 1-semiseparable.
+
+**Steps.**
+
+1. Use the convention $x_t=A_t x_{t-1}+B_tu_t$ and $y_t=C_t^\top x_t$, with $A_t\in\mathbb{R}^{N\times N}$, $B_t\in\mathbb{R}^{N\times m}$, and $C_t\in\mathbb{R}^{N\times p}$. For $t\ge s$,
+   $$
+   M_{t,s}=C_t^\top A_tA_{t-1}\cdots A_{s+1}B_s\in\mathbb{R}^{p\times m}.
+   $$
+2. Choose a separator $b$ and a strictly lower rectangular block with rows on the right of $b$ and columns on the left. Split the product at the separator:
+   $$
+   U_t=C_t^\top\prod_{r=b}^{t}A_r\in\mathbb{R}^{p\times N},
+   \qquad
+   V_s=\left(\prod_{r=s+1}^{b-1}A_r\right)B_s\in\mathbb{R}^{N\times m}.
+   $$
+   Then $M_{t,s}=U_tV_s$, so the block has rank at most $N$.
+3. In the scalar-decay case $A_t=a_tI$, define
+   $$
+   L_{t,s}=\mathbf{1}[s\le t]\prod_{r=s+1}^{t}a_r.
+   $$
+   Every separator block of $L$ factors into one column times one row, so $L$ is 1-semiseparable. No nonzero assumption on the $a_t$ is needed for this factorization.
+4. With content matrices $C$ and $B$, the full matrix is
+   $$
+   M=L\circ(CB^\top).
+   $$
+   The mask is 1-SS; the content-bearing matrix is generally only $N$-SS.
+5. The $N=2$ counterexample uses $a_t=1$, $C_3=e_1$, $C_4=e_2$, $B_1=e_1$, and $B_2=e_2$. The rows $3,4$ and columns $1,2$ form the identity matrix, whose rank is $2$. Therefore “the full M is 1-SS” is false.
+6. For general diagonal $A_t=\operatorname{diag}(a_{t,1},\ldots,a_{t,N})$, the full matrix is still at most $N$-SS. The distinction is $N$ separate masks:
+   $$
+   M=\sum_{r=1}^{N}L^{(r)}\circ(C_{:,r}B_{:,r}^{\top}),
+   \qquad
+   L^{(r)}_{t,s}=\prod_{j=s+1}^{t}a_{j,r}.
+   $$
+7. For gated linear attention,
+   $$
+   S_t=a_tS_{t-1}+k_tv_t^\top,\qquad y_t^\top=q_t^\top S_t.
+   $$
+   Unrolling gives
+   $$
+   y_t=\sum_{s\le t}L_{t,s}(q_t^\top k_s)v_s,
+   \qquad
+   Y=(L\circ QK^\top)V.
+   $$
+   Setting $B_t=k_t$, $C_t=q_t$, and $u_t=v_t$ makes this exactly the scalar-identity SSM recurrence. It is an identity, not an analogy. The attention weight matrix $W=L\circ QK^\top$ nevertheless inherits the $N$-rank bound of the content factor; “1-SS” names $L$, not $W$.
+8. The [Mamba-2/SSD report](https://arxiv.org/abs/2405.21060) supplies the structured-state-space duality context. The check verifies the general rank bound, rank-one mask, exact gated recurrence, and rank-two counterexample.
+
+**Check.** checks/M7/D-M7.1-05.py reports general block rank $3$ for state dimension $3$, mask rank $1$, gated equivalence error $7.077671781985373\times10^{-16}$, and counterexample rank $2$.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Status |
+| --- | --- | --- |
+| D-M7.1-01 | independent finite-softmax reference errors $2.7755575615628914\times10^{-17}$ for both paths | pass |
+| D-M7.1-02 | direct/factorized errors $0$; QK-normalization error $2.7755575615628914\times10^{-17}$; random-feature error $0.0012643508065883768$ | pass; approximation labeled |
+| D-M7.1-03 | contraction bound $0.3130901250502221$; fixed-point error $2.220446049250313\times10^{-16}$ | pass |
+| D-M7.1-04 | Green error $0$; defective-matrix exponential error $0$; ZOH convolution error $2.220446049250313\times10^{-16}$ | pass |
+| D-M7.1-05 | rank bound $3$; mask rank $1$; gated error $7.077671781985373\times10^{-16}$; counterexample rank $2$ | pass |
+
+Run checks/M7/D-M7.1-01.py through checks/M7/D-M7.1-05.py. Float64 arithmetic verifies the exact identities; random features are reported as an approximation with a nonzero error.
+
+## 5. Interactive visualization
+
+<CourseWidget id="V-M7-a" />
+
+**V-M7-a — Structured-matrix switcher.** The specification is viz/specs/V-M7-a.yaml and the pure compute module is viz/compute/structured_matrix.ts. Switch among Toeplitz, semiseparable, low-rank, and dense matrices. Change $\Delta$, state dimension, seed, and the selective toggle. The matrix heatmap and rank/spectrum readout make the structure visible.
+
+The insight is narrow: “semiseparable” does not mean “the entire content-bearing matrix has rank one.” The selector shows how token-dependent decay changes the mask; it does not claim that the dense attention matrix becomes 1-SS.
+
+## 6. Closing
+
+**Counterintuitive question.** If linear attention and an SSM can produce the same structured sequence matrix, why are they not simply the same model?
+
+**Worked answer.** D-M7.1-05 identifies the exact shared object: a scalar-decay gated linear-attention recurrence is an identity-level SSM realization, and both expose a semiseparable decay mask. The content maps, parameterization, normalization, training rule, and hardware algorithm can still differ. In a general selective SSM, the transition matrices create up to $N$ semiseparable content blocks; in softmax attention, the data-dependent $QK^\top$ factor and row normalization create a different operator. Shared structure is not identical architecture.
+
+**Assignment A-M7.** Implement the structured-matrix switcher, verify the semiseparable identity against the M4.6 gated state, and keep a short report separating Toeplitz, semiseparable, low-rank, and dense claims. Later M7 lessons extend the same objects to dynamics, energy, representation, and expressivity.
+
+**Spine check.** The autoregressive interface is unchanged. The operator view says whether prefix interaction is a kernel integral, a Green's function, a Volterra map, a finite-rank feature state, or a semiseparable state transition. It does not remove the need to measure quality and serving cost.

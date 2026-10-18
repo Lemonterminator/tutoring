@@ -1,0 +1,18 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { shapeCards } from '../../../framework/games/llm-foundations-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+
+## 开始练习
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+从列向量与矩阵形状开始，检查雅可比方向，再手算转置乘上游梯度。对应第一课前向定义与链式法则约定。
+
+<PracticeGame generate={shapeCards} lang="zh" />
+
+## 边界与原始课程
+
+二维练习帮助定位转置错误，但不能代替实际张量程序的形状检查。最后一题不提供中间步骤。
+
+<SourceLessonLink source="llm:M0.1" lang="zh" />

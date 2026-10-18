@@ -1,0 +1,43 @@
+{
+  "subject": "llm",
+  "id": "M7.1",
+  "module": "M7",
+  "title": {
+    "en": "Operator view — attention kernels and SSM Green's functions",
+    "zh": "算子视角——注意力核与 SSM 格林函数"
+  },
+  "prereqs": [
+    "M4.6",
+    "M5.2"
+  ],
+  "estimatedHours": 7,
+  "spine": {
+    "en": {
+      "a": "Attention is a data-dependent kernel integral operator; an LTI SSM is a causal Green's-function operator; their finite sequence matrices occupy different structure classes.",
+      "b": "Both still map a prefix to a next-token distribution. The operator view changes the mathematical object used to describe the prefix interaction, not the autoregressive interface."
+    },
+    "zh": {
+      "a": "注意力是一个数据依赖的核积分算子；线性时不变（LTI）状态空间模型（SSM）是一个因果格林函数算子；它们的有限序列矩阵占据不同的结构类。",
+      "b": "两者仍将前缀映射到下一个 token 的分布。算子视角改变了用于描述前缀交互的数学对象，而非自回归接口。"
+    }
+  },
+  "derivations": [
+    "D-M7.1-01",
+    "D-M7.1-02",
+    "D-M7.1-03",
+    "D-M7.1-04",
+    "D-M7.1-05"
+  ],
+  "visualizations": [
+    "V-M7-a"
+  ],
+  "assignment": "A-M7",
+  "references": [
+    "kovachki2021",
+    "cao2021",
+    "choromanski2021",
+    "gu2021",
+    "gu2020",
+    "dao2024"
+  ]
+}

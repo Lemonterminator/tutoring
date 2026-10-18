@@ -1,0 +1,24 @@
+import { AaltoGpCourse } from '../../../framework/games/aalto-gp/AaltoGpCourse';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## 玩 Aalto 高斯过程课
+
+<a href={quantLessonHref('QUANT-GAMES')}>← 返回小游戏专区</a>
+
+这些小游戏对应 Aalto 大学 CS-E4895 Gaussian Processes（2023）：多元高斯与贝叶斯回归、GP 回归与核函数、模型选择、分类与近似推断、大规模与稀疏变分 GP、RKHS 与无限宽网络、深度 GP、隐变量与多输出、状态空间 GP，以及贝叶斯优化。全部 33 个游戏已在下方上线，其中包含早期 CS-E4075 专题课独有的两个主题。
+
+每个小游戏都链接到对应的讲义页码、GPML 教材章节和作业任务。讲义在新标签打开，不会丢失当前答案。题目直接给出核函数的取值和小矩阵，计算都能心算完成；难点在于选对公式、分清 f* 与 y*、看出假设何时不成立。数字支持 3/4 这样的分数。没有计时或扣生命值。
+
+想把这些内容和投资组合联系起来，可以接着做<a href={quantLessonHref('GAME-GP-FINANCE')}>高斯过程与投资组合：桥接小游戏</a>。
+
+<AaltoGpCourse lang="zh" />
+
+## 怎样使用原材料
+
+先独立尝试一步，再看提示；概念陌生时打开对应讲义页。作业 notebook 在 GitHub 上，适合在完成一局后动手实现同一个计算（例如自己写 Cholesky 求解或 Kalman 递推）。
+
+## 继续练习陌生题目
+
+完成标记记录练习经历，不代表掌握程度。这些有界题型不考查编程实现、超参数优化的实际运行，也不覆盖讲义中的每一个推导；填对数字也不等于能在真实数据上建好模型。完成一局后，用自己的话解释最后一题，再做一道对应的作业任务，并在之后不看提示回顾。
+
+讲义来自 Aalto 大学 CS-E4895 与 CS-E4075 课程，版权归讲师所有；本地副本取自学生维护的 GitHub 镜像 SpringNuance/Gaussian-Processes，仅供本地学习。教材为 Rasmussen 与 Williams 的 *Gaussian Processes for Machine Learning*（MIT Press，2006）。

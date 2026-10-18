@@ -1,0 +1,327 @@
+## 1. 动机
+
+Transformer 块不仅仅是注意力矩阵。它们反复将注意力机制和前馈写入操作添加到残差流中，并将归一化放置在每个残差块周围（Post-LN）或内部（Pre-LN）。这些选择既影响子层读取的表示形式，也影响初始化时的梯度尺度。
+
+本课完成三项工作：在不隐藏中心化或均方根微分的情况下推导 LayerNorm 和 RMSNorm 的雅可比矩阵；将 Pre-LN/Post-LN 定理的范围限定在 Xiong 等人分析的确切参数和假设内；并将一个块重写为残差流上的 QK 读取电路与 OV 写入电路。
+
+## 2. 前向定义
+
+对于单个位置，设 $x\in\mathbb{R}^{d}$ 且设 $\mathbf{1}\in\mathbb{R}^{d}$ 为全一向量。LayerNorm 定义为：
+
+$$
+\mu=\frac{1}{d}\mathbf{1}^\top x,\qquad
+c=x-\mu\mathbf{1},\qquad
+\sigma=\sqrt{\frac{1}{d}c^\top c+\varepsilon},
+\qquad
+\widehat x=\frac{c}{\sigma},
+$$
+
+$$
+\operatorname{LN}_{\gamma,\beta}(x)=\gamma\odot\widehat x+\beta.
+$$
+
+RMSNorm 省略了中心化步骤：
+
+$$
+r=\sqrt{\frac{1}{d}x^\top x+\varepsilon},
+\qquad
+\operatorname{RMSN}_{\gamma}(x)=\gamma\odot\frac{x}{r}.
+$$
+
+对于序列矩阵 $X\in\mathbb{R}^{n\times d}$，一个注意力头（head）读取：
+
+$$
+Q_h=XW_Q^h,\qquad K_h=XW_K^h,\qquad
+A_h=\operatorname{softmax}_{\mathrm{rows}}\left(\frac{Q_hK_h^\top}{\sqrt{d_h}}\right)
+\in\mathbb{R}^{n\times n},
+$$
+
+并写入：
+
+$$
+Y_h=A_hXW_V^hW_O^h\in\mathbb{R}^{n\times d}.
+$$
+
+后续使用的简化残差分解为：
+
+$$
+X_{\mathrm{out}}
+=X+\sum_{h=1}^{H}A_hXW_V^hW_O^h+\operatorname{FFN}(\cdot).
+$$
+
+Post-LN 和 Pre-LN 的区别在于归一化的位置。简化的 Post-LN 块为：
+
+$$
+x_{\ell+1}=\operatorname{LN}\left(x_\ell+F_\ell(x_\ell)\right),
+$$
+
+而简化的 Pre-LN 块为：
+
+$$
+x_{\ell+1}=x_\ell+F_\ell(\operatorname{LN}(x_\ell)),
+\qquad
+x_{\mathrm{final}}=\operatorname{LN}(x_{L+1}).
+$$
+
+此处用于 Xiong 风格比较的 Pre-LN 定义中包含了额外的最终 LayerNorm。
+
+**参考文献。** Pre-LN/Post-LN 定理及其预热实验出自 Xiong 等人，“On Layer Normalization in the Transformer Architecture” (https://arxiv.org/abs/2002.04745)。RMSNorm 出自 Zhang 和 Sennrich (https://arxiv.org/abs/1910.07467)。残差流（residual-stream）及 QK/OV 电路术语遵循 Elhage 等人 (https://transformer-circuits.pub/2021/framework/index.html)。
+
+## 3。推导过程
+
+### D-M3.3-01 · LayerNorm 和 RMSNorm 的雅可比矩阵
+
+**定理。** 在 $\varepsilon>0$ 条件下，无仿射变换的 LayerNorm 输出 $\widehat x=c/\sigma$ 的雅可比矩阵为
+
+$$
+J_{\mathrm{LN}}(x)
+=\frac{1}{\sigma}
+\left(
+I-\frac{\mathbf{1}\mathbf{1}^\top}{d}
+-\frac{\widehat x\widehat x^\top}{d}
+\right)
+\in\mathbb{R}^{d\times d}.
+$$
+
+带仿射变换的 LayerNorm 输出具有
+
+$$
+J_{\operatorname{LN}_{\gamma,\beta}}(x)
+=\operatorname{diag}(\gamma)J_{\mathrm{LN}}(x).
+$$
+
+RMSNorm 的雅可比矩阵为
+
+$$
+J_{\mathrm{RMSN}}(x)
+=\frac{1}{r}
+\left(
+I-\frac{xx^\top}{d r^2}
+\right)
+=\frac{1}{r}
+\left(
+I-\frac{yy^\top}{d}
+\right),
+\qquad y=\frac{x}{r}.
+$$
+
+**LayerNorm 的步骤。**
+
+1. 均值微分为
+   $$
+   d\mu=\frac{1}{d}\mathbf{1}^\top dx.
+   $$
+   因此，中心化向量的微分为
+   $$
+   dc=dx-\mathbf{1}\,d\mu
+   =\left(I-\frac{\mathbf{1}\mathbf{1}^\top}{d}\right)dx.
+   $$
+2. 对方差项求导：
+   $$
+   d\left(\frac{1}{d}c^\top c\right)
+   =\frac{2}{d}c^\top dc.
+   $$
+   由于 $c^\top\mathbf{1}=0$，代入 $dc$ 的表达式：
+   $$
+   c^\top dc
+   =c^\top\left(I-\frac{\mathbf{1}\mathbf{1}^\top}{d}\right)dx
+   =c^\top dx.
+   $$
+3. 对 $\sigma=\sqrt{c^\top c/d+\varepsilon}$ 求导：
+   $$
+   d\sigma
+   =\frac{1}{2\sigma}\frac{2}{d}c^\top dx
+   =\frac{c^\top dx}{d\sigma}.
+   $$
+4. 对 $\widehat x=c/\sigma$ 应用商法则：
+   $$
+   d\widehat x
+   =\frac{1}{\sigma}dc-\frac{c}{\sigma^2}d\sigma.
+   $$
+   代入步骤 1 和 3：
+   $$
+   d\widehat x
+   =\frac{1}{\sigma}\left(I-\frac{\mathbf{1}\mathbf{1}^\top}{d}\right)dx
+   -\frac{c c^\top}{d\sigma^3}dx.
+   $$
+5. 由于 $c/\sigma=\widehat x$，提取公因子 $1/\sigma$：
+   $$
+   d\widehat x
+   =\frac{1}{\sigma}
+   \left(
+   I-\frac{\mathbf{1}\mathbf{1}^\top}{d}
+   -\frac{\widehat x\widehat x^\top}{d}
+   \right)dx.
+   $$
+   读取 $dx$ 的系数即得到所示雅可比矩阵。随后，仿射变换将每个输出行乘以 $\gamma$，这等价于左乘 $\operatorname{diag}(\gamma)$。
+
+**RMSNorm 的步骤。**
+
+1. 设 $y=x/r$。均方根（RMS）微分为
+   $$
+   dr=\frac{1}{2r}\frac{2}{d}x^\top dx
+   =\frac{x^\top dx}{d r}.
+   $$
+2. 对 $y=x/r$ 求导：
+   $$
+   dy=\frac{1}{r}dx-\frac{x}{r^2}dr
+   =\frac{1}{r}dx-\frac{xx^\top}{d r^3}dx.
+   $$
+3. 提取公因子 $1/r$ 并利用 $y=x/r$：
+   $$
+   dy=\frac{1}{r}\left(I-\frac{yy^\top}{d}\right)dx.
+   $$
+   不存在 $\mathbf{1}\mathbf{1}^\top/d$ 项，因为 RMSNorm 不计算或减去均值。
+4. LayerNorm 对公共平移具有不变性：对于任意标量 $\operatorname{LN}(x+a\mathbf{1})=\operatorname{LN}(x)$，有 $a$。RMSNorm 则不然：公共平移会同时改变分子和 RMS 分母。该检查测量 LayerNorm 的平移误差 $6.661338147750939\times10^{-16}$ 和 RMSNorm 的平移变化 $1.9019511363263102$。
+
+**验证。** checks/M3/D-M3.3-01.py 将两个解析雅可比矩阵与 float64 有限差分法进行比较。LayerNorm 的最大绝对误差为 $1.4464665402946775\times10^{-10}$，RMSNorm 为 $1.569945284884966\times10^{-10}$；它还检查了平移区别并打印 passed = True。
+
+**直观理解。** LayerNorm 在缩放前消除了方向 $\mathbf{1}$，而 RMSNorm 仅控制总平方幅值。因此，RMSNorm 节省了均值减法路径，但不会消除均值分量。
+
+### D-M3.3-02 · 初始化时的 Pre-LN 与 Post-LN
+
+**定理（范围精确限定）。** 在下述简化模型和假设下，Xiong 等人对特定矩阵（即最后一个 FFN 子层的第二个线性矩阵）的梯度进行了界定：
+
+$$
+\nabla_{W^{2,L}}L,
+$$
+
+而非泛指“最后一层”的参数。以至少
+
+$$
+0.99-\delta-\frac{\varepsilon}{0.9+\varepsilon},
+$$
+
+的概率，其高概率上界形式为
+
+$$
+\left\|\nabla_{W^{2,L}}L\right\|_F
+=O\left(d\sqrt{\ln d}\right)
+\quad\text{(Post-LN)},
+$$
+
+和
+
+$$
+\left\|\nabla_{W^{2,L}}L\right\|_F
+=O\left(d\sqrt{\frac{\ln d}{L}}\right)
+\quad\text{(Pre-LN)}.
+$$
+
+这些是上界，而非 $\Theta$ 陈述；该论文并未证明匹配的下界。
+
+**假设。** 定理的简化设定使用单头注意力机制，初始化时 $W^Q=W^K=0$，具有 Xavier/高斯分布条目 $d\times d$ 的方形 $\mathcal{N}(0,1/d)$ 权重矩阵，ReLU FFN，带有 $\gamma=1,\beta=0$ 的 LayerNorm，高斯输入，以及一个集中性假设：每个位置的隐藏状态平方范数在其期望值附近是 $(\varepsilon,\delta)$ 有界的。Pre-LN 侧以额外的最终 LayerNorm $x_{\mathrm{final}}=\operatorname{LN}(x_{L+1})$ 结束。
+
+**步骤。**
+
+1. 根据 D-M3.3-01，LayerNorm 雅可比矩阵是一个有界的投影类矩阵乘以 $1/\sigma$。在集中性假设下，$\sigma$ 与 $\|x\|/\sqrt d$ 成正比，因此
+   $$
+   \left\|J_{\mathrm{LN}}(x)\right\|
+   =O\left(\frac{\sqrt d}{\|x\|}\right).
+   $$
+   这是两种放置方式中使用的归一化估计。
+2. 在 Post-LN 中，无论之前运行了多少个块，每个块的输出都会被重新归一化到范数约为 $\sqrt d$。对于最后一个 FFN 矩阵，反向路径为
+   $$
+   W^{2,L}\longrightarrow \text{last residual add}\longrightarrow \operatorname{LN}\longrightarrow L.
+   $$
+   此路径上没有依赖于深度的乘积项，因此根据定理的集中性计算，范数估计给出了与深度无关的 $O(d\sqrt{\ln d})$ 上界。
+3. 在 Pre-LN 中，残差流在每次加法后不会被重新归一化：
+   $$
+   x_{\ell+1}=x_\ell+F_\ell(\operatorname{LN}(x_\ell)).
+   $$
+   简化的初始化计算给出
+   $$
+   \mathbb{E}\|x_\ell\|^2=\Theta(\ell d),
+   $$
+   因此 $\|x_\ell\|$ 在深度 $\sqrt{Ld}$ 处像 $L$ 一样增长。额外的最终 LayerNorm 贡献了因子
+   $$
+   O\left(\frac{\sqrt d}{\sqrt{Ld}}\right)=O(L^{-1/2})
+   $$
+   相对于与深度无关的宽度因子，从而得出所述的 $O(d\sqrt{\ln d/L})$ 上界。
+4. 深度因子的来源是累积的未归一化残差流，随后进行最终归一化。并非 Pre-LN“对其残差分支取平均”。
+5. 将另一结果单独列出：较早层 $l<L$ 的梯度包括沿残差路径的各层雅可比矩阵乘积。Xiong 等人讨论了一个近似扩展，Post-LN 具有约 $(2/3)^{(L-l)/2}$ 的衰减；这不是定理 1，也不能与最后一矩阵的上界互换。
+6. Warmup（预热）是一个独立的经验假设，并非该定理的推论。Xiong 等人报告称，Post-LN 在 IWSLT14 上使用 Adam 和 SGD 都需要预热，而 Pre-LN 在 IWSLT14、WMT14 以及 BERT 预训练中无需预热即可训练。该定理界定了初始化梯度的幅度；它本身并不能证明完整的优化器调度方案。
+7. 仓库中的简化 float64 实验测量了 $W^{2,L}$ 的最后 $L\in\{2,4,8,16,32\}$ 梯度范数，在 Pre-LN 侧包含了最终 LayerNorm，并拟合了对数 - 对数斜率。它得到 Post-LN 斜率为 $-0.023142879376785604$，Pre-LN 斜率为 $-0.3437517783090803$；这是一个经验性的玩具趋势，不能替代论文中的高概率定理。
+
+**验证。** checks/M3/D-M3.3-02.py 使用通用的 float6$W^{2,L}$ 框架检查最后 4 的解析梯度，报告深度实验，并记录 torch_autograd = unavailable，因为当前最小环境没有 PyTorch。它打印 passed = True。权威的定理范围和假设见 Xiong 等人的报告 (https://arxiv.org/abs/2002.04745)。
+
+**主张（范围正确限定）。** 在此简化分析中，Pre-LN 针对特定最后一个 FFN 第二个矩阵的初始化梯度具有 $1/\sqrt L$ 上界缩放。“Pre-LN 总是拥有更好的梯度”或“该定理证明预热是不必要的”是更强的主张，此处并未确立。
+
+**直观理解。** Post-LN 在每个块之后重置尺度，而 Pre-LN 让残差流累积并在最后进行归一化。最终的归一化随后在最后矩阵的梯度中暴露了平方根深度尺度。
+
+### D-M3.3-03 · QK 读取、OV 写入与残差流
+
+**主张。** 对于头 $h$，QK 部分决定了读取矩阵
+
+$$
+A_h=\operatorname{softmax}_{\mathrm{rows}}\left(
+\frac{XW_Q^h(XW_K^h)^\top}{\sqrt{d_h}}
+\right)
+\in\mathbb{R}^{n\times n},
+$$
+
+而 OV 部分将选定的值写回模型宽度：
+
+$$
+Y_h=A_hXW_V^hW_O^h\in\mathbb{R}^{n\times d}.
+$$
+
+带有残差连接和 FFN 输出时，该层为
+
+$$
+\boxed{
+X_{\mathrm{out}}
+=X+\sum_{h=1}^{H}A_hXW_V^hW_O^h+\operatorname{FFN}(\cdot)
+}.
+$$
+
+**步骤。**
+
+1. 查询（Query）和键（Key）投影为 $XW_Q^h,XW_K^h\in\mathbb{R}^{n\times d_h}$。它们的缩放乘积形状为 $n\times n$：
+   $$
+   \frac{XW_Q^h(XW_K^h)^\top}{\sqrt{d_h}}\in\mathbb{R}^{n\times n}.
+   $$
+   行 Softmax 将其转换为 $A_h$，因此 $W_Q^h,W_K^h$ 控制读取哪些源行。
+2. 值（Value）投影的形状为 $XW_V^h\in\mathbb{R}^{n\times d_h}$。左乘 $A_h$ 混合了每个查询行的源值：
+   $$
+   A_hXW_V^h\in\mathbb{R}^{n\times d_h}.
+   $$
+3. 输出投影将头的写入映射回模型宽度：
+   $$
+   A_hXW_V^hW_O^h\in\mathbb{R}^{n\times d}.
+   $$
+4. 求和来自 $h=1,\ldots,H$ 的写入，加上输入的残差流 $X$，再加上 FFN 的贡献。结果正是方框中的分解式。
+5. 数值检查构建了随机的 $X$、QK 权重、值/输出权重以及 FFN 输出。它验证了分解式的最大误差为 $3.552713678800501\times10^{-15}$，并验证了每一行 QK 之和为一。
+6. "QK 电路”和"OV 电路”是这两个参数路径的可解释性术语。代数陈述即上述矩阵分解；它并不声称训练后的头具有单一的人类可解释功能。
+
+**验证。** checks/M3/D-M3.3-03.py 验证了 QK 行归一化和残差/OV 分解；它打印 passed = True。
+
+**类比（已标注）。** 可以将一个头想象为使用 QK 读取地址，使用 OV 写入内容。这是一个可解释性类比；确切对象是 $A_hXW_V^hW_O^h$。
+
+## 4. 数值验证
+
+检查使用确定性的 float64 计算。当前输出如下：
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M3.3-01 | LayerNorm Jacobian 最大绝对误差 $1.4464665402946775\times10^{-10}$；RMSNorm $1.569945284884966\times10^{-10}$ | pass |
+| D-M3.3-02 | 后向斜率 $-0.023142879376785604$；前向斜率 $-0.3437517783090803$；last-$W^{2,L}$ 测试夹具检查通过 | pass |
+| D-M3.3-03 | 残差分解最大误差 $3.552713678800501\times10^{-15}$；行和为一 | pass |
+
+在此环境中，torch.float64 比较是可选的，记录为不可用而非伪造。从仓库父目录运行 python -m pytest course/tests 以执行课程合约及所有早期检查。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M3-d" />
+
+**V-M3-d — Pre-LN/Post-LN 梯度范数。** 规范位于 viz/specs/V-M3-d.yaml，纯计算模块为 viz/compute/pre_post_ln.ts。选择深度、宽度、位置和种子。该组件绘制最后 $W^{2,L}$ 梯度范数的玩具初始化预览，并叠加归一化的 $1/\sqrt L$ 参考线。
+
+该组件被明确标记为合成预览：权威数值实验为 D-M3.3-02，且 Xiong 定理仅适用于所述简化设置及所述最后一个 FFN 矩阵。现有前端可使用 Canvas2D 渲染两条曲线，并在图表旁显示作用域文本。
+
+## 6。结语
+
+**反直觉的问题。** 为什么将同一个 LayerNorm 从残差块之后移至其内部，会如此显著地改变初始化行为？**解答：** D-M3.3-02 指出了尺度来源。Post-LN 对每个块进行重归一化，因此从最后一个 FFN 的第二个矩阵到损失函数的路径上没有累积的残差范数；而 Pre-LN 保持流未归一化，其期望平方范数以 $Ld$ 的速度增长，且最终的 LayerNorm 引入了额外的 $1/\sqrt L$ 因子。这是一个关于初始化梯度的局部结论，并非针对所有参数或优化器的普遍主张。
+
+**作业 A-M3。** 在 code/minilm/ 中，为 nanoGPT 基线添加可配置的 Pre-LN/Post-LN 块以及 QK/OV 日志记录。使用相同的微小语料库和相同的随机种子进行比较，记录最后 $W^{2,L}$ 的初始化范数，并导出由 V-M3-a 和 V-M3-d 使用的残差/QK/OV 摘要。
+
+**核心检查。** 从架构上看，归一化设定了坐标尺度，而残差分解使得每个注意力头成为共享流上的读写算子。从概率角度看，这些选择改变了每个前缀条件计算下的参数化和梯度尺度，同时保持了因果条件分解。

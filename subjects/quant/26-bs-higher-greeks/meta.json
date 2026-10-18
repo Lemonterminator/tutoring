@@ -1,0 +1,43 @@
+{
+  "id": "QUANT-BS8",
+  "subject": "quant",
+  "module": "BS paper · Higher-order risk (08/08)",
+  "title": {
+    "en": "Higher Greeks, Hessians and IV conditioning",
+    "zh": "高阶 Greeks、Hessian 与 IV 条件数"
+  },
+  "prereqs": [
+    "QUANT-BS7"
+  ],
+  "estimatedHours": 2,
+  "spine": {
+    "en": {
+      "a": "Rebuild the derivation with paper and pencil.",
+      "b": "Compare assumptions, formulas and the supplied numerical evidence."
+    },
+    "zh": {
+      "a": "用纸笔重建每步推导，先尝试再打开答案。",
+      "b": "对照假设、公式、图片与提供的数值证据。"
+    }
+  },
+  "assignment": "Paper pauses · chapter 08",
+  "references": [
+    "Quant_interview BS assignment (5 pages)",
+    "Original corrected paper-workbook derivations"
+  ],
+  "navigation": {
+    "previous": {
+      "id": "QUANT-BS7",
+      "title": {
+        "en": "Put pricing, parity and Greeks",
+        "zh": "Put 定价、平价与 Greeks"
+      },
+      "devHref": "/subjects/quant/25-bs-put-parity/index.html",
+      "buildHref": "/quant-25-bs-put-parity.html"
+    },
+    "indexHref": {
+      "dev": "/subjects/quant/18-bs-paper-course/index.html",
+      "build": "/quant-18-bs-paper-course.html"
+    }
+  }
+}

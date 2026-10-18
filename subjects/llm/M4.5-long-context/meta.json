@@ -1,0 +1,40 @@
+{
+  "subject": "llm",
+  "id": "M4.5",
+  "module": "M4",
+  "title": {
+    "en": "Long context: YaRN, windows, sinks, and sparse indexers",
+    "zh": "长上下文：YaRN、窗口、sink 和稀疏索引器"
+  },
+  "prereqs": [
+    "M4.4"
+  ],
+  "estimatedHours": 8,
+  "spine": {
+    "en": {
+      "a": "A finite training context makes positional phases and attention memory fail beyond the trained length; long-context methods alter frequencies, the visible key set, or the softmax denominator.",
+      "b": "The next-token distribution remains prefix-conditioned. The methods change how positions are represented and which prefix positions can contribute, so each method has a different approximation or information-loss boundary."
+    },
+    "zh": {
+      "a": "有限的训练上下文会导致位置相位和注意力记忆在超出训练长度时失效；长上下文方法会改变频率、可见键集或 softmax 分母。",
+      "b": "下一个 token 的分布仍然受前缀条件约束。这些方法改变了位置的表示方式以及哪些前缀位置可以参与贡献，因此每种方法都有不同的近似或信息损失边界。"
+    }
+  },
+  "derivations": [
+    "D-M4.5-01",
+    "D-M4.5-02",
+    "D-M4.5-03",
+    "D-M4.5-04",
+    "D-M4.5-05"
+  ],
+  "visualizations": [
+    "V-M4-e"
+  ],
+  "assignment": "A-M4",
+  "references": [
+    "su2021",
+    "peng2023",
+    "xiao2023",
+    "deepseekv32"
+  ]
+}

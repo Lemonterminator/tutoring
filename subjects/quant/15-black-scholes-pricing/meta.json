@@ -1,0 +1,13 @@
+{
+  "id": "QUANT-P2", "subject": "quant", "module": "Quant pricing · Black–Scholes theory (2/4)",
+  "title": { "en": "Black–Scholes pricing, parity and Greeks", "zh": "Black–Scholes 定价、平价与 Greeks" },
+  "prereqs": ["QUANT-P1", "Probability", "Itô's lemma at introductory level"],
+  "estimatedHours": 8,
+  "spine": {
+    "en": { "a": "Explain the PDE and risk-neutral routes to the same call and put prices.", "b": "Check every Greek convention with parity and the pricing PDE." },
+    "zh": { "a": "从 PDE 与风险中性两条路线解释相同的 call/put 价格。", "b": "用平价与定价 PDE 检查每个 Greek 的符号和单位。" }
+  },
+  "derivations": ["Forward Black–Scholes form", "Put-call parity", "PDE", "Delta/Gamma/Vega/Theta/Rho"],
+  "assignment": "Analytic Greeks and put-call parity grid",
+  "references": ["Hull, 11th Global ed.", "Shreve 2004", "MIT 18.440 Lecture 36"]
+}

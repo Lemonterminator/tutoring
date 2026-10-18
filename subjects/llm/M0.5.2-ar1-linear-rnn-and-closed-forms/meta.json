@@ -1,0 +1,33 @@
+{
+  "subject": "llm",
+  "id": "M0.5.2",
+  "module": "M0.5",
+  "title": {
+    "en": "AR(1): the linear RNN with closed forms",
+    "zh": "AR(1): 具有闭式解的线性 RNN"
+  },
+  "prereqs": [
+    "M0.5.1"
+  ],
+  "estimatedHours": 4,
+  "spine": {
+    "en": {
+      "a": "Make the recurrent gradient multiplier concrete before introducing nonlinear RNN Jacobian products.",
+      "b": "Connect a Gaussian conditional likelihood to least squares, autocorrelation, and the stationary distribution."
+    },
+    "zh": {
+      "a": "在引入非线性 RNN 雅可比乘积之前，使循环梯度乘法器具体化。",
+      "b": "将高斯条件似然与最小二乘法、自相关和平稳分布联系起来。"
+    }
+  },
+  "derivations": [
+    "D-M0.5.2-01",
+    "D-M0.5.2-02",
+    "D-M0.5.2-03"
+  ],
+  "visualizations": [
+    "V-M0.5-a"
+  ],
+  "assignment": "A-M0.5",
+  "references": []
+}

@@ -1,0 +1,323 @@
+## 1. Motivation
+
+An architecture is only useful when its training update and inference path are explicit. AdamW changes how weight decay enters the update, label smoothing changes the target distribution and the logits gradient, weight tying makes input and output embeddings share one matrix, KV caching trades memory capacity for decode work, and decoding rules turn logits into tokens.
+
+This lesson derives each of those interfaces. The formulas are kept separate from implementation estimates: the optimizer and loss identities are exact, the FLOP and memory numbers state their counting conventions, and decoding heuristics are labeled as policies rather than theorems.
+
+## 2. Forward definition
+
+For parameters $\theta_t$, gradient $g_t=\nabla_\theta L_t$, first moment $m_t$, and second raw moment $v_t$, AdamW uses
+
+$$
+m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
+\qquad
+v_t=\beta_2v_{t-1}+(1-\beta_2)g_t\odot g_t,
+$$
+
+$$
+\widehat m_t=\frac{m_t}{1-\beta_1^t},
+\qquad
+\widehat v_t=\frac{v_t}{1-\beta_2^t},
+$$
+
+$$
+\theta_t=(1-\eta_t\lambda)\theta_{t-1}
+-\eta_t\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
+$$
+
+The decay factor is outside the adaptive gradient step. A linear warmup followed by cosine decay can be written
+
+$$
+\eta_t=
+\begin{cases}
+\eta_{\max}t/T_w,&t\le T_w,\\
+\eta_{\min}+\frac{\eta_{\max}-\eta_{\min}}{2}
+\left(1+\cos\left(\pi\frac{t-T_w}{T-T_w}\right)\right),
+&T_w<t\le T.
+\end{cases}
+$$
+
+The inverse-square-root schedule uses
+
+$$
+\eta_t=\eta_{\max}\min\left(\frac{t}{T_w},\sqrt{\frac{T_w}{t}}\right).
+$$
+
+For a vocabulary of size $V$, target token $y$, and smoothing amount $\varepsilon$, label smoothing uses
+
+$$
+q=(1-\varepsilon)e_y+\varepsilon u,
+\qquad
+u_i=\frac{1}{V}.
+$$
+
+For hidden state $h\in\mathbb{R}^{d}$ and input embedding matrix $E\in\mathbb{R}^{V\times d}$, tied output logits are
+
+$$
+z=hE^\top+b\in\mathbb{R}^{V}.
+$$
+
+With $L$ layers, context length $n$, $h_{\mathrm{kv}}$ key/value heads, head dimension $d_h$, and $b_e$ bytes per element, storing keys and values costs
+
+$$
+\operatorname{bytes}_{\mathrm{KV}}
+=2Lnh_{\mathrm{kv}}d_hb_e.
+$$
+
+Temperature and truncation convert logits into a sampling distribution:
+
+$$
+p_i(T)=\frac{\exp(z_i/T)}{\sum_j\exp(z_j/T)},\qquad T>0.
+$$
+
+Top-$k$ retains the $k$ largest probabilities and renormalizes. Top-$p$ sorts probabilities and retains the smallest prefix whose cumulative mass is at least $p$. Beam search keeps several partial sequences and compares length-normalized log scores.
+
+**Sources.** AdamW is from Loshchilov and Hutter (https://arxiv.org/abs/1711.05101). Label smoothing follows Szegedy et al. (https://arxiv.org/abs/1512.00567). Weight tying follows Press and Wolf (https://arxiv.org/abs/1608.05859). Nucleus sampling is from Holtzman et al. (https://arxiv.org/abs/1904.09751).
+
+## 3. Derivations
+
+### D-M3.5-01 · AdamW, warmup, and schedules
+
+**Theorem.** Given $m_0=v_0=0$, AdamW's one-step update is
+
+$$
+\theta_t=(1-\eta_t\lambda)\theta_{t-1}
+-\eta_t\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon},
+$$
+
+where the factor $(1-\eta_t\lambda)$ is decoupled from the adaptive gradient. Folding $\lambda\theta$ into $g_t$ instead produces a different adaptive update.
+
+**Steps.**
+
+1. The exponential moving-average recurrences are
+   $$
+   m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
+   \qquad
+   v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
+   $$
+   Expanding the first recurrence from $m_0=0$ gives
+   $$
+   m_t=(1-\beta_1)\sum_{r=1}^{t}\beta_1^{t-r}g_r.
+   $$
+   The factor $1-\beta_1^t$ is the missing total weight at initialization; dividing by it gives $\widehat m_t$. The same expansion gives the correction $1-\beta_2^t$ for $v_t$.
+2. The adaptive direction is
+   $$
+   d_t=\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
+   $$
+   Applying a gradient step to this direction gives $\theta_{t-1}-\eta_td_t$.
+3. Decoupled weight decay multiplies the old parameter by $1-\eta_t\lambda$ independently:
+   $$
+   \theta_t=(1-\eta_t\lambda)\theta_{t-1}-\eta_td_t.
+   $$
+4. A coupled L2 implementation instead forms $g_t+\lambda\theta_{t-1}$ before the moment recurrences. Because the adaptive denominator then depends on $\theta_{t-1}$, the two operations are not algebraically equivalent.
+5. Warmup sets $\eta_t$ to zero at step zero and increases it linearly until $T_w$. This limits the impact of noisy early estimates of $v_t$ and of large initial gradients. D-M3.3-02 supplies a separate initialization-gradient reason for being cautious with Post-LN; neither observation makes warmup a theorem for every optimizer and architecture.
+6. After warmup, cosine decay follows the displayed cosine from $\eta_{\max}$ to $\eta_{\min}$. Inverse-square-root decay reaches its peak at $T_w$ and then decreases as $t^{-1/2}$.
+7. The check evaluates the first AdamW update, contrasts it with coupled L2, and verifies the schedule endpoints. It obtains
+   $$
+   \theta_1=[1.4885000005,-1.98800000025],
+   $$
+   versus coupled-L2 $[1.4900000002857143,-1.9900000001666667]$, with cosine samples $[0,0.5,1.0,0.1]$.
+
+**Check.** checks/M3/D-M3.5-01.py verifies bias correction, decoupling, linear warmup, cosine endpoints, and inverse-square-root behavior; it prints passed = True.
+
+**Claim, correctly scoped.** Warmup is an optimization policy motivated by gradient and moment-estimate scale; the AdamW algebra does not prove that a particular task must use warmup.
+
+**Intuition.** Adam chooses a coordinate-wise step from moment estimates, while AdamW shrinks the parameter itself as a separate operation. Warmup gives both operations time to enter the scale regime in which the chosen learning rate is intended to operate.
+
+### D-M3.5-02 · Label smoothing and the logits gradient
+
+**Theorem.** With $q=(1-\varepsilon)e_y+\varepsilon u$ and probabilities $p=\operatorname{softmax}(z)$,
+
+$$
+\operatorname{CE}(p,q)
+=-\sum_{i=1}^{V}q_i\log p_i
+=(1-\varepsilon)\operatorname{CE}(p,e_y)
++\varepsilon\operatorname{CE}(p,u).
+$$
+
+The gradient with respect to logits is
+
+$$
+\boxed{\nabla_z\operatorname{CE}(p,q)=p-q}.
+$$
+
+**Steps.**
+
+1. Substitute the smoothed target:
+   $$
+   -\sum_i\left((1-\varepsilon)(e_y)_i+\varepsilon u_i\right)\log p_i.
+   $$
+2. Distribute the sum:
+   $$
+   -(1-\varepsilon)\sum_i(e_y)_i\log p_i
+   -\varepsilon\sum_i u_i\log p_i.
+   $$
+   The first term is $(1-\varepsilon)\operatorname{CE}(p,e_y)$ and the second is $\varepsilon\operatorname{CE}(p,u)$.
+3. Let $\ell(z)=-\sum_iq_i\log p_i$ and $p_i=e^{z_i}/\sum_j e^{z_j}$. Differentiate one coordinate:
+   $$
+   \frac{\partial\ell}{\partial z_j}
+   =-\sum_iq_i\frac{\partial\log p_i}{\partial z_j}.
+   $$
+4. Since
+   $$
+   \log p_i=z_i-\log\sum_r e^{z_r},
+   $$
+   its derivative is
+   $$
+   \frac{\partial\log p_i}{\partial z_j}
+   =\mathbf{1}_{i=j}-p_j.
+   $$
+   Hence
+   $$
+   \frac{\partial\ell}{\partial z_j}
+   =-\sum_iq_i(\mathbf{1}_{i=j}-p_j)
+   =-q_j+p_j\sum_iq_i.
+   $$
+5. The smoothed target sums to one, so $\sum_iq_i=1$ and
+   $$
+   \nabla_z\ell=p-q.
+   $$
+6. The check compares the gradient to float64 finite differences and compares the smoothed loss to the convex decomposition. It obtains decomposition error $1.1102230246251565\times10^{-16}$ and gradient sum $-1.0755285551056204\times10^{-16}$.
+
+**Check.** checks/M3/D-M3.5-02.py verifies the complete logits gradient and the loss identity with the shared harness; it prints passed = True.
+
+**Intuition.** Smoothing moves a little target mass from the observed token to every vocabulary item. The gradient therefore pushes the model toward $p$ matching a softened target rather than a one-hot spike.
+
+### D-M3.5-03 · Weight tying and GPT parameter count
+
+**Theorem.** With tied input/output embeddings, $E\in\mathbb{R}^{V\times d}$ is used both to look up token vectors and to form output logits $z=hE^\top+b$. Ignoring small biases and normalization parameters, a $L$-layer width-$d$ GPT with a standard FFN has
+
+$$
+\boxed{N_{\mathrm{tied}}=12Ld^2+Vd}.
+$$
+
+Without tying, a separate output projection adds another $Vd$:
+
+$$
+N_{\mathrm{untied}}=12Ld^2+2Vd.
+$$
+
+**Steps.**
+
+1. From M3.1, the Q/K/V/O projections contain $4d^2$ parameters per layer.
+2. A standard $d\to4d\to d$ FFN contains $4d^2+4d^2=8d^2$ parameters per layer. Adding attention and FFN gives $12d^2$ per layer.
+3. The input embedding contributes $Vd$. If output logits use $E^\top$, there is no second vocabulary-by-width matrix, so
+   $$
+   N_{\mathrm{tied}}=12Ld^2+Vd.
+   $$
+4. If the output projection is independent, it contributes another $Vd$ and gives the untied expression.
+5. For one tied output row, $z=hE^\top+b$. With $\delta_z=\nabla_zL$, the differential is
+   $$
+   dL=\delta_z(dh\,E^\top+h\,dE^\top)^\top.
+   $$
+   Collecting coefficients gives
+   $$
+   \nabla_hL=\delta_zE,\qquad
+   \nabla_EL=\delta_z^\top h.
+   $$
+   The same $E$ receives any additional gradient from input-token lookup, so tying couples the two uses during training.
+6. At $L=12,d=16,V=100$, the check obtains $N_{\mathrm{tied}}=38464$, $N_{\mathrm{untied}}=40064$, and verifies the tied-output gradients by finite differences.
+
+**Check.** checks/M3/D-M3.5-03.py verifies parameter counts and the tied output scalar-loss gradient with the shared harness; it prints passed = True.
+
+**Claim, correctly scoped.** Tying saves a vocabulary-sized matrix and couples input/output representations; it does not assert that the tied and untied optimizers follow the same trajectory.
+
+### D-M3.5-04 · KV cache and decode cost
+
+**Theorem.** For every layer, position, KV head, and head coordinate, the decoder stores one key and one value. Therefore
+
+$$
+\boxed{
+\operatorname{bytes}_{\mathrm{KV}}
+=2Lnh_{\mathrm{kv}}d_hb_e
+}.
+$$
+
+With parameter count $N$, a common leading estimate for one-token decode is $2N$ FLOPs for parameter multiply/add work plus attention terms. In the course convention, the query-to-cache score products and value products contribute approximately
+
+$$
+4Lnhd_h
+$$
+
+FLOPs for $h$ query heads and context length $n$.
+
+**Steps.**
+
+1. One cached key tensor has shape $L\times n\times h_{\mathrm{kv}}\times d_h$, so it contains $Lnh_{\mathrm{kv}}d_h$ elements. Values have the same shape.
+2. Two tensors and $b_e$ bytes per element yield
+   $$
+   2\cdot Lnh_{\mathrm{kv}}d_h\cdot b_e.
+   $$
+3. At a new token, the model reads the cached keys to form query-key scores. Each score is a dot product with about $2d_h$ FLOPs, and the weighted value sum contributes another about $2d_h$ FLOPs. Across $L$, $h$, and $n$ this is approximately $4Lnhd_h$.
+4. The parameter path performs approximately one multiply and one add per parameter, giving $2N$ leading FLOPs. The total is an estimate, not a hardware-independent runtime theorem.
+5. Cache memory grows linearly with context length and KV-head count. Grouped-query attention reduces $h_{\mathrm{kv}}$ while keeping more query heads, so it reduces the cache bytes without removing the query-head score work.
+6. For $L=32,n=2048,h_{\mathrm{kv}}=8,d_h=128$ and fp16, the check obtains $268435456$ bytes, or $0.25$ GiB. Doubling $n$ doubles the cache.
+
+**Check.** checks/M3/D-M3.5-04.py verifies the byte formula, the $2N$ plus attention FLOP decomposition, and context-length scaling; it prints passed = True.
+
+**Approximation, labeled.** “Decode is memory-bandwidth-bound” is a systems diagnosis: cached K/V must be moved through the memory hierarchy at every step, while the arithmetic intensity of the small per-token batch is low. The displayed FLOP formulas do not prove a hardware roofline for every implementation.
+
+### D-M3.5-05 · Temperature, truncation, and beam decoding
+
+**Claim.** Temperature, top-$k$, top-$p$, greedy decoding, and beam search are policies for converting a conditional distribution into a sequence; they are not changes to the trained next-token objective.
+
+**Steps.**
+
+1. Temperature rescales logits:
+   $$
+   p_i(T)=\frac{e^{z_i/T}}{\sum_j e^{z_j/T}}.
+   $$
+   For $T<1$, logit differences are amplified; for $T>1$, they are compressed. The normalization keeps the result a probability vector.
+2. Top-$k$ finds the $k$ largest probabilities, sets all other coordinates to zero, and divides the retained coordinates by their sum. This produces a sparse conditional distribution.
+3. Top-$p$ sorts probabilities $p_{(1)}\ge\cdots\ge p_{(V)}$ and chooses the smallest $K$ satisfying
+   $$
+   \sum_{r=1}^{K}p_{(r)}\ge p.
+   $$
+   It retains those $K$ tokens and renormalizes.
+4. Greedy decoding chooses
+   $$
+   y_t=\arg\max_i p(i\mid y_{<t},x).
+   $$
+   It is deterministic but can discard a sequence whose later conditional probabilities would have produced a better continuation.
+5. Beam search keeps $B$ partial sequences. If a sequence has token log probabilities $\ell_1,\ldots,\ell_T$, a length-normalized score is
+   $$
+   \operatorname{score}(y_{1:T})
+   =\frac{\sum_{t=1}^{T}\ell_t}{T^\alpha}.
+   $$
+   At each step it expands every current beam, ranks candidates by this score, and retains the best $B$.
+6. Sampling instead draws from the retained probability distribution. The check verifies temperature ordering, support after top-$k$/top-$p$, deterministic greedy output, repeatability under a fixed seed, and a two-step length-normalized beam result.
+7. Spine B distinguishes the policies: greedy and beam search select high-scoring paths, while temperature/top-$k$/top-$p$ sampling preserves controlled randomness from the conditional distribution. Neither policy changes the model's learned factorization.
+
+**Check.** checks/M3/D-M3.5-05.py exercises the decoding policies and prints passed = True.
+
+**Analogy, labeled.** Temperature is a “sharpness dial” and top-$p$ is a “probability-mass gate.” These phrases describe user-facing behavior; the exact operations are the equations and renormalizations above.
+
+## 4. Numerical verification
+
+The five deterministic checks use float64 arithmetic:
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M3.5-01 | AdamW $[1.4885000005,-1.98800000025]$ vs coupled L2 $[1.4900000002857143,-1.9900000001666667]$; cosine samples $[0,0.5,1.0,0.1]$ | pass |
+| D-M3.5-02 | label-smoothing decomposition error $1.1102230246251565\times10^{-16}$; gradient sum $-1.0755285551056204\times10^{-16}$ | pass |
+| D-M3.5-03 | tied $38464$, untied $40064$; shared-harness gradient pass | pass |
+| D-M3.5-04 | KV cache $268435456$ bytes $=0.25$ GiB; decode attention estimate $1073741824$ FLOPs | pass |
+| D-M3.5-05 | cold top probability $0.8372831813099706$, hot $0.3863193248271418$, beam $(0,1)$ | pass |
+
+Run python -m pytest course/tests from the repository parent to execute M3.5 and all preceding lessons.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M3-e" />
+
+**V-M3-e — Model and cache calculator.** The specification is viz/specs/V-M3-e.yaml and the pure compute module is viz/compute/model_calculator.ts. Enter $d,h,h_{\mathrm{kv}},L,V,n$, and dtype to update the tied-embedding parameter estimate, training FLOPs per token, KV-cache bytes, and a labeled saved-activation estimate.
+
+The calculator explicitly distinguishes exact accounting identities from estimates: $12Ld^2+Vd$ is the stated tied-weight convention, $6N$ is a leading training-FLOP estimate, and the activation figure excludes attention-score workspace. The existing frontend can render these as number cards and a cache-vs-context line without any reader replacement.
+
+## 6. Closing
+
+**Counterintuitive question.** Why can a model with a fixed parameter count become much slower as the context grows even though the new token adds only one position? **Worked answer:** D-M3.5-04 separates parameter work from cache work. The parameter path is approximately $2N$ per token, but the new query reads all $n$ cached positions, and the K/V cache itself grows as $2Lnh_{\mathrm{kv}}d_hb_e$. Longer context therefore increases both memory traffic and attention work even when $N$ is unchanged.
+
+**Assignment A-M3.** Finish the config-driven nanoGPT baseline in code/minilm/: select AdamW and a schedule, optionally smooth labels, optionally tie embeddings, expose KV-cache accounting, and implement greedy, temperature, top-$k$, top-$p$, and beam decoding. Run the same tiny-Shakespeare and BPE fixtures, export V-M3-a attention data, and report loss, tokens/s, cache bytes, and decoding settings.
+
+**Spine check.** Architecturally, training choices determine how parameters move and inference choices determine how cached representations become tokens. Probabilistically, every step still starts from a prefix-conditioned next-token distribution; optimization, caching, and decoding change how that distribution is learned, evaluated, stored, or sampled.

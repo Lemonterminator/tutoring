@@ -1,0 +1,107 @@
+## 1. Motivation
+
+M0.5.5 showed that token-level perplexity depends on the token unit. Tokenisation is therefore part of the probabilistic interface of an autoregressive model: it decides what counts as one prediction, how long the context is, and which strings become reusable symbols. Byte-pair encoding (BPE) builds such a vocabulary by repeatedly applying a local compression rule. This lesson derives that rule, checks a complete toy corpus, and contrasts it with the probabilistic Unigram LM tokenizer.
+
+## 2. Forward definition
+
+Represent a corpus as weighted token sequences. For adjacent symbols $a$ and $b$, let $c(a,b)$ be their weighted adjacent-pair count. Replacing every non-overlapping occurrence of $(a,b)$ by the new symbol $ab$ changes the weighted corpus token count by
+
+$$
+\Delta N=c(a,b).
+$$
+
+The one-step BPE rule is the greedy objective
+
+$$
+(a^\star,b^\star)=\arg\max_{(a,b)}c(a,b).
+$$
+
+After selecting $(a^\star,b^\star)$, the vocabulary receives the merged symbol $a^\star b^\star$, the corpus is rewritten, and pair counts are recomputed. The greedy rule optimizes immediate token reduction; it does not assert that a fixed number of local choices gives a globally optimal vocabulary.
+
+## 3. Derivations
+
+### D-M0.5.7-01 · BPE is greedy compression
+
+**Claim.** Each BPE merge of $(a,b)$ reduces the weighted corpus token count by exactly $c(a,b)$. Repeating the most frequent-pair choice produces the specified toy sequence $ug\to un\to hug$.
+
+**Steps.**
+
+1. Let a sequence contain adjacent pair occurrences $(a,b)$. For one occurrence, the two tokens $a,b$ are replaced by one token $ab$, so the sequence length decreases by one. (The merge removes exactly one token per selected occurrence.)
+2. If the corpus contains $c(a,b)$ weighted occurrences, add the one-token reduction over all occurrences:
+   $$
+   \Delta N=c(a,b).
+   $$
+   (The weight of a sequence counts how many corpus instances receive the same rewrite.)
+3. Choose the pair with the largest immediate reduction:
+   $$
+   (a^\star,b^\star)=\arg\max_{(a,b)}c(a,b).
+   $$
+   (This is the local greedy objective; ties require a deterministic rule in an implementation.)
+4. Rewrite the corpus and repeat. Because rewriting changes adjacency, the next pair-count table is not the original table. (A merge can create a new pair such as $(h,ug)$ and can remove old pairs such as $(h,u)$.)
+5. Use the weighted toy corpus
+   $$
+   \{hug:10,\ pug:5,\ pun:12,\ bun:4,\ hugs:5\}.
+   $$
+   (The toy arithmetic keeps characters as initial symbols and leaves the final $s$ explicit; boundary-marker details are not needed for this count check.)
+6. Count the initial pairs. The largest is
+   $$
+   c(u,g)=10+5+5=20,
+   $$
+   while $c(u,n)=12+4=16$. Select $ug$ and reduce the corpus token count by $20$. (The three contributing word types are $hug$, $pug$, and $hugs$.)
+7. Recompute after the first merge. The $u,n$ pair remains in $pun$ and $bun$, so $c(u,n)=12+4=16$ is now maximal. Select $un$ and reduce the count by $16$. (The first merge did not consume those $u,n$ occurrences.)
+8. Recompute again. The pair $(h,ug)$ occurs in the $10$ copies of $hug$ and the $5$ copies of $hugs$, so
+   $$
+   c(h,ug)=10+5=15.
+   $$
+   Select $hug$ and reduce the count by $15$. (The new symbol $ug$ is the input to the third merge.)
+9. The merge history is therefore
+   $$
+   ug\to un\to hug,
+   $$
+   with reductions $(20,16,15)$. The initial weighted token count is
+   $$
+   10\cdot3+5\cdot3+12\cdot3+4\cdot3+5\cdot4=113,
+   $$
+   and the final count after three merges is
+   $$
+   113-(20+16+15)=62.
+   $$
+   (The check compares both the local reductions and the final total.)
+10. Greedy is not a global-optimality theorem. Each step maximizes the current $\Delta N$, but a choice changes which pairs exist at later steps. With a fixed merge budget, an alternative sequence can preserve or create more useful future pairs; therefore the local argmax need not minimize the final token count or maximize a downstream language-model objective. (The lesson makes this limitation explicit rather than silently treating the heuristic as an optimizer of the global objective.)
+
+**Check.** checks/M0.5/D-M0.5.7-01.py reports initial tokens 113, merges [('u', 'g'), ('u', 'n'), ('h', 'ug')], reductions [20, 16, 15], final tokens 62, and reduction_identity_error = 0.0; passed = True.
+
+**Intuition.** BPE spends one vocabulary entry on the pair that currently saves the most corpus tokens. The vocabulary is useful because frequent local pieces become single symbols, while its greedy history also determines which future pieces can be formed.
+
+### Comparison, labeled · Unigram LM
+
+**Comparison, labeled.** BPE is a deterministic merge procedure: once the initial symbols, tie-breaking rule, and merge count are fixed, the learned vocabulary is fixed. It scores a pair by immediate corpus compression and then rewrites every matching occurrence. This is a compression heuristic, not a probability model over alternative segmentations.
+
+**Comparison, labeled.** A Unigram LM tokenizer instead starts from a larger candidate vocabulary and assigns a probabilistic model to segmentations. It can score multiple subword paths for the same string, prune candidates according to a likelihood-based criterion, and fit the model with an EM-style procedure. This gives a different inductive bias: segmentation uncertainty is represented explicitly rather than removed by one deterministic merge history.
+
+**Source note.** The Unigram LM comparison follows Kudo, “Subword Regularization: Improving Neural Network Translation Models with Multiple Subword Candidates,” [ACL 2018](https://aclanthology.org/P18-1007/). The BPE terminology and merge-based subword construction are described by Sennrich, Haddow, and Birch, “Neural Machine Translation of Rare Words with Subword Units,” [ACL 2016](https://aclanthology.org/P16-1162/).
+
+## 4. Numerical verification
+
+The deterministic float64-compatible check verifies the immediate-reduction identity on the weighted corpus and reproduces the three merge choices. The pure widget computation returns the same history plus snapshots for the existing Canvas2D frontend.
+
+| Item | Numerical output | Result |
+| --- | --- | --- |
+| Initial corpus | weighted token count 113; largest pair ('u','g') has count 20 | pass |
+| Three greedy merges | ug → un → hug; reductions 20, 16, 15; final count 62 | pass |
+
+Run python -m pytest course/tests from the repository parent. The check and widget test are independent of the lesson renderer.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M0.5-f" />
+
+**V-M0.5-f — BPE merge stepper.** The widget specification is viz/specs/V-M0.5-f.yaml, and its pure computation is viz/compute/bpe_stepper.ts. Step through the merge budget to inspect the pair-count table, the selected pair and reduction, and the weighted corpus after each rewrite. The existing frontend owns the canvas layer; this lesson supplies the stable data contract and deterministic snapshots.
+
+## 6. Closing
+
+**Counterintuitive question.** If BPE always chooses the most frequent pair, why is that not a proof that the final vocabulary is best? **Worked answer:** D-M0.5.7-01 shows that the local objective is only $\arg\max c(a,b)$. Every merge changes future adjacency, so a locally largest compression step can trade away a more useful later composition. The tokenizer is part of the model interface, not a neutral preprocessing detail.
+
+**Assignment A-M0.5.** Implement BPE on a small corpus, report each pair count and token-count reduction, and reproduce the worked corpus merge history. Compare the resulting sequence length and held-out perplexity with the add-one bigram baseline.
+
+**Spine check.** Architecture-wise, tokenisation determines the sequence length and vocabulary symbols consumed by RNNs, convolutions, and attention. Probability-wise, BPE changes the sample space on which the autoregressive factorisation and its cross-entropy are reported; the later model still computes conditionals over the chosen symbols.

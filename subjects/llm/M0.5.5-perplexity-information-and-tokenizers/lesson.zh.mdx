@@ -1,0 +1,132 @@
+## 1. 动机
+
+M0.5.4 表明，似然度取决于所选的输出族。下一个缺陷是将困惑度（perplexity）视为文本的内在属性来解读。困惑度是每个 token 平均惊讶度的指数形式，因此更改分词器会改变被平均的单位。本课将推导有效分支因子（effective branching-factor）的解释，并将该分数转换为每字节比特数（bits per byte）。
+
+## 2. 前向定义
+
+对于具有 $p\in\Delta^{K-1}$ 的令牌分布 $K\in\mathbb{N}$，以 nat 为单位的熵和困惑度分别为：
+
+$$
+H(p)=-\sum_{i=1}^{K}p_i\log p_i\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{ppl}(p)=\exp(H(p))\in[1,K].
+$$
+
+对于总负对数似然为 $\mathrm{NLL}\in\mathbb{R}_{\ge0}$、包含 $N_{\mathrm{tok}}\in\mathbb{N}$ 个令牌且大小为 $N_{\mathrm{byte}}\in\mathbb{N}$ 字节的数据集：
+
+$$
+H_{\mathrm{tok}}=\frac{\mathrm{NLL}}{N_{\mathrm{tok}}}\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{ppl}_{\mathrm{tok}}=\exp(H_{\mathrm{tok}})\in[1,\infty),
+\qquad
+\mathrm{bpb}=\frac{\mathrm{NLL}}{\log 2\;N_{\mathrm{byte}}}\in\mathbb{R}_{\ge0}.
+$$
+
+每字符比特数或每字节比特数的量值，其分母随物理文本单位变化，而非随分词器的令牌计数变化。
+
+## 3. 推导过程
+
+### D-M0.5.5-01 · 困惑度（Perplexity）是有效的分支因子
+
+**断言。** 如果 $k\in\mathbb{N}$ 个符号等概率分布，则 $\mathrm{ppl}=k$。若平均信息量为每字符 $b$ 比特，且一个 token 平均包含 $c$ 个字符，则该 token 的困惑度为 $2^{bc}$。
+
+**步骤。**
+
+1. 设定 $p_i=1/k\in\mathbb{R}$ 的等概率分布为 $i=1,\ldots,k$。（等概率意味着每个符号带来的惊讶度相同。）
+2. 代入熵公式：
+   $$
+   H(p)=-\sum_{i=1}^{k}\frac1k\log\frac1k
+   =-k\frac1k(-\log k)=\log k\in\mathbb{R}_{\ge0}.
+   $$
+   （共有 $k$ 个相同的项，且 $-\log(1/k)=\log k$。）
+3. 对熵取指数：
+   $$
+   \mathrm{ppl}=\exp(H)=\exp(\log k)=k\in\mathbb{N}.
+   $$
+   （指数运算逆转了自然对数。）
+4. 将每字符平均 $b\in\mathbb{R}_{\ge0}$ 比特转换为每 token 的纳特（nats）。1 比特等于 $\log 2$ 纳特，因此
+   $$
+   H_{\mathrm{tok}}=bc\log 2\in\mathbb{R}_{\ge0}.
+   $$
+   （包含 $c$ 个字符的 token 累积了 $bc$ 比特的信息量。）
+5. 对 token 熵取指数：
+   $$
+   \mathrm{ppl}_{\mathrm{tok}}=\exp(bc\log 2)=2^{bc}\in[1,\infty).
+   $$
+   （恒等式 $\exp(a\log2)=2^a$ 将单位从纳特转换为比特。）
+6. 对于已验证的测试用例 $b=1.25\in\mathbb{R}$ 和 $c=3.2\in\mathbb{R}$，有 $bc=4\in\mathbb{R}$ 和 $\mathrm{ppl}=2^4=16$。（数值示例明确了单位转换过程。）
+
+**检查。** `checks/M0.5/D-M0.5.5-01.py` —— 等概率困惑度 `7.999999999999998`（针对 $k=8$），token 比特数 `4.0`，转换后的困惑度 `16.0`，`passed = True`。
+
+**直觉。** 困惑度回答了“多少种等概率的选择会产生这种平均惊讶度？”只有在指明单位（token、字符或字节）后，该答案才具有意义。
+
+### D-M0.5.5-02 · 困惑度依赖于分词器，而每字节比特数则不然
+
+**断言。** 两个分词器可能为相同的总负对数似然（NLL）分配不同的 token 级困惑度，因为它们使用的 token 数量不同。将相同的 NLL 除以字节数可得到可比较的每字节比特数。
+
+**步骤。**
+
+1. 设相同的文本和模型评估产生总 $\mathrm{NLL}=A\in\mathbb{R}_{\ge0}$ 和总字节数 $B\in\mathbb{N}$。（物理文本固定了分母中的字节数。）
+2. 分词器 A 使用 $N_A\in\mathbb{N}$ 个 token，因此
+   $$
+   H_A=\frac{A}{N_A}\in\mathbb{R}_{\ge0},
+   \qquad
+   \mathrm{ppl}_A=\exp\left(\frac{A}{N_A}\right)\in[1,\infty).
+   $$
+   （按 token 平均是将相同的总量除以分词器 A 的 token 数。）
+3. 分词器 B 使用 $N_B\in\mathbb{N}$ 个 token，因此
+   $$
+   H_B=\frac{A}{N_B}\in\mathbb{R}_{\ge0},
+   \qquad
+   \mathrm{ppl}_B=\exp\left(\frac{A}{N_B}\right)\in[1,\infty).
+   $$
+   （即使评估的文本相同，不同的分段方式也会改变平均值。）
+4. 如果 $N_A\ne N_B$ 且 $A>0$，则通常 $\mathrm{ppl}_A\ne\mathrm{ppl}_B$。（指数函数严格单调递增，因此不相等的每 token NLL 在取指数后仍不相等。）
+5. 将相同的总 NLL 转换为比特：
+   $$
+   \mathrm{NLL}_{\mathrm{bits}}=\frac{A}{\log2}\in\mathbb{R}_{\ge0}.
+   $$
+   （除以 $\log2$ 将纳特转换为比特。）
+6. 除以物理字节数：
+   $$
+   \mathrm{bpb}=\frac{A}{\log2\;B}\in\mathbb{R}_{\ge0}.
+   $$
+   （分母中不出现任何分词器的 token 计数。）
+7. 对于测试用例 $A=120\in\mathbb{R}$，有 $B=80\in\mathbb{N}$、$N_A=100\in\mathbb{N}$ 和 $N_B=60\in\mathbb{N}$，
+   $$
+   \mathrm{ppl}_A=\exp(120/100)=3.3201169\ldots,
+   \quad
+   \mathrm{ppl}_B=\exp(120/60)=7.3890561\ldots,
+   \quad
+   \mathrm{bpb}=\frac{120}{80\log2}=2.16404256\ldots.
+   $$
+   （token 级得分不同，而字节级得分相同。）
+
+**检查。** `checks/M0.5/D-M0.5.5-02.py` —— 分词器 A 困惑度 `3.3201169227365472`，分词器 B 困惑度 `7.38905609893065`，两者每字节比特数均为 `2.164042561333445`，`passed = True`。
+
+**直觉。** 依赖于分词器的困惑度是每学习符号的速率，而非通用标尺。每字节比特数询问模型为相同的物理文本分配了多少信息量。
+
+**信息说明，非推导过程。** 熵率是源符号的渐近平均不确定性。香农对英语熵的经典估计为语言模型损失提供了历史下限背景，但它并非关于现代分词器的有限数据集定理。参见 [Shannon (1951)](https://doi.org/10.1002/j.1538-7305.1951.tb01338.x)。
+
+## 4。数值验证
+
+这两项检查使用确定性的 float64 值。它们验证了等概率分支因子恒等式、每字符比特转换、依赖分词器的困惑度以及不依赖分词器的每字节比特数。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M0.5.5-01 | $k=8$ 给出困惑度 `7.999999999999998`；转换得到 `16.0` | pass |
+| D-M0.5.5-02 | 分词器困惑度 `3.3201169227365472` 和 `7.38905609893065`；两者 bpb 均为 `2.164042561333445` | pass |
+
+从仓库父目录运行 `python -m pytest course/tests`。本课没有独立的组件；V-M0.5-d 在 M0.5.8 中可视化温度和截断效果。
+
+## 5. 交互式可视化
+
+本课程没有独立的组件。其数值内容是一个单位转换和报告约定，供后续的分量塑造器（distribution-shaper）组件 **V-M0.5-d** 使用。该组件属于 D-M0.5.8-02，因为它展示了解码温度如何改变熵。
+
+## 6。结束
+
+**反直觉的问题。** 对于相同的文本，具有更高 token perplexity（困惑度）的 tokenizer 是否可能更好？**解答：** 是的，因为 D-M0.5.5-02 比较的是不同的分母。一个使用更少、更大 token 的 tokenizer，即使其每字节的总 NLL（负对数似然）相同或更低，其每个 token 的 perplexity 也可能更高。在解释 token 级别的数值之前，请先比较每字节的比特数（bits per byte）。
+
+**作业 A-M0.5。** 针对平滑二元语法模型（smoothed bigram model），同时报告 held-out token perplexity 和 bits per byte，并明确说明所使用的 tokenizer 及分母。作业合同位于 `code/common/A-M0.5-README.md`。
+
+**核心检查（Spine check）。** 从架构角度看，tokenization 改变了后续所有架构所见的单元和序列长度。从概率角度看，perplexity 是选定单位下的指数化交叉熵，而 bits per byte 则提供了一个可比较的物理文本速率。

@@ -1,0 +1,55 @@
+import { QuantRoadmap } from '../../../framework/quant/QuantRoadmap';
+import { QuantChapterIndex } from '../../../framework/quant/QuantChapterIndex';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## 量化学习章节导航
+
+<QuantChapterIndex lang="zh" />
+
+## 范围与依据
+
+这是根据大学课程和当前材料集合推断的学习建议，检索日期为 2026 年 10 月 1 日。它不是官方入学或学位要求；有材料也不代表已经掌握。
+
+[牛津课程](https://www.ox.ac.uk/admissions/graduate/courses/msc-mathematical-and-computational-finance) 将线性代数、分析、概率、统计和微分方程列为背景，并设置随机分析与数值方法课程。[CMU MSCF](https://www.cmu.edu/mscf/academics/curriculum) 包含金融时间序列、统计学习、优化和模拟。这些课程支持“共同基础 → 按岗位深入”的学习安排。
+
+## 数学基础与材料缺口
+
+<QuantRoadmap lang="zh" />
+
+六门大学公开课的整包及课件入口见 <a href={quantLessonHref('QUANT-3')}>公开课材料库</a>。
+
+## 建议学习顺序
+
+按当前星图中的课程，建议依次浏览：
+
+1. **MIT 18.06SC 线性代数**：用线性方程、特征值、正交投影和 SVD 的习题查漏。
+2. **MIT 18.02SC 多元微积分**：重点检查梯度、Hessian、多重积分和变量替换。
+3. **MIT 6.041SC 应用概率**：条件概率、联合分布、条件期望与极限定理。
+4. **Aalto MS-C1620 统计推断（中文译本）**：估计、检验、回归与诊断。
+5. **MIT 18.650 统计推断**：加深似然、渐近理论、贝叶斯与统计模型；已掌握第 4 门时可直接进入。
+6. **MIT 18.065 数据分析矩阵方法**：将矩阵分解、最小二乘、PCA 和正则化用于数据分析。
+7. **Aalto MS-C2105 优化导论**：目标函数、约束与基本求解方法。
+8. **Aalto ELEC-E5424 凸优化**：凸性、对偶与 KKT；随后练习组合优化。
+9. **Aalto MS-C2111 随机过程**：马尔可夫链与随时间演化的随机模型。
+10. **Aalto MS-E1600 测度概率**：深入收敛、条件期望和概率理论，为随机分析补齐理论条件。
+11. **Aalto MS-E1604 布朗运动与随机分析**：鞅、Itô 积分与随机微分方程。
+12. **Aalto ELEC-E8425 能源系统建模与优化**：作为优化与随机建模的领域实践。
+13. **Aalto ELEC-E8125 强化学习**：在概率、优化与马尔可夫模型基础上研究序贯决策。
+
+前两门可先用题目查漏。第 4、5 门可按掌握程度选择深度；第 7–8 门和第 9 门可并行。预测研究方向应在统计推断之后加入**时间序列、按时间验证和风险评估**；定价方向优先推进第 9–11 门，再补数值方法与金融定价。编号是当前导航的建议路线，不表示相邻课程都有严格先修关系。
+
+这一安排是学习建议。[MIT 18.650 官方课纲](https://ocw.mit.edu/courses/18-650-statistics-for-applications-fall-2016/pages/syllabus/)列出概率理论和部分线性代数背景；[MIT 金融分析课纲](https://ocw.mit.edu/courses/15-450-analytics-of-finance-fall-2010/pages/syllabus/)也要求微积分、概率与统计背景。这些要求支持先学概率统计，再进入金融建模的安排。
+
+对于**预测与量化研究**，先补线性代数、多元微积分和概率统计，再学习回归、时间序列、按时间验证、模型评估与组合优化。新的“回归评估到量化风险”材料接在回归和概率分布基础之后。理解评估假设后，再选择强化学习等专题。
+
+对于**衍生品定价与金融建模**，先补分析和概率，再学习鞅、随机分析、数值模拟/PDE，以及金融定价与对冲。统计评估仍有用，连续时间数学需要更深入。
+
+新增的 **Black–Scholes 定价方向**分为四门衔接课程。重构代码前先学<a href={quantLessonHref('QUANT-P1')}>数值计算基础</a>，再学<a href={quantLessonHref('QUANT-P2')}>定价、平价与 Greeks</a>；实现 IV 前先读<a href={quantLessonHref('QUANT-P3')}>隐含波动率与求根</a>，最后进入<a href={quantLessonHref('QUANT-P4')}>C++ 数值工程</a>。每门课都有经核对的阅读材料、推导和与 Delta/Gamma 作业及库计划绑定的练习。数值课更正了之前对作业 45° Gamma 公式的错误审查。
+
+对于**组合风险**，应将协方差估计、依赖结构与边际预测一起学习。先读联合校准的反例，再判断单个资产预测校准能否推出组合风险正确。
+
+## Aalto 材料与下一步练习
+
+本地已经有 MS-C2128 时间序列材料，尚未接入星图。把这份材料接入是可行的下一步。[Aalto 教学页面](https://math.aalto.fi/en/research/stochastics/teaching/) 列有概率论、多元统计、高维统计和预测与时间序列分析；页面展示的是 **2024–2025 学年**清单，当前开课学期应另行确认。
+
+选择一条路线。每门基础课至少推导一个结果、实现一个小例子，再判断自己是否掌握。可以从按时间划分的收益预测开始，同时比较点误差、预测覆盖率与密度评分，并解释依赖关系如何改变不确定性估计。

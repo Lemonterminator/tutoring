@@ -1,0 +1,9 @@
+{
+  "id": "GAME-JACOBIAN",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "optimization",
+  "module": "Math practice",
+  "title": { "en": "Jacobian: from partial derivatives to optimization", "zh": "雅各比矩阵：从偏导到优化" },
+  "prereqs": []
+}

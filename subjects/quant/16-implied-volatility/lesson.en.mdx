@@ -1,0 +1,46 @@
+## Place in the pricing track
+
+Course 3 of 4 prepares the library's implied-volatility step. Given a market price $P_m$, solve $V(\sigma)=P_m$ only after defining the accepted input domain and the distinction between a unique mathematical root and a numerically identifiable root. Use the Black–Scholes price and Vega from Course 2.
+
+## Prices that can have an implied volatility
+
+For $S,K,T>0$, write $A=S e^{-qT}$ and $B=K e^{-rT}$. Finite positive volatility gives
+
+$$\max(A-B,0)<C(\sigma)<A,\qquad \max(B-A,0)<P(\sigma)<B.$$
+
+The lower boundary is attained at $\sigma=0$ (if the API allows it). The upper boundary is approached as $\sigma\to\infty$ and has no finite-volatility inverse. With exact arithmetic, a price strictly inside the appropriate interval has one positive IV because
+
+$$\frac{\partial V}{\partial\sigma}=S e^{-qT}\phi(d_1)\sqrt T>0.$$
+
+Parity allows a call and put at the same strike/maturity to imply the same volatility. It also provides a check that a target quote and its transformed OTM quote agree. At $T=0$ the price is just payoff and cannot identify volatility. Treat NaN, infinity, nonpositive $S,K$, negative $T$ and prices outside the interval as explicit statuses rather than relying on a failed Newton step.
+
+## Shape, Newton and conditioning
+
+The volatility second derivative (Vomma) is $\partial^2 V/\partial\sigma^2=\mathrm{Vega}\,d_1d_2/\sigma$. Its sign changes with $d_1d_2$; a single global convexity assumption is false. An unrestricted Newton update $\sigma_{n+1}=\sigma_n-[V(\sigma_n)-P_m]/\mathrm{Vega}(\sigma_n)$ can cross $\sigma=0$, overflow or make an enormous jump when Vega is tiny.
+
+The inverse's local absolute condition number is $|d\sigma/dP_m|=1/\mathrm{Vega}$. Deep OTM options and short maturities can have a price indistinguishable from zero in binary64 while their true IV is nonzero. A small price residual then says little about volatility accuracy. Compare the requested volatility tolerance with the resolvable price change $\mathrm{Vega}\,\delta\sigma$.
+
+## A safeguarded solver contract
+
+1. Check the domain and the call/put-specific arbitrage bounds. Return `PriceOutOfBounds` for a genuinely invalid price. Distinguish lower-bound `ZeroVolBoundary` and upper-bound `NoFiniteVol` from general failures.
+2. Build a bracket $[\sigma_L,\sigma_U]$ with $\sigma_L=0$ and expand $\sigma_U$ until the target price is bracketed or a documented cap/precision limit is reached. Maintain the sign invariant at every iteration.
+3. Try Newton only if Vega is usable and the proposed step is finite and strictly inside the bracket; otherwise bisect. Update the bracket from the sign of the price residual. Brent's method is a useful comparison because it also preserves a bracket.
+4. Stop using both price and volatility information: an absolute-plus-relative price residual, a bracket-width or volatility-step tolerance, and a maximum iteration count. Report `PrecisionLimit` if distinct volatilities have the same computed price. A bare tolerance of `1e-12` has no meaning until its units and scales are stated.
+
+For numerical stability, solve on an OTM price or normalized forward price where practical. Subtracting a large intrinsic value to recover tiny time value may itself lose precision, so this normalization needs a stable pricing formula; merely changing option type by parity cannot recreate rounded-away input information.
+
+## Industrial comparison and initial guesses
+
+The Brenner–Subrahmanyam ATM approximation and Corrado–Miller formula are initial guesses in restricted regimes, not substitutes for bracketing. Jäckel's *Let's Be Rational* works with normalized Black prices, region-specific rational initial approximations and a fourth-order Householder iteration. Its reported near-machine-precision behavior also depends on stable price evaluation. Use it as an advanced benchmark after a transparent safeguarded solver is correct.
+
+## Practice with this repository
+
+1. Derive call and put bounds from nonnegative payoffs, parity and their maximum payoffs. In a price-to-IV-to-price grid, test exact lower/upper boundaries separately from near-boundary interior prices.
+2. Find a $(K/S,\sigma,T)$ and deliberately poor Newton start that leaves the valid interval or stalls; record the iterations. Repeat with an expanding bracket and bisection fallback.
+3. For $T=1/365$ and deep OTM strikes, perturb the target price by one representable `double` step. Compare the resulting IV change with $\Delta P/\mathrm{Vega}$ and label cases where the inverse is numerically unidentifiable.
+
+## Reading, in order
+
+1. Richard P. Brent (1973), *Algorithms for Minimization without Derivatives*, Prentice-Hall, [author bibliography](https://maths-people.anu.edu.au/brent/select.html). Read the guaranteed-convergence zero-finding part; confirm pages in your copy. The [free practical root-finding notes](https://www.buttenschoen.ca/MATH551/practical-root-finding/) are a shorter lead-in.
+2. Peter Jäckel (2015), “Let's Be Rational,” *Wilmott* 2015(75), 40–53, [DOI](https://doi.org/10.1002/wilm.10395). Read the normalized-price construction and convergence/accuracy discussion after implementing the simple solver; full text may require access.
+3. QuantLib, [`impliedvolatility.cpp`](https://github.com/lballabio/QuantLib/blob/master/ql/instruments/impliedvolatility.cpp), open source implementation using a bracketed Brent solver. Read for API and solver contract, not as proof that its tolerances fit this library.

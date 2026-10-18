@@ -1,0 +1,10 @@
+{
+  "id": "QUANT-5", "subject": "quant", "kind": "game", "module": "Probability game pilot",
+  "title": { "en": "Martingale challenge: information, conditional means and stopping", "zh": "鞅挑战：信息、条件期望与停止" },
+  "prereqs": [],
+  "spine": {
+    "en": { "a": "Condition on information available now, using finite probability trees.", "b": "Distinguish constant means, predictable stakes, compensation and bounded stopping." },
+    "zh": { "a": "用有限概率树，只对当前信息下仍可能的未来取平均。", "b": "辨别均值不变、可预测赌注、漂移补偿与有界停止。" }
+  },
+  "references": ["MIT 18.445 (Spring 2015): Lectures 15–17, conditional expectation and martingales"]
+}

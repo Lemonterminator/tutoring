@@ -1,0 +1,338 @@
+## 1. Motivation
+
+M3 made one Transformer executable. The next defect is cost accounting. A training run has a parameter path, a token path, and a memory path. If any one is counted incorrectly, a comparison between models can look precise while allocating the wrong resource.
+
+This lesson separates identities from empirical fits. The leading FLOP counts are accounting conventions. The Chinchilla curve is an empirical loss fit. Its constrained optimum is exact only inside that fitted curve. The activation number is an explicit estimate with declared saved-tensor conventions.
+
+## 2. Forward definition
+
+Let $N\in\mathbb{R}_{>0}$ be the number of trainable parameters, $D\in\mathbb{R}_{>0}$ the number of training tokens, and $C\in\mathbb{R}_{>0}$ the training compute budget in FLOPs. The course's leading dense-transformer convention is
+
+$$
+C \approx 6ND,\qquad
+C\in\mathbb{R}_{>0},\;N\in\mathbb{R}_{>0},\;D\in\mathbb{R}_{>0}.
+$$
+
+The factor 6 is a labeled approximation: roughly 2 FLOPs per parameter per token for the forward pass and 4 for the backward pass. Attention terms can be added when they are not negligible.
+
+For a model width $d\in\mathbb{N}$, depth $L\in\mathbb{N}$, context length $n\in\mathbb{N}$, query-head count $h\in\mathbb{N}$, and head width $d_h\in\mathbb{N}$, the one-token decoder estimate used in M3 is
+
+$$
+F_{\mathrm{decode}}
+\approx 2N+4Lnhd_h,\qquad
+F_{\mathrm{decode}}\in\mathbb{R}_{>0}.
+$$
+
+The first term counts the parameter path. The second counts query-key dot products and weighted value sums. It is an estimate, not a hardware-independent runtime theorem.
+
+Hoffmann et al. fit the following loss model on their training runs:
+
+$$
+\mathcal{L}(N,D)
+=E+\frac{A}{N^\alpha}+\frac{B}{D^\beta},
+\qquad
+\mathcal{L},E,A,B,\alpha,\beta\in\mathbb{R},
+\quad \alpha,\beta>0.
+$$
+
+In this equation $\mathcal{L}(N,D)\in\mathbb{R}$ is a scalar loss. The fitted constants belong to the experiment and tokenizer; they are not universal constants of every language model. The primary source is Hoffmann et al., [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556). The earlier comparison point is Kaplan et al., [Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361).
+
+For mixed-precision Adam, let $\theta\in\mathbb{R}^{N}$ be the parameter vector. The storage convention is
+
+$$
+M_{\mathrm{Adam}}
+\approx
+N(2+2+4+4+4)\ \mathrm{bytes}
+=16N\ \mathrm{bytes}.
+$$
+
+The five terms are fp16 weights, fp16 gradients, an fp32 master copy, and two fp32 moment vectors. This is a selected-state accounting identity under the displayed dtype convention; it does not include activations, temporary workspaces, or optimizer sharding.
+
+For a layer hidden state $H_\ell\in\mathbb{R}^{n\times d}$, $L$ layers, element size $b\in\mathbb{N}$ bytes, and $s\in\mathbb{N}$ saved vectors per token, a declared activation estimate is
+
+$$
+M_{\mathrm{act}}
+\approx sLndb\ \mathrm{bytes},
+\qquad
+M_{\mathrm{act}}\in\mathbb{R}_{>0}.
+$$
+
+The lesson's reference code uses $s=6$ for residual, normalized input, Q, K, V, and one FFN intermediate vector. Attention-score workspace in $\mathbb{R}^{n\times n}$ is excluded from this estimate.
+
+## 3. Derivations
+
+### D-M4.1-01 · Training and inference FLOPs
+
+**Approximation, labeled.** Under the course's multiply-add convention, training compute is approximately $6ND$, and one-token decoder compute is approximately $2N+4Lnhd_h$. These are leading estimates, not exact instruction counts.
+
+**Steps.**
+
+1. Consider one matrix multiply with input $x\in\mathbb{R}^{d_{\mathrm{in}}}$, weight $W\in\mathbb{R}^{d_{\mathrm{in}}\times d_{\mathrm{out}}}$, and output $y\in\mathbb{R}^{d_{\mathrm{out}}}$. One output coordinate is
+   $$
+   y_j=\sum_{i=1}^{d_{\mathrm{in}}}x_iW_{ij},
+   \qquad
+   y\in\mathbb{R}^{d_{\mathrm{out}}}.
+   $$
+   It has $d_{\mathrm{in}}$ multiplications and $d_{\mathrm{in}}-1$ additions. The leading count is therefore $2d_{\mathrm{in}}$ FLOPs per output coordinate and $2d_{\mathrm{in}}d_{\mathrm{out}}$ FLOPs for the matrix.
+2. The matrix has $N_W=d_{\mathrm{in}}d_{\mathrm{out}}$ parameters. Thus its leading forward count is $2N_W$ FLOPs. Summing over matrices gives $2N$ FLOPs per token for the parameter path, ignoring smaller bias and normalization terms.
+3. The backward pass must propagate a gradient to $x$ and a gradient to $W$. For $W$, the differential is
+   $$
+   dL
+   =\langle \nabla_yL,\;dW^\top x\rangle
+   =\langle x(\nabla_yL)^\top,\;dW\rangle,
+   \qquad
+   \nabla_yL\in\mathbb{R}^{d_{\mathrm{out}}},\;x\in\mathbb{R}^{d_{\mathrm{in}}}.
+   $$
+   Computing the weight-gradient outer product and the input-gradient matrix product contributes about $2N_W+2N_W=4N_W$ FLOPs in the same leading convention. Summing gives approximately $4N$ backward FLOPs.
+4. For $D$ tokens, multiplying the per-token estimate by $D$ gives
+   $$
+   C_{\mathrm{train}}
+   \approx D(2N+4N)
+   =6ND,
+   \qquad
+   C_{\mathrm{train}},N,D\in\mathbb{R}_{>0}.
+   $$
+5. At decode time, the parameter path is evaluated once for the new token, so it contributes approximately $2N$ FLOPs. For one layer, one query head, one cached key $k_j\in\mathbb{R}^{d_h}$, and query $q\in\mathbb{R}^{d_h}$,
+   $$
+   s_j=q^\top k_j,\qquad
+   s_j\in\mathbb{R},\quad q,k_j\in\mathbb{R}^{d_h}.
+   $$
+   The score dot product costs about $2d_h$ FLOPs. The weighted value sum with $v_j\in\mathbb{R}^{d_h}$ also costs about $2d_h$ FLOPs for one position. Across $n$ cached positions, $L$ layers, and $h$ query heads, the leading attention term is $4Lnhd_h$.
+6. Adding the two paths gives
+   $$
+   F_{\mathrm{decode}}
+   \approx 2N+4Lnhd_h,
+   \qquad
+   F_{\mathrm{decode}}\in\mathbb{R}_{>0}.
+   $$
+7. The check evaluates both identities with integer-valued dimensions. It obtains $12{,}000{,}000{,}000$ training FLOPs for $N=10^6,D=2000$ and $2{,}004{,}096$ decode FLOPs for the stated toy layer stack.
+
+**Check.** checks/M4/D-M4.1-01.py prints the two terms and passed: True.
+
+**Intuition.** Training pays for every parameter over every token. Decode pays the parameter path once, then pays an additional linearly growing read over the cached context.
+
+### D-M4.1-02 · Chinchilla allocation under a fixed budget
+
+**Theorem, scoped to the fitted loss.** If $\alpha,\beta,A,B>0$ and $C=6ND$, the unique minimizer of the displayed fitted loss along the budget surface has
+
+$$
+N_{\mathrm{opt}}
+\propto C^{\frac{\beta}{\alpha+\beta}},
+\qquad
+D_{\mathrm{opt}}
+\propto C^{\frac{\alpha}{\alpha+\beta}}.
+$$
+
+This is an analytic result for the empirical curve. It is not a theorem that every dataset, tokenizer, architecture, or training regime has the same exponents.
+
+**Steps.**
+
+1. Keep the multiplier symbolic as $k>0$ and write the budget constraint:
+   $$
+   C=kND,
+   \qquad
+   C,k,N,D\in\mathbb{R}_{>0}.
+   $$
+   Solving for the token count gives
+   $$
+   D=\frac{C}{kN},
+   \qquad
+   D\in\mathbb{R}_{>0}.
+   $$
+2. Substitute this expression into the loss:
+   $$
+   \mathcal{L}(N)
+   =E+\frac{A}{N^\alpha}
+   +\frac{B}{(C/(kN))^\beta}.
+   $$
+   Since $(C/(kN))^{-\beta}=(kN/C)^\beta$, this becomes
+   $$
+   \mathcal{L}(N)
+   =E+AN^{-\alpha}
+   +B\left(\frac{k}{C}\right)^\beta N^\beta,
+   \qquad
+   N\in\mathbb{R}_{>0}.
+   $$
+3. Differentiate each term:
+   $$
+   \frac{d}{dN}E=0,
+   \qquad
+   \frac{d}{dN}AN^{-\alpha}=-\alpha AN^{-\alpha-1},
+   $$
+   $$
+   \frac{d}{dN}
+   \left[
+   B\left(\frac{k}{C}\right)^\beta N^\beta
+   \right]
+   =\beta B\left(\frac{k}{C}\right)^\beta N^{\beta-1}.
+   $$
+   Therefore
+   $$
+   \frac{d\mathcal{L}}{dN}
+   =-\alpha AN^{-\alpha-1}
+   +\beta B\left(\frac{k}{C}\right)^\beta N^{\beta-1}.
+   $$
+4. Set the derivative to zero and move the negative term to the other side:
+   $$
+   \alpha AN^{-\alpha-1}
+   =\beta B\left(\frac{k}{C}\right)^\beta N^{\beta-1}.
+   $$
+   Multiply both sides by $N^{\alpha+1}>0$:
+   $$
+   \alpha A
+   =\beta B\left(\frac{k}{C}\right)^\beta N^{\alpha+\beta}.
+   $$
+5. Divide by the positive coefficient and invert the budget ratio:
+   $$
+   N^{\alpha+\beta}
+   =\frac{\alpha A}{\beta B}
+   \left(\frac{C}{k}\right)^\beta.
+   $$
+   Taking the positive $(\alpha+\beta)$-th root gives
+   $$
+   N_{\mathrm{opt}}
+   =
+   \left(\frac{\alpha A}{\beta B}\right)^{\frac{1}{\alpha+\beta}}
+   \left(\frac{C}{k}\right)^{\frac{\beta}{\alpha+\beta}},
+   \qquad
+   N_{\mathrm{opt}}\in\mathbb{R}_{>0}.
+   $$
+6. Recover $D_{\mathrm{opt}}$ by substituting into $D=C/(kN)$:
+   $$
+   D_{\mathrm{opt}}
+   =
+   \left(\frac{\beta B}{\alpha A}\right)^{\frac{1}{\alpha+\beta}}
+   \left(\frac{C}{k}\right)^{\frac{\alpha}{\alpha+\beta}},
+   \qquad
+   D_{\mathrm{opt}}\in\mathbb{R}_{>0}.
+   $$
+   The powers of $C$ are therefore $\beta/(\alpha+\beta)$ for parameters and $\alpha/(\alpha+\beta)$ for tokens.
+7. To verify that the stationary point is the unique minimum, factor the derivative:
+   $$
+   \frac{d\mathcal{L}}{dN}
+   =N^{-\alpha-1}
+   \left[
+   -\alpha A
+   +\beta B\left(\frac{k}{C}\right)^\beta N^{\alpha+\beta}
+   \right].
+   $$
+   The prefactor is positive. The bracket is strictly increasing in $N$ because $\alpha+\beta>0$, starts negative, and crosses zero once. The derivative is negative before the crossing and positive after it.
+8. Hoffmann et al. report fitted parametric exponents close to $\alpha=0.34$ and $\beta=0.28$. Substitution gives
+   $$
+   \frac{\beta}{\alpha+\beta}
+   =\frac{0.28}{0.34+0.28}
+   =0.45161290322580644,
+   $$
+   $$
+   \frac{\alpha}{\alpha+\beta}
+   =\frac{0.34}{0.34+0.28}
+   =0.5483870967741935.
+   $$
+   The paper's first two empirical approaches reported approximately $0.50/0.50$ and $0.49/0.51$, while its parametric approach reported approximately $0.46/0.54$. These are related estimates, not interchangeable identities.
+9. The float64 check uses $k=6$ and the fit $E=1.69,A=406.4,B=410.7,\alpha=0.34,\beta=0.28$. At $C=6\times10^{12}$ it obtains
+   $$
+   N_{\mathrm{opt}}=353169.89874250407,
+   \qquad
+   D_{\mathrm{opt}}=2831498.3908894775,
+   $$
+   with constrained numerical derivative $-1.6095204903703447\times10^{-14}$.
+
+**Check.** checks/M4/D-M4.1-02.py verifies the budget equality, the closed-form exponents, a finite-difference stationary derivative, and the local loss comparison; it prints passed: True.
+
+**Approximation, labeled.** The constants and exponents describe one fitted corpus and training setup. The algebra after choosing that fit is exact; transferring the fit to a different setting is an approximation.
+
+### D-M4.1-03 · Mixed-precision optimizer and activation memory
+
+**Theorem, scoped to the storage convention.** If the five optimizer arrays have the displayed dtypes and all contain one value per parameter, the selected Adam state costs exactly $16N$ bytes.
+
+**Steps.**
+
+1. The parameter vector is $\theta\in\mathbb{R}^{N}$. A fp16 weight array has shape $[N]$ and costs
+   $$
+   M_{\mathrm{weight}}=2N\ \mathrm{bytes}.
+   $$
+2. A fp16 gradient array has the same shape $[N]$ and costs
+   $$
+   M_{\mathrm{grad}}=2N\ \mathrm{bytes}.
+   $$
+3. The fp32 master copy has shape $[N]$ and costs
+   $$
+   M_{\mathrm{master}}=4N\ \mathrm{bytes}.
+   $$
+4. Adam's first and second moments $m,v\in\mathbb{R}^{N}$ each use fp32:
+   $$
+   M_m=4N\ \mathrm{bytes},
+   \qquad
+   M_v=4N\ \mathrm{bytes}.
+   $$
+5. Adding the five arrays gives
+   $$
+   M_{\mathrm{Adam}}
+   =M_{\mathrm{weight}}+M_{\mathrm{grad}}+M_{\mathrm{master}}+M_m+M_v
+   =(2+2+4+4+4)N
+   =16N\ \mathrm{bytes}.
+   $$
+6. For activations, one saved vector has shape $[n,d]$ and costs $ndb$ bytes. If each of $L$ layers saves $s$ such vectors, the product rule for the count of arrays gives
+   $$
+   M_{\mathrm{act}}
+   =s\cdot L\cdot n\cdot d\cdot b
+   \ \mathrm{bytes}.
+   $$
+   The reference convention sets $s=6$. It deliberately excludes the separate attention-score matrix with shape $[n,n]$.
+7. A square-root checkpoint schedule stores approximately $q=\lceil\sqrt{L}\rceil$ layer boundaries instead of all $L$ boundaries:
+   $$
+   M_{\mathrm{ckpt}}
+   \approx qndsb
+   =\lceil\sqrt{L}\rceil ndsb\ \mathrm{bytes}.
+   $$
+   The memory scaling changes from $O(Lnd)$ to $O(\sqrt{L}nd)$ under this convention. The matching recomputation cost is implementation-dependent; the standard trade-off is described at the same coarse $O(\sqrt{L})$ level rather than as an exact wall-clock identity.
+8. For $N=10000$, the check obtains $160000$ bytes, exactly 16 bytes per parameter. With $s=6$, $n=32$, $d=64$, and fp16, the full activation estimate is $1572864$ bytes at $L=64$, while the square-root checkpoint estimate is $196608$ bytes.
+
+**Check.** checks/M4/D-M4.1-03.py verifies the five-array sum, linear full-activation scaling in $L$, and the square-root checkpoint estimate; it prints passed: True.
+
+**Approximation, labeled.** Real training memory also contains temporary kernels, communication buffers, allocator fragmentation, framework metadata, and possibly sharded states. The displayed number is a transparent accounting baseline.
+
+## 4. Numerical verification
+
+The M4.1 checks use float64 arithmetic for analytic formulas and integer arithmetic for count identities.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M4.1-01 | training $12{,}000{,}000{,}000$ FLOPs; decode $2{,}004{,}096$ FLOPs | pass |
+| D-M4.1-02 | $N_{\mathrm{opt}}=353169.89874250407$; $D_{\mathrm{opt}}=2831498.3908894775$; exponents $0.45161290322580644/0.5483870967741935$ | pass |
+| D-M4.1-03 | Adam $160000$ bytes for $N=10000$; full $L=64$ activations $1572864$ bytes; checkpointed $196608$ bytes | pass |
+
+Run python checks/M4/D-M4.1-01.py, python checks/M4/D-M4.1-02.py, and python checks/M4/D-M4.1-03.py from course/. The repository test suite also executes these checks.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M4-a" />
+
+**V-M4-a — Chinchilla iso-FLOP explorer.** The specification is viz/specs/V-M4-a.yaml; the pure compute module is viz/compute/chinchilla.ts. The widget evaluates
+
+$$
+\mathcal{L}(N,C/(6N)),
+\qquad
+N,C\in\mathbb{R}_{>0},
+$$
+
+and plots the fitted loss while $N/N_{\mathrm{opt}}$ moves from $0.25$ to $4$. It also reports $N_{\mathrm{opt}}$, $D_{\mathrm{opt}}$, the two compute exponents, and $D_{\mathrm{opt}}/N_{\mathrm{opt}}$. The visible insight sentence must say that the curve is an empirical fit and that the analytic optimum is conditional on that fit. A renderer can bind these pure outputs to the owner's existing Preact/MDX plotting convention without changing the frontend.
+
+The widget's equation is D-M4.1-02. Its line and endpoint tests run with node --experimental-strip-types viz/compute/chinchilla.test.mjs.
+
+## 6. Closing
+
+**Counterintuitive question.** If the training budget $C$ is fixed, why can adding data make a model smaller rather than simply making the run more expensive?
+
+**Worked answer.** D-M4.1-02 starts with $C=6ND$. Solving for data gives $D=C/(6N)$. Therefore increasing $N$ forces $D$ down along the same budget surface, while decreasing $N$ frees tokens. The loss fit assigns one penalty to insufficient parameters and another to insufficient tokens. The optimum is the point where the two derivative contributions balance:
+
+$$
+\alpha A N^{-\alpha-1}
+=\beta B\left(\frac{6}{C}\right)^\beta N^{\beta-1}.
+$$
+
+This is why “more parameters” is not a complete answer to a fixed-budget design question. The equation compares two scarce resources; it does not claim that a smaller model is always better when compute is not fixed.
+
+**Assignment A-M4.** The full assignment extends code/minilm/ with the six M4 efficiency lines. For this lesson, record the two FLOP terms, the Chinchilla optimum for one selected budget, the 16-byte Adam baseline, and the full/checkpointed activation estimates. The later M4 lesson gates add equivalence checks for online softmax, MLA, and recurrent linear-attention forms.
+
+**Spine check.** Architecturally, the next-token distribution is unchanged, but its feasible training path is constrained by $N$, $D$, $C$, and memory. Probabilistically, scaling laws are empirical statements about the loss of that distribution; accounting identities state the computation and storage required to obtain it.

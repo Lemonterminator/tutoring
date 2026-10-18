@@ -1,0 +1,21 @@
+import { GpFinanceCourse } from '../../../framework/games/gp-finance/GpFinanceCourse';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## Gaussian processes and portfolios
+
+<a href={quantLessonHref('QUANT-2')}>← Back to regression evaluation and quantitative risk</a> · <a href={quantLessonHref('QUANT-BS0')}>BS and Greeks paper course</a> · <a href={quantLessonHref('GAME-AALTO-GP')}>Aalto Gaussian processes course</a>
+
+The covariance matrix Σ of portfolio theory and the kernel matrix K of a Gaussian process are the same object: the second-order structure of a Gaussian random vector. Treat assets as input points and returns as values of a random function; the portfolio return wᵀr is then a linear functional of the GP, and the portfolio variance wᵀΣw is that functional's variance. Many formulas translate directly:
+
+- a factor model XFXᵀ + D is a linear kernel plus diagonal noise;
+- minimum-variance weights come from the precision matrix Σ⁻¹, and 1/[Σ⁻¹]ᵢᵢ is exactly the GP's leave-one-out predictive variance;
+- shrinking towards the identity adds a noise term to the kernel and an L2 penalty to the weights (the convex and additive forms are related by δ = ρμ/(1 − ρ));
+- the Black–Litterman posterior mean is GP conditioning with a linear observation operator P.
+
+The three games below break these correspondences into steps you can do in your head. They are an extension written for this site, not part of the Aalto course; every finance definition they need is stated in the question.
+
+<GpFinanceCourse lang="en" />
+
+## What these games do not assess
+
+They do not assess estimating a covariance (sample size, non-stationarity, heavy tails) or constrained portfolio optimisation, and they are not investment advice. After a round, try real return data: compare the sample covariance, Ledoit–Wolf shrinkage and a kernel-built covariance by the out-of-sample realised volatility of their minimum-variance portfolios.

@@ -1,0 +1,109 @@
+## 1. Motivation
+
+M5.1 defined a card without filling gaps from memory. M5.2 instantiates that card for the families in the handoff snapshot. The purpose is comparison by design axis. The purpose is not to declare a single best architecture.
+
+The source rule is strict: a field is either linked to a primary technical report, model card, or configuration, or it is written as unknown. A family name is not evidence for a field in a particular variant. When a later model has no public architecture report, the card records that absence.
+
+## 2. Card reading rule
+
+Read each card in two passes. First read the identity and source status. Then read the six M4 axes:
+
+| M4 axis | Card question |
+| --- | --- |
+| M4.1 scaling/accounting | Which parameters are total, active, resident, or recomputed? |
+| M4.2 online softmax | Is the dense attention path materialized, tiled, local, or sparse? |
+| M4.3 cache lineage | Are K/V heads grouped, latent-compressed, or otherwise reduced? |
+| M4.4 MoE | How are experts selected, balanced, and communicated? |
+| M4.5 long context | Which positions are local, global, interpolated, sunk, or indexed? |
+| M4.6 recurrence/SSM | Which layers carry a matrix/state recurrence, and at what ratio? |
+
+“Unknown” has semantic content. It means the course does not have a checked primary source for that field. It is not a zero, a default Transformer value, or an invitation to infer from benchmark behavior.
+
+## 3. Case cards
+
+### DeepSeek: latent cache to sparse attention
+
+The [DeepSeek-V2 technical report](https://arxiv.org/abs/2405.04434) reports 236B total parameters, 21B activated parameters, 128K context, MLA, and DeepSeekMoE. The [DeepSeek-V3 report](https://arxiv.org/abs/2412.19437) reports 671B total and 37B activated parameters, keeps MLA and DeepSeekMoE, and adds the auxiliary-loss-free balancing strategy and multi-token prediction. The same report describes an FP8 training path.
+
+The [DeepSeek-V3.2 report](https://arxiv.org/abs/2512.02556) adds DeepSeek Sparse Attention. The card records DSA as the architectural delta and does not silently copy every V3 field into V3.2. The [DeepSeek transparency center](https://www.deepseek.com/en/transparency/) and the [V4 technical documentation](https://fe-static.deepseek.com/chat/transparency/deepseek-V4-model-card-EN.pdf) source the V4 entry: V4-Pro is 1.6T total / 49B active, V4-Flash is 284B total / 13B active, both have a 1M context in the handoff snapshot, and the reported choices include compressed sparse attention, heavily compressed attention, mHC, early hash-routed MoE, sigmoid expert bias, YaRN, and an FP4 indexer. The card links the report and keeps any field not stated there unknown.
+
+This lineage demonstrates four separate axes: MLA changes the cache state; MoE separates total from active computation; DSA changes which keys are read; V4 changes both attention compression and residual transport.
+
+### Qwen: grouped cache to hybrid recurrence
+
+The [Qwen3 technical report](https://arxiv.org/abs/2505.09388) covers dense and MoE variants from 0.6B to 235B and is the source for the Qwen3 family card. The handoff axis for Qwen3 is GQA plus QK-norm.
+
+The Qwen3-Next card links its [model card](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) and the family architecture announcement. The axis being taught is hybrid Gated DeltaNet plus gated attention with sparse MoE and multi-token prediction. The [Qwen3.5 announcement](https://qwen.ai/blog?email_hash=23463b99b62a72f26ed677cc556c44e8&id=qwen3.5) reports a 397B total / 17B active variant and describes the same hybrid direction. The [Qwen3.6-27B announcement](https://qwen.ai/blog?id=qwen3.6-27b&lang=zh-CN) sources the 27B dense variant. The handoff snapshot records the Qwen3.5/3.6 family as supporting 1M-token input; the card does not transfer that number to an unverified variant without a matching source.
+
+The design lesson is not “recurrence replaces attention.” It is that a hybrid can choose a recurrent state for part of the layer budget and retain attention for content retrieval.
+
+### OpenAI: gpt-oss as a public comparison point
+
+The [gpt-oss model card](https://openai.com/index/gpt-oss-model-card/) is unusually explicit. It reports gpt-oss-20b as 21B total / 3.6B active with 24 layers and gpt-oss-120b as 117B total / 5.1B active with 36 layers; both support 128K context. It describes alternating locally banded and full attention with bandwidth 128, group size 8 for grouped multi-query attention, RoPE, RMSNorm before attention and MoE blocks, Pre-LN placement, and gated SwiGLU. The card reports 32 experts and top-4 routing for the 20B variant. For the 120B expert total, the lesson keeps the field source-version-sensitive rather than merging contradictory snapshots.
+
+The serving lesson is visible without guessing hidden internals: local/full alternation limits some attention interactions, GQA reduces cache width, and active parameters are much smaller than resident weights. The card does not claim anything about GPT-5; the [OpenAI model overview](https://openai.com/open-models/) is not an architecture report for that private series.
+
+### Google: local/global attention and a deliberate unknown
+
+The [Gemma 3 technical report](https://arxiv.org/abs/2503.19786) sources the 1B, 4B, 12B, and 27B released sizes, at least 128K context, a short local-attention span, and a larger local-to-global attention-layer ratio. It also reports distillation in the development recipe. The card describes the position, normalization, and expert fields only when the report states them.
+
+The handoff snapshot lists Gemma 4 sizes as E2B/E4B, 12B, 26B-A4B, and 31B. The [Gemma documentation](https://ai.google.dev/gemma) is linked, but architecture fields not stated in the checked source remain unknown. This is the required behavior for a current model with incomplete public detail.
+
+### Z.ai: GLM-4.5 and the boundary of verification
+
+The [GLM-4.5 technical report](https://arxiv.org/abs/2508.06471) reports a 355B total / 32B activated MoE model and a 106B compact variant. The handoff card records deeper-narrower MoE, partial RoPE, QK-norm, and an MTP axis only where the report or the handoff's verified source supports it. GLM-5.x names are kept as a separate card. The card does not invent what changed in GLM-5.1, GLM-5.2, or GLM-5.3.
+
+### Moonshot, Meta, SSM hybrids, and Claude
+
+The [Kimi K2 technical report](https://arxiv.org/abs/2507.20534) is the source for the K2 lineage axis. The [Kimi K3 release and report page](https://www.kimi.com/news/kimi-k3-open-source) reports a 2.8T MoE model with 104B active parameters and a 1M context, and names Kimi Delta Attention and attention residuals. The card links those claims and leaves other fields unknown.
+
+The [Meta Llama 4 announcement](https://ai.meta.com/blog/llama-4-multimodal-intelligence/) and [Llama 4 model card](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct) source the handoff's iRoPE, interleaved NoPE, and chunked-attention axis. Variant-specific numbers belong to the model card, not to a generic Llama 4 sentence.
+
+The [Mamba-2/SSD report](https://arxiv.org/abs/2405.21060) is the source for the structured state-space axis. Nemotron-H, Granite 4, Falcon-H1, and MiniMax-M1/M3 are kept as a grouped teaching card until each model's own report is attached; their attention:SSM ratios are unknown. Finally, the Claude card links the [Anthropic public overview](https://www.anthropic.com/claude) and marks architecture fields not public. API behavior, pricing, and context limits do not identify a private architecture.
+
+## 4. Numerical verification
+
+The card comparator does not recompute model internals. It verifies that each selected cell carries a status and source path. The design-space calculator then applies the exact accounting identities from M3.5 and M4:
+
+$$
+B_{\mathrm{KV}}=2L\,n\,h_{\mathrm{kv}}\,d_h\,b,
+\qquad
+\text{decode weight FLOPs/token}\approx 2N_{\mathrm{active}}.
+$$
+
+For the same $L,n,d_h,b$, changing $h_{\mathrm{kv}}$ from $32$ to $8$ divides the KV cache by $4$. Replacing a full attention layer by a local window changes the key count from $n$ to $w$ for that layer. A recurrence ratio changes the count of attention layers, but it adds state-update work; it is not free deletion of a layer.
+
+The calculator reports these as a transparent proxy:
+
+$$
+C_{\mathrm{decode}}
+=2N_{\mathrm{active}}
+ +2(\text{attention layers})(\text{heads})(\text{keys/query})d_h
+ +(\text{recurrent layers})d_{\mathrm{state}}^2.
+$$
+
+This last expression is an instructional cost model, not a hardware benchmark. The card's exact numbers come from the linked sources; the proxy only makes the direction of each M4 toggle visible.
+
+The checks compare MHA/GQA cache ratio $4$, MLA latent-width reduction, a 3:1 hybrid layer split, sparse key count, and expert-parallel dispatch bytes. Both comparator and calculator use deterministic inputs.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M5-b" />
+
+<CourseWidget id="V-M5-c" />
+
+**V-M5-b — Card comparator.** The specification is viz/specs/V-M5-b.yaml and the pure compute module is viz/compute/architecture_comparator.ts. Select two to four cards. Rows preserve the fixed template order. A cell shows its value, status, and source URL. The visible insight is that differences and unknowns occur field by field.
+
+**V-M5-c — Design-space calculator.** The specification is viz/specs/V-M5-c.yaml and the pure compute module is viz/compute/design_space_calculator.ts. Keep active parameters fixed, then toggle KV heads, MLA latent width, local window, sparse top-k, recurrence ratio, and expert parallelism. The visible insight is that equal active parameters do not imply equal cache bytes or decode cost.
+
+The existing frontend can render V-M5-b as a table and V-M5-c as linked number cards/plots. The compute modules contain no DOM access and are tested independently.
+
+## 6. Closing
+
+**Counterintuitive question.** Why can two models with the same total and active parameters differ by 10× in KV-cache size and 3× in decode throughput?
+
+**Worked answer.** Total and active parameters govern different terms. Cache bytes depend on $L$, $n$, $h_{\mathrm{kv}}$, $d_h$, and scalar precision. Decode work also depends on how many keys each query reads, how many layers use recurrence, and whether expert routing moves activations between devices. Therefore attention variant, window scheme, recurrence ratio, precision, and expert parallelism explain the gap; parameter counts alone do not.
+
+**Assignment A-M5.** The assignment code in code/minilm/a_m5.py exposes three toy configuration toggles: DeepSeek-V3-like MLA+MoE+MTP, Gemma-3-like local/global attention with dual RoPE bases, and Qwen3-Next-like Gated DeltaNet/attention 3:1 hybrid. Run the same deterministic corpus through all three, and report loss, tokens per second, and cache bytes in one table. These are toy axis reproductions, not claims of production equivalence.
+
+**Spine check.** Every card still maps a prefix to a next-token distribution. The cases differ in how that prefix is stored, selected, and transported. The final unresolved defect is provenance: a private or insufficiently documented model must retain unknown fields.

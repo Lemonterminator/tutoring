@@ -1,0 +1,31 @@
+{
+  "subject": "llm",
+  "id": "M0.5.1",
+  "module": "M0.5",
+  "title": {
+    "en": "Chain rule, maximum likelihood, and forward KL",
+    "zh": "链式法则、最大似然估计与前向KL散度"
+  },
+  "prereqs": [
+    "M0.1"
+  ],
+  "estimatedHours": 4,
+  "spine": {
+    "en": {
+      "a": "Separate the probability model from the architecture that computes each conditional.",
+      "b": "Establish why autoregressive maximum likelihood is equivalent to minimizing forward KL and how sequence NLL becomes perplexity."
+    },
+    "zh": {
+      "a": "将概率模型与计算每个条件概率的架构分离。",
+      "b": "阐明自回归最大似然估计为何等价于最小化前向KL散度，以及序列负对数似然如何转化为困惑度。"
+    }
+  },
+  "derivations": [
+    "D-M0.5.1-01",
+    "D-M0.5.1-02",
+    "D-M0.5.1-03"
+  ],
+  "visualizations": [],
+  "assignment": "A-M0.5",
+  "references": []
+}

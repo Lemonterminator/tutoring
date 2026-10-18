@@ -1,0 +1,289 @@
+## 1. Motivation
+
+M3.5 counted the KV cache as $2Lnh_{\mathrm{kv}}d_hb_e$ bytes. The remaining defect is lineage: which representation is cached, how many heads produce it, and whether a projection can be absorbed before decoding? The answer determines memory traffic and parameter count.
+
+The sequence MHA → MQA → GQA → MLA is not a sequence of unrelated names. It is a sequence of changes to the K/V state that the decoder rereads. The algebra is exact for content-only MLA absorption. Standard RoPE introduces a query-key pair index and breaks one global absorbed query; a separate decoupled rotary component restores a compressible content path.
+
+## 2. Forward definition
+
+Let model width be $d\in\mathbb{N}$, query-head count $h\in\mathbb{N}$, KV-head count $h_{\mathrm{kv}}\in\mathbb{N}$, head dimension $d_h\in\mathbb{N}$, layer count $L\in\mathbb{N}$, context length $n\in\mathbb{N}$, and element size $b_e\in\mathbb{N}$ bytes. The cache stores
+
+$$
+K_{\mathrm{cache}},V_{\mathrm{cache}}
+\in\mathbb{R}^{L\times n\times h_{\mathrm{kv}}\times d_h}.
+$$
+
+Two tensors give
+
+$$
+\operatorname{bytes}_{\mathrm{KV}}
+=2Lnh_{\mathrm{kv}}d_hb_e\ \mathrm{bytes}.
+$$
+
+MHA uses $h_{\mathrm{kv}}=h$. MQA uses $h_{\mathrm{kv}}=1$. GQA uses an intermediate number of KV heads, with query heads partitioned into groups that share a KV head. The K/V projection parameter count, excluding biases, is
+
+$$
+N_{\mathrm{KV\;proj}}
+=2dh_{\mathrm{kv}}d_h,
+\qquad
+N_{\mathrm{KV\;proj}}\in\mathbb{N}.
+$$
+
+For MLA, let the compressed KV latent be $c_t^{KV}\in\mathbb{R}^{d_c}$ and let a separate rotary key component have width $d_R\in\mathbb{N}$. The compressed cache shape is
+
+$$
+c^{KV}_{1:n}\in\mathbb{R}^{n\times d_c},
+\qquad
+k^R_{1:n}\in\mathbb{R}^{n\times d_R},
+$$
+
+so the cache estimate is
+
+$$
+\operatorname{bytes}_{\mathrm{MLA}}
+=Ln(d_c+d_R)b_e\ \mathrm{bytes}.
+$$
+
+The content path is
+
+$$
+c_t^{KV}=W^{DKV}h_t\in\mathbb{R}^{d_c},
+\qquad
+k_t^C=W^{UK}c_t^{KV}\in\mathbb{R}^{d_k},
+\qquad
+v_t^C=W^{UV}c_t^{KV}\in\mathbb{R}^{d_v}.
+$$
+
+For a query $q_i\in\mathbb{R}^{d_k}$ and a cached latent $c_j^{KV}\in\mathbb{R}^{d_c}$,
+
+$$
+q_i^\top k_j^C
+=q_i^\top W^{UK}c_j^{KV}
+=(W^{UK\top}q_i)^\top c_j^{KV}\in\mathbb{R}.
+$$
+
+**Sources.** MQA is introduced by Shazeer, [Fast Transformer Decoding: One Write-Head is All You Need](https://arxiv.org/abs/1911.02150). GQA is described by Ainslie et al., [GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints](https://arxiv.org/abs/2305.13245). MLA and its decoupled rotary component are sourced from DeepSeek-AI, [DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model](https://arxiv.org/abs/2405.04434).
+
+## 3. Derivations
+
+### D-M4.3-01 · MHA, MQA, and GQA cache lineage
+
+**Theorem, scoped to the cache tensors.** Holding $L,n,d_h,b_e$ fixed, changing from $h$ KV heads to $h_{\mathrm{kv}}$ KV heads changes cache bytes by the factor
+
+$$
+\frac{\operatorname{bytes}_{\mathrm{MHA}}}
+{\operatorname{bytes}_{\mathrm{GQA}}}
+=\frac{h}{h_{\mathrm{kv}}}.
+$$
+
+The same factor applies to K/V projection parameters, while the query projection is unchanged by the KV sharing choice.
+
+**Steps.**
+
+1. In MHA, every query head has its own key and value head. The key tensor has shape $[L,n,h,d_h]$ and the value tensor has the same shape. Therefore
+   $$
+   \operatorname{bytes}_{\mathrm{MHA}}
+   =2Lnhd_hb_e\ \mathrm{bytes}.
+   $$
+2. In MQA, all query heads share one K/V head. The cache tensors have shapes $[L,n,1,d_h]$, so
+   $$
+   \operatorname{bytes}_{\mathrm{MQA}}
+   =2Ln d_hb_e\ \mathrm{bytes}.
+   $$
+   Dividing gives
+   $$
+   \frac{\operatorname{bytes}_{\mathrm{MHA}}}
+   {\operatorname{bytes}_{\mathrm{MQA}}}
+   =\frac{2Lnhd_hb_e}{2Lnd_hb_e}
+   =h.
+   $$
+3. In GQA, a group of query heads shares each KV head. The cache tensors have shapes $[L,n,h_{\mathrm{kv}},d_h]$, so
+   $$
+   \operatorname{bytes}_{\mathrm{GQA}}
+   =2Lnh_{\mathrm{kv}}d_hb_e\ \mathrm{bytes}.
+   $$
+   Thus
+   $$
+   \frac{\operatorname{bytes}_{\mathrm{MHA}}}
+   {\operatorname{bytes}_{\mathrm{GQA}}}
+   =\frac{2Lnhd_hb_e}{2Lnh_{\mathrm{kv}}d_hb_e}
+   =\frac{h}{h_{\mathrm{kv}}}.
+   $$
+4. The K/V projections map width $d$ to $h_{\mathrm{kv}}d_h$ coordinates each. One projection has $dh_{\mathrm{kv}}d_h$ weights, and K plus V give
+   $$
+   N_{\mathrm{KV\;proj}}
+   =dh_{\mathrm{kv}}d_h+dh_{\mathrm{kv}}d_h
+   =2dh_{\mathrm{kv}}d_h.
+   $$
+   Therefore the K/V projection parameter reduction from MHA to GQA is also $h/h_{\mathrm{kv}}$. Query projection weights still have shape $[d,hd_h]$ and remain unchanged.
+5. Sharing K/V does not remove the $h$ query-head score products. It reduces the cached K/V state and K/V projection parameters; the score and value work is then organized around shared K/V representations.
+6. With $L=32,n=2048,h=32,h_{\mathrm{kv}}=8,d_h=128,b_e=2$, the check obtains MHA $1073741824$ bytes, GQA $268435456$ bytes, and MQA $33554432$ bytes. The MHA-to-GQA cache and projection reduction factors are both 4.
+
+**Check.** checks/M4/D-M4.3-01.py verifies cache bytes, K/V projection parameters, and the reduction factors; it prints passed: True.
+
+**Claim, correctly scoped.** The factor $h/h_{\mathrm{kv}}$ is an accounting result for these tensors. End-to-end throughput also depends on kernels, batching, communication, and the cost of the query-head path.
+
+### D-M4.3-02 · MLA absorption without RoPE
+
+**Theorem.** For content-only MLA, the key projection can be absorbed into the query and the value/output projections can be absorbed per head. For one head,
+
+$$
+q_i^\top W^{UK}c_j^{KV}
+=(W^{UK\top}q_i)^\top c_j^{KV},
+$$
+
+and with $B=W^OW^{UV}\in\mathbb{R}^{d_{\mathrm{out}}\times d_c}$,
+
+$$
+y_i
+=W^O\sum_j\alpha_{ij}W^{UV}c_j^{KV}
+=B\sum_j\alpha_{ij}c_j^{KV}
+\in\mathbb{R}^{d_{\mathrm{out}}}.
+$$
+
+For multiple heads, absorption on the value side is per head: $B_h=W_h^OW_h^{UV}$.
+
+**Steps.**
+
+1. Let $C\in\mathbb{R}^{n\times d_c}$ collect cached compressed latents by rows, let $W^{UK}\in\mathbb{R}^{d_k\times d_c}$, and let $q_i\in\mathbb{R}^{d_k}$. The reconstructed key for position $j$ is
+   $$
+   k_j^C=W^{UK}c_j^{KV}\in\mathbb{R}^{d_k}.
+   $$
+2. The unabsorbed score is
+   $$
+   q_i^\top k_j^C
+   =q_i^\top W^{UK}c_j^{KV}.
+   $$
+   By the transpose rule $(AB)^\top=B^\top A^\top$,
+   $$
+   q_i^\top W^{UK}c_j^{KV}
+   =(W^{UK\top}q_i)^\top c_j^{KV}.
+   $$
+3. Define the absorbed query
+   $$
+   \widetilde q_i=W^{UK\top}q_i\in\mathbb{R}^{d_c}.
+   $$
+   Then all scores can be computed as $C\widetilde q_i\in\mathbb{R}^{n}$ without reconstructing and caching every $k_j^C$.
+4. Let $W^{UV}\in\mathbb{R}^{d_v\times d_c}$ and $W^O\in\mathbb{R}^{d_{\mathrm{out}}\times d_v}$. The explicit value path is
+   $$
+   y_i
+   =W^O\left(\sum_{j=1}^{n}\alpha_{ij}W^{UV}c_j^{KV}\right),
+   \qquad
+   \alpha_i\in\mathbb{R}^{n},\quad y_i\in\mathbb{R}^{d_{\mathrm{out}}}.
+   $$
+5. Distribute the finite sum and matrix product:
+   $$
+   y_i
+   =W^OW^{UV}\left(\sum_{j=1}^{n}\alpha_{ij}c_j^{KV}\right).
+   $$
+   Define
+   $$
+   B=W^OW^{UV}\in\mathbb{R}^{d_{\mathrm{out}}\times d_c}.
+   $$
+   Then
+   $$
+   y_i=B\left(\alpha_i^\top C\right)\in\mathbb{R}^{d_{\mathrm{out}}},
+   \qquad
+   \alpha_i^\top C\in\mathbb{R}^{d_c}.
+   $$
+6. For head $h$, use $W_h^{UV}\in\mathbb{R}^{d_{v,h}\times d_c}$ and $W_h^O\in\mathbb{R}^{d_{\mathrm{out}}\times d_{v,h}}$. The correct per-head absorption is
+   $$
+   B_h=W_h^OW_h^{UV}\in\mathbb{R}^{d_{\mathrm{out}}\times d_c},
+   $$
+   $$
+   y_i=\sum_hB_h\left(\sum_j\alpha_{ij,h}c_j^{KV}\right)
+   \in\mathbb{R}^{d_{\mathrm{out}}}.
+   $$
+   A single global $W^OW^{UV}$ is invalid when each head has its own $\alpha_{ij,h}$.
+7. The check computes the explicit keys and values, then computes the absorbed query and per-head value product. With random float64 tensors, the maximum output difference is $2.220446049250313\times10^{-15}$ and the maximum attention-weight difference is $2.220446049250313\times10^{-16}$.
+
+**Check.** checks/M4/D-M4.3-02.py compares absorbed and unabsorbed MLA outputs and attention weights without RoPE; it prints passed: True.
+
+**Intuition.** The content latent is the cached object. Absorption moves fixed linear maps to the side of the computation where the current query or output is available, so the cache need not store expanded keys and values.
+
+### D-M4.3-03 · Why standard RoPE breaks one global absorption
+
+**Theorem, scoped to standard RoPE.** With position-dependent rotations, the effective absorbed query depends on both query position $i$ and key position $j$. Therefore one vector per query cannot be precomputed and dotted against every cached $c_j^{KV}$.
+
+**Steps.**
+
+1. Let $R_t\in\mathbb{R}^{d_k\times d_k}$ be the block-diagonal RoPE rotation at position $t$. Standard RoPE produces
+   $$
+   q_i^{R}=R_iq_i\in\mathbb{R}^{d_k},
+   \qquad
+   k_j^{R}=R_jW^{UK}c_j^{KV}\in\mathbb{R}^{d_k}.
+   $$
+2. The rotated score is
+   $$
+   (q_i^{R})^\top k_j^{R}
+   =q_i^\top R_i^\top R_jW^{UK}c_j^{KV}.
+   $$
+   For the standard relative rotation convention, $R_i^\top R_j=R_{j-i}$, so
+   $$
+   (q_i^{R})^\top k_j^{R}
+   =q_i^\top R_{j-i}W^{UK}c_j^{KV}.
+   $$
+3. Transpose the scalar product to expose the latent-side vector:
+   $$
+   q_i^\top R_{j-i}W^{UK}c_j^{KV}
+   =\left(W^{UK\top}R_{j-i}^\top q_i\right)^\top c_j^{KV}.
+   $$
+   The effective query is
+   $$
+   q'_{i,j}=W^{UK\top}R_{j-i}^\top q_i\in\mathbb{R}^{d_c}.
+   $$
+   It depends on both $i$ and $j$. This pair-index dependence, not a vague commutation slogan, is the actual obstruction.
+4. A global absorption attempt that uses only $i$ omits the $R_{j-i}^\top$ factor. The numerical check compares that attempt with explicit rotated keys and obtains a nonzero output gap of $7.142153873371237$.
+5. The commutant characterization is a correctly scoped aside. For one 2D rotation $R(\theta)$, the real matrices commuting with it have the form
+   $$
+   aI+bJ,\qquad
+   I,J\in\mathbb{R}^{2\times2},
+   \quad
+   J=\begin{bmatrix}0&-1\\1&0\end{bmatrix}.
+   $$
+   This is a scaled-rotation family. A reflection in $O(2)$ does not generally commute with rotations; it conjugates $R(\theta)$ to $R(-\theta)$. For a block-diagonal RoPE matrix with generically distinct frequencies, the commutant is a direct sum of one such scaled-rotation block per plane. A generic dense trained $W^{UK}$ has no reason to lie in this restrictive subset. This aside is not needed for the primary pair-index proof.
+6. The fix uses a separate, smaller rotary component:
+   $$
+   k_j^R=\operatorname{RoPE}(W^{KR}h_j)\in\mathbb{R}^{d_R},
+   $$
+   together with a matching rotary query. The content key remains RoPE-free and compressible. In DeepSeek-V2, the rotary query is computed from the compressed query latent rather than directly from $h_t$; that model-specific statement is sourced from its technical report.
+7. The cache must store the already-rotated $k_j^R$ at write time. It must not store unrotated $W^{KR}h_j$ and rotate it at every read step, because that would recompute every cached token's rotation for every decoding step.
+8. The check confirms pairwise absorbed and explicit RoPE outputs agree to $1.3322676295501878\times10^{-15}$, while the global attempt differs. It also confirms position zero is unchanged and that a nonzero-position key is rotated before caching.
+
+**Check.** checks/M4/D-M4.3-03.py compares absorbed and unabsorbed MLA with RoPE, demonstrates the failed global absorption, and checks the decoupled rotary cache write; it prints passed: True.
+
+**Claim, correctly scoped.** Decoupled RoPE restores a practical cache design by separating position from the compressible content path. The algebraic pairwise rewrite is exact, but because it depends on $j$, it is not the same as a single cache-friendly absorbed query.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M4.3-01 | MHA/GQA/MQA cache bytes $1073741824/268435456/33554432$; MHA-to-GQA factor 4 | pass |
+| D-M4.3-02 | absorbed output error $2.220446049250313\times10^{-15}$; attention error $2.220446049250313\times10^{-16}$ | pass |
+| D-M4.3-03 | pairwise output error $1.3322676295501878\times10^{-15}$; global-attempt output gap $7.142153873371237$ | pass |
+
+Run python checks/M4/D-M4.3-01.py, python checks/M4/D-M4.3-02.py, and python checks/M4/D-M4.3-03.py from course/. The V-M4-c pure compute test uses the same cache formulas.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M4-c" />
+
+**V-M4-c — KV-cache lineage.** The specification is viz/specs/V-M4-c.yaml and the pure compute module is viz/compute/kv_cache_lineage.ts. Change $L$, $n$, $h$, $h_{\mathrm{kv}}$, $d_h$, $d_c$, $d_R$, and dtype. The widget reports MHA, MQA, GQA, and MLA cache bytes plus reduction factors.
+
+The equation is D-M4.3-01 together with the MLA cache expression in D-M4.3-02/03. The visible insight says that sharing or compressing K/V states changes cache bytes linearly, while query-head work is a separate axis. The existing frontend can render the four series as number cards and a cache-versus-context line.
+
+## 6. Closing
+
+**Counterintuitive question.** Why does “absorbing” a projection not mean that RoPE can always be moved into the same projection?
+
+**Worked answer.** Without RoPE, D-M4.3-02 gives one absorbed query $\widetilde q_i=W^{UK\top}q_i$ for all cached positions. With RoPE, D-M4.3-03 gives
+
+$$
+q'_{i,j}=W^{UK\top}R_{j-i}^\top q_i.
+$$
+
+The rotation depends on the key position $j$. A vector computed once for query position $i$ cannot equal all the different $q'_{i,j}$ values unless a highly restrictive special structure holds. The practical fix is not to pretend that one global absorption still exists. It is to keep the content path compressible and cache a separate, already-rotated, smaller rotary key component.
+
+**Assignment A-M4.** Add MQA/GQA cache accounting, content-only MLA absorption, pairwise RoPE equivalence, and the decoupled rotary cache path to code/minilm/ or code/efficiency/. Export V-M4-c inputs and outputs for at least one MHA/GQA/MLA comparison. Record that the DeepSeek-V2 claims are sourced from its technical report.
+
+**Spine check.** Architecturally, all variants still produce a prefix-conditioned attention distribution. Efficient inference changes which K/V representation is cached and which linear maps are evaluated at read time; the probability factorization remains the same.

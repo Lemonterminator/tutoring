@@ -1,0 +1,360 @@
+## 1. Motivation
+
+Self-attention by itself has no preferred order for an unmasked set of token vectors. A decoder's causal mask already exposes a prefix boundary, but a useful model can also encode relative offsets directly in its score geometry. This lesson compares four choices: sinusoidal features added to the stream, rotary position embedding (RoPE) applied to queries and keys, ALiBi's additive distance bias, and NoPE with causal masking alone.
+
+The central discipline is to separate exact algebra from an empirical story. Sinusoidal shifts and the RoPE relative-position identity are exact. RoPE's often-repeated “long-term decay” story requires a corrected Abel bound and has no monotone-decay theorem for a finite raw score. ALiBi and NoPE change the score or support structure in different ways; neither should be described as merely another rotation.
+
+## 2. Forward definition
+
+Let $d$ be even and let $M=d/2$. For frequency index $i\in\{0,\ldots,M-1\}$, set
+
+$$
+\theta_i=\operatorname{base}^{-2i/d}.
+$$
+
+The Vaswani-style sinusoidal feature uses the pair
+
+$$
+\operatorname{PE}(p)_{2i}=\sin(p\theta_i),\qquad
+\operatorname{PE}(p)_{2i+1}=\cos(p\theta_i),
+\qquad
+\operatorname{PE}(p)\in\mathbb{R}^{d}.
+$$
+
+RoPE instead leaves the token representation alone until the attention projections have produced $q,k\in\mathbb{R}^{d}$. Define
+
+$$
+R(\phi)=
+\begin{bmatrix}
+\cos\phi&-\sin\phi\\
+\sin\phi&\cos\phi
+\end{bmatrix},
+\qquad
+R_m=\operatorname{blockdiag}\bigl(R(m\theta_0),\ldots,R(m\theta_{M-1})\bigr)
+\in\mathbb{R}^{d\times d}.
+$$
+
+At position $m$, use $R_mq$ and $R_mk$ in the QK score. Do not rotate $v$: the value path carries content, while the query/key path supplies the relative-position phase.
+
+ALiBi adds a head-specific Toeplitz bias to the scaled score:
+
+$$
+\widetilde S^{(h)}_{ij}
+=\frac{(q_i^{(h)})^\top k_j^{(h)}}{\sqrt{d_h}}
+-m_h|i-j|,
+\qquad m_h\ge 0,
+$$
+
+and then applies the causal mask. NoPE sets the explicit positional signal to zero but retains the causal support $j\le i$. The number of visible source positions is then $i+1$, which is already position-dependent.
+
+**Sources.** Sinusoidal features and the Transformer comparison follow Vaswani et al. (https://arxiv.org/abs/1706.03762). RoPE's construction is from Su et al. (https://arxiv.org/abs/2104.09864). ALiBi is from Press, Smith, and Lewis (https://arxiv.org/abs/2108.12409). The NoPE causal-mask observation is from Haviv et al. (https://arxiv.org/abs/2203.16634). The source-qualified correlated-query/key discussion in D-M3.2-03 refers to Men et al. (https://arxiv.org/abs/2405.14591).
+
+## 3. Derivations
+
+### D-M3.2-01 · Sinusoidal relative-position property
+
+**Theorem.** For every integer shift $k$, there is a position-independent block-diagonal matrix $M_k\in\mathbb{R}^{d\times d}$ such that
+
+$$
+\operatorname{PE}(p+k)=M_k\operatorname{PE}(p).
+$$
+
+**Setup.** For frequency pair $i$, let
+
+$$
+u_i(p)=
+\begin{bmatrix}
+\sin(p\theta_i)\\
+\cos(p\theta_i)
+\end{bmatrix}
+\in\mathbb{R}^{2},
+\qquad
+M_{k,i}=
+\begin{bmatrix}
+\cos(k\theta_i)&\sin(k\theta_i)\\
+-\sin(k\theta_i)&\cos(k\theta_i)
+\end{bmatrix}
+\in\mathbb{R}^{2\times2}.
+$$
+
+Define $M_k=\operatorname{blockdiag}(M_{k,0},\ldots,M_{k,M-1})$.
+
+**Steps.**
+
+1. Multiply the first coordinate:
+   $$
+   \bigl[M_{k,i}u_i(p)\bigr]_1
+   =\cos(k\theta_i)\sin(p\theta_i)+\sin(k\theta_i)\cos(p\theta_i).
+   $$
+   The sine addition identity turns this into $\sin((p+k)\theta_i)$.
+2. Multiply the second coordinate:
+   $$
+   \bigl[M_{k,i}u_i(p)\bigr]_2
+   =-\sin(k\theta_i)\sin(p\theta_i)+\cos(k\theta_i)\cos(p\theta_i).
+   $$
+   The cosine subtraction identity turns this into $\cos((p+k)\theta_i)$.
+3. Therefore $M_{k,i}u_i(p)=u_i(p+k)$ for every $i$. Stacking the $M$ independent pairs gives $M_k\operatorname{PE}(p)=\operatorname{PE}(p+k)$.
+4. The matrix depends on $k$ and the fixed frequency schedule, but not on $p$. It is therefore a relative-shift operator even though the feature vector is indexed by an absolute position.
+
+**Result.**
+
+$$
+\boxed{\operatorname{PE}(p+k)=M_k\operatorname{PE}(p)}
+$$
+
+The float64 check evaluates negative and positive positions and shifts and obtains maximum error $3.566591466608315\times10^{-15}$.
+
+**Check.** checks/M3/D-M3.2-01.py — deterministic float64 positions, shifts, and block matrices; it asserts maximum absolute error below $10^{-12}$ and prints passed = True.
+
+**Intuition.** Every frequency pair is a tiny clock hand. Advancing the position applies the same two-dimensional rotation to that pair, so a fixed offset can be recognized by a fixed linear map.
+
+### D-M3.2-02 · RoPE relative-position identity
+
+**Theorem.** For block-diagonal two-dimensional rotations,
+
+$$
+\left\langle R_mq,R_nk\right\rangle
+=q^\top R_{n-m}k.
+$$
+
+**Setup.** The matrices in Section 2 satisfy $R(\phi)^\top=R(-\phi)$ and $R(a)R(b)=R(a+b)$. Their block-diagonal stacking has the same identities. In complex notation, a pair $(x_{2i},x_{2i+1})$ is represented by $x_i=x_{2i}+\mathrm{i}x_{2i+1}$, and the rotation is multiplication by $e^{\mathrm{i}m\theta_i}$.
+
+**Steps.**
+
+1. Expand the inner product as a matrix product:
+   $$
+   \left\langle R_mq,R_nk\right\rangle
+   =(R_mq)^\top(R_nk)
+   =q^\top R_m^\top R_nk.
+   $$
+2. Transpose each two-dimensional block:
+   $$
+   R(m\theta_i)^\top=R(-m\theta_i).
+   $$
+   Since rotations add their angles,
+   $$
+   R(-m\theta_i)R(n\theta_i)=R((n-m)\theta_i).
+   $$
+3. The blockwise equality gives
+   $$
+   R_m^\top R_n
+   =\operatorname{blockdiag}\bigl(R((n-m)\theta_0),\ldots,R((n-m)\theta_{M-1})\bigr)
+   =R_{n-m}.
+   $$
+4. Substitute this into step 1:
+   $$
+   \left\langle R_mq,R_nk\right\rangle
+   =q^\top R_{n-m}k.
+   $$
+5. The complex form says the same thing pair by pair:
+   $$
+   q_{m,i}=q_i e^{\mathrm{i}m\theta_i},\qquad
+   k_{n,i}=k_i e^{\mathrm{i}n\theta_i},
+   $$
+   so the real dot-product contribution is
+   $$
+   \operatorname{Re}\left(\overline{q_i e^{\mathrm{i}m\theta_i}}\,
+   k_i e^{\mathrm{i}n\theta_i}\right)
+   =\operatorname{Re}\left(\overline{q_i}k_i e^{\mathrm{i}(n-m)\theta_i}\right).
+   $$
+6. The identity acts on $q$ and $k$ only. Rotating $v$ would change the value vector delivered after the attention weights are formed; it is not part of this QK identity.
+
+**Result.**
+
+$$
+\boxed{R_m^\top R_n=R_{n-m}
+\quad\Longrightarrow\quad
+\left\langle R_mq,R_nk\right\rangle=q^\top R_{n-m}k}
+$$
+
+The random float64 check reports maximum identity error $1.2434497875801753\times10^{-14}$ and maximum matrix-composition error $3.469446951953614\times10^{-15}$. The value path is left unchanged.
+
+**Check.** checks/M3/D-M3.2-02.py — random $q,k,m,n$; it asserts $|\mathrm{lhs}-\mathrm{rhs}|<10^{-10}$ and prints passed = True.
+
+**Intuition.** Absolute rotations cancel in the dot product until only the relative angle remains. This is why RoPE places position in QK geometry without adding a position vector to the residual stream.
+
+### D-M3.2-03 · The corrected RoPE Abel bound and the false decay theorem
+
+**Theorem, exact inequality.** Let $M=d/2$, let
+
+$$
+a(\Delta)=\operatorname{Re}\sum_{i=0}^{M-1}h_i e^{\mathrm{i}\Delta\theta_i},
+\qquad
+h_i=\overline{z_i}w_i,
+\qquad
+\theta_i=\operatorname{base}^{-2i/d},
+$$
+
+where $z_i=q_{2i}+\mathrm{i}q_{2i+1}$ and $w_i=k_{2i}+\mathrm{i}k_{2i+1}$ are the per-block complex forms of $q$ and $k$. Define
+
+$$
+S_j(\Delta)=\sum_{r=0}^{j-1}e^{\mathrm{i}\Delta\theta_r},
+\qquad
+A_M(\Delta)=\frac{1}{M}\sum_{j=1}^{M}|S_j(\Delta)|.
+$$
+
+Set $h_M=0$. Then summation by parts gives the deterministic bound
+
+$$
+\boxed{
+|a(\Delta)|
+\le
+M\left(\max_{0\le i<M}|h_i-h_{i+1}|\right)A_M(\Delta)
+}.
+$$
+
+This is the theorem. It is not a theorem that the raw score decays monotonically.
+
+**Steps.**
+
+1. Abbreviate $u_i=e^{\mathrm{i}\Delta\theta_i}$. The partial sums obey
+   $$
+   S_{i+1}-S_i=u_i,\qquad S_0=0.
+   $$
+   Therefore the complex sum before taking its real part is
+   $$
+   Z(\Delta)=\sum_{i=0}^{M-1}h_i u_i
+   =\sum_{i=0}^{M-1}h_i(S_{i+1}-S_i).
+   $$
+2. Distribute the two sums:
+   $$
+   Z(\Delta)=
+   \sum_{i=0}^{M-1}h_iS_{i+1}
+   -\sum_{i=0}^{M-1}h_iS_i.
+   $$
+   The first sum has terms $h_{j-1}S_j$ for $j=1,\ldots,M$; the second has terms $h_jS_j$ for $j=0,\ldots,M-1$. Since $S_0=0$, the $j=0$ term is zero.
+3. Collect equal partial sums:
+   $$
+   Z(\Delta)
+   =\sum_{j=1}^{M-1}(h_{j-1}-h_j)S_j+h_{M-1}S_M.
+   $$
+   With $h_M=0$, the last term has the same form as the others:
+   $$
+   Z(\Delta)=\sum_{j=1}^{M}(h_{j-1}-h_j)S_j.
+   $$
+4. Take absolute values and use the triangle inequality:
+   $$
+   |Z(\Delta)|
+   \le
+   \sum_{j=1}^{M}|h_{j-1}-h_j|\,|S_j|
+   \le
+   \left(\max_{0\le i<M}|h_i-h_{i+1}|\right)\sum_{j=1}^{M}|S_j|.
+   $$
+5. By definition $\sum_{j=1}^{M}|S_j|=M A_M(\Delta)$. Also $|a(\Delta)|=|\operatorname{Re}Z(\Delta)|\le|Z(\Delta)|$. Combining these two inequalities proves the boxed bound.
+6. For the standard log-spaced schedule, the paper's phrase “long-term decay” is a separate qualitative observation: substantial cancellation often makes $A_M(\Delta)$ broadly trend downward over practical ranges. The bound does not prove that trend, and it does not make the raw score monotone.
+7. A one-frequency counterexample disproves a monotone-decay theorem. Let $q=k$ be supported only on the block with $\theta_0=1$ and choose its coefficient so $h_0=1$. Then
+   $$
+   a(\Delta)=\cos(\Delta),
+   $$
+   and
+   $$
+   |a(3)|\approx0.9899924966>0.4161468365\approx|a(2)|.
+   $$
+   The raw score is oscillatory, not decaying.
+8. The envelope $A_M$ is not generally monotone either. For $d=4$ and $\operatorname{base}=10000$, $\theta=(1,0.01)$ and
+   $$
+   A_2(\Delta)
+   =\frac12\left(1+\left|e^{\mathrm{i}\Delta}+e^{\mathrm{i}0.01\Delta}\right|\right).
+   $$
+   The check obtains
+   $$
+   A_2(3)=0.5856911075961685,\qquad
+   A_2(4)=0.8978788737899159,
+   $$
+   so $A_2(4)>A_2(3)$.
+9. For fixed finite $d$, $Z(\Delta)$ is a finite trigonometric sum. When the frequencies are commensurate it is exactly periodic; otherwise Diophantine approximation allows phases to re-approach alignment at large distances. Thus there is no general asymptotic-to-zero theorem for the raw finite sum.
+10. Randomness does not rescue a raw-score decay claim. For isotropic, independent, zero-mean $q,k$ with per-coordinate variances $\sigma_q^2,\sigma_k^2$,
+    $$
+    \mathbb{E}\left[(q^\top R_\Delta k)^2\right]
+    =\sigma_k^2\mathbb{E}\left[q^\top R_\Delta R_\Delta^\top q\right]
+    =\sigma_k^2\mathbb{E}\left[\|q\|^2\right]
+    =d\sigma_q^2\sigma_k^2,
+    $$
+    independent of $\Delta$. The float64 Monte Carlo check estimates the unit-variance value at $\Delta\in\{0,17,101\}$ with relative error $0.006671071757480718$.
+11. A genuinely distance-dependent, distribution-dependent quantity appears when $k$ is correlated with $q$, for example $k^\star=q+\varepsilon$. Under the independent, zero-mean noise model, the signal term contains
+    $$
+    \mathbb{E}[q^\top R_\Delta q]
+    \propto\sum_i\cos(\Delta\theta_i),
+    $$
+    which is itself oscillatory and can be negative for some distances and small bases. This is the source-qualified expected-advantage discussion in Men et al. (https://arxiv.org/abs/2405.14591), not a replacement for the exact Abel inequality.
+
+**Claim, correctly scoped.** “RoPE scores decay monotonically with distance” is false. The defensible statement is: the standard log-spaced schedule produces a broadly decreasing cancellation envelope in the Abel bound over practically relevant ranges; this is qualitative, not proven.
+
+**Check.** checks/M3/D-M3.2-03.py verifies the summation-by-parts identity, the deterministic bound, the $\cos(\Delta)$ counterexample, the $A_2(4)>A_2(3)$ counterexample, and the isotropic RMS calculation; it prints passed = True.
+
+**Intuition.** RoPE supplies a bank of rotating clocks, so different frequency blocks can cancel over many offsets. Cancellation can be broad without being monotone, and a finite collection of clocks can later line up again.
+
+### D-M3.2-04 · ALiBi and NoPE
+
+**Claim.** ALiBi adds a fixed distance-dependent bias per head,
+
+$$
+B^{(h)}_{ij}=-m_h|i-j|,
+$$
+
+which is Toeplitz before the causal mask because $B^{(h)}_{i+1,j+1}=B^{(h)}_{ij}$. NoPE does not restore full permutation symmetry in a causal decoder: the mask itself has position-dependent support.
+
+**Steps.**
+
+1. For ALiBi, start with the unmodified score $S_{ij}^{(h)}$. Adding the bias gives
+   $$
+   \widehat S_{ij}^{(h)}
+   =S_{ij}^{(h)}-m_h|i-j|.
+   $$
+   The bias depends only on the relative index difference, so translating both indices by one leaves it unchanged whenever both entries remain in range.
+2. The causal softmax then uses
+   $$
+   \widetilde S_{ij}^{(h)}
+   =
+   \begin{cases}
+   \widehat S_{ij}^{(h)},&j\le i,\\
+   -\infty,&j>i.
+   \end{cases}
+   $$
+   The numerical check verifies the Toeplitz equality on every adjacent diagonal and verifies that all future entries are $-\infty$.
+3. For NoPE, define the causal support set of row $i$:
+   $$
+   \mathcal{V}_i=\{0,1,\ldots,i\}.
+   $$
+   Its cardinality is
+   $$
+   |\mathcal{V}_i|=i+1.
+   $$
+   These counts are distinct for $i=0,\ldots,n-1$. A permutation that exchanges two positions with different counts cannot preserve the mask, so causal attention is not permutation-equivariant in the same way as unmasked attention without positional features.
+4. The counting argument says that a decoder can infer a position-related signal from the number of available prefix slots and from the boundary between visible and future slots, even when no explicit position vector is added. Haviv et al. test this NoPE mechanism empirically (https://arxiv.org/abs/2203.16634).
+5. This is an architectural possibility, not a claim that every NoPE model must learn a useful positional representation or match RoPE/ALiBi quality. The check verifies the combinatorial support signal, not downstream language-model performance.
+
+**Check.** checks/M3/D-M3.2-04.py verifies the Toeplitz bias, causal invalid entries, and distinct support counts $[1,2,\ldots,7]$; it prints passed = True.
+
+**Analogy, labeled.** ALiBi can be pictured as a distance-dependent tax on attention edges. The exact statement is the additive Toeplitz formula; the “tax” wording is only an analogy.
+
+## 4. Numerical verification
+
+All four checks use deterministic float64 computations. The outputs below are recorded from the current repository:
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M3.2-01 | sinusoidal shift maximum error $3.566591466608315\times10^{-15}$ | pass |
+| D-M3.2-02 | RoPE identity error $1.2434497875801753\times10^{-14}$; value path unchanged | pass |
+| D-M3.2-03 | Abel identity error $2.1868857395626282\times10^{-15}$; $A_2(3)=0.5856911075961685$, $A_2(4)=0.8978788737899159$; isotropic RMS relative error $0.006671071757480718$ | pass |
+| D-M3.2-04 | Toeplitz error $0$; causal support counts $[1,2,3,4,5,6,7]$ | pass |
+
+The shared harness is not needed for the closed-form positional identities because the checks compare exact vector/matrix constructions and deterministic counterexamples directly. Run python -m pytest course/tests from the repository parent; the lesson test also runs the TypeScript widget test.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M3-c" />
+
+**V-M3-c — RoPE rotation and dot-product decay.** The specification is viz/specs/V-M3-c.yaml and the pure compute module is viz/compute/rope.ts. The reader controls $d$, the base, relative distance, a single-frequency-block toggle, and a diagnostic value-rotation toggle. The widget shows rotating 2D planes, the relative-position identity error, the synthetic raw-score curve, and the Abel envelope.
+
+The default curve is deliberately not drawn as a clean monotone decay. The single-frequency toggle exposes $a(\Delta)=\cos(\Delta)$, and the $d=4$, base $=10000$ setting exposes the non-monotone envelope counterexample. The value toggle reports how far a value vector moves if a reader applies a rotation that the QK identity never requested.
+
+The module has no DOM access and returns plain arrays and records. The existing frontend can render rotation planes as SVG and the curves as Canvas2D without changing the reader.
+
+## 6. Closing
+
+**Counterintuitive question.** Remove positional encoding entirely from a causal decoder; why can it still learn order-dependent language? **Worked answer:** D-M3.2-04 counts the visible prefix slots. Row $i$ can attend to $i+1$ source positions, while a later row can attend to more; the causal mask therefore breaks the permutation symmetry that an unmasked set-attention layer would have. This supplies a position-related signal even with NoPE, although it does not prove that every model will use the signal effectively.
+
+**Assignment A-M3.** Extend code/minilm/ with the config-driven nanoGPT baseline, preserve the hand-written attention gradients, and expose positional choices for later experiments. Export the V-M3-a attention data and compare sinusoidal, RoPE, ALiBi, and NoPE on the same small corpus; record loss, attention behavior, and the relevant numerical checks.
+
+**Spine check.** Architecturally, positional mechanisms specify how a Transformer distinguishes offsets: fixed shifts, QK rotations, score biases, or causal support. Probabilistically, all four still produce row-wise conditional reads over the permitted prefix, so they modify the parameterization of the autoregressive conditional without changing its causal factorization.

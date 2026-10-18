@@ -1,0 +1,288 @@
+import { BSMaterials, bsMaterialHref } from "../../../framework/quant/BSPaperCourse";
+import bsFigure0 from "../../../content/bs-math/assets/greeks_term_structure.png";
+
+<div class="bs-paper-content">
+
+Goal: Reuse the same density identity to derive other first-order Greeks, then connect them to numerical differentiation and the BS PDE. Duration approximately 90 minutes. Prerequisites: 02; numerical part prerequisites 03-05.
+
+## 1. First, create a partial derivative table
+
+Let $m=\log(S/K)+(r-q)T$, $\tau=\sigma\sqrt T$, $d_1=m/\tau+\tau/2$. For a general variable $x$, the quotient rule gives
+
+$$
+(d_1)_x=\frac{m_x}{\tau}+\left(\frac12-\frac{m}{\tau^2}\right)\tau_x,\quad(d_2)_x=(d_1)_x-\tau_x.
+$$
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Variable x
+
+</th>
+<th>
+
+Derivative of m
+
+</th>
+<th>
+
+Derivative of tau
+
+</th>
+<th>
+
+Derivative of d1
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+S
+
+</td>
+<td>
+
+$1/S$
+
+</td>
+<td>
+
+$0$
+
+</td>
+<td>
+
+$1/(S\tau)$
+
+</td>
+</tr>
+<tr>
+<td>
+
+sigma
+
+</td>
+<td>
+
+$0$
+
+</td>
+<td>
+
+$\sqrt T$
+
+</td>
+<td>
+
+$-d_2/\sigma$
+
+</td>
+</tr>
+<tr>
+<td>
+
+r
+
+</td>
+<td>
+
+$T$
+
+</td>
+<td>
+
+$0$
+
+</td>
+<td>
+
+$\sqrt T/\sigma$
+
+</td>
+</tr>
+<tr>
+<td>
+
+q
+
+</td>
+<td>
+
+$-T$
+
+</td>
+<td>
+
+$0$
+
+</td>
+<td>
+
+$-\sqrt T/\sigma$
+
+</td>
+</tr>
+<tr>
+<td>
+
+T
+
+</td>
+<td>
+
+$r-q$
+
+</td>
+<td>
+
+$\tau/(2T)$
+
+</td>
+<td>
+
+$(r-q)/\tau-d_2/(2T)$
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+All parameters are independent; when computing Rho, fix $q$, do not let $q=r$ vary simultaneously. If the system input is forward $F$ rather than spot $S$, the so-called “Rho” must also specify which one is held fixed.
+
+**Paper pause A:** derive $d_{1,\sigma}$ and $d_{1,T}$ yourself, do not memorize the table directly.
+
+<details class="bs-paper-answer">
+<summary>Pause A answer</summary>
+
+
+$d_{1,\sigma}=\sqrt T(1/2-m/\tau^2)=\sqrt T-d_1/\sigma=-d_2/\sigma$. The derivative with respect to maturity is $(r-q)/\tau+\tau/(4T)-m/(2T\tau)=(r-q)/\tau-d_2/(2T)$.
+
+
+</details>
+
+## 2. Vega: The CDF derivative term does not fully cancel this time
+
+When differentiating with respect to $\sigma$, $A,B$ remains constant. By the density identity, set $H=A\phi(d_1)=B\phi(d_2)$:
+
+$$
+\nu=C_\sigma=H((d_1)_\sigma-(d_2)_\sigma)=H\tau_\sigma=A\phi(d_1)\sqrt T.
+$$
+
+Since $S,\sigma,T>0$ and $\phi>0$, Vega is positive. The same density factor can be eliminated from the Gamma formula:
+
+$$
+\nu=\sigma T S^2\Gamma.
+$$
+
+This connects "differentiation with respect to diffusion intensity" and "second-order differentiation with respect to the state variable." It applies to constant-parameter European BS Call/Put options here, and is not a universal identity for arbitrary pricing models.
+
+**Paper pause B:** What is the Vega for scenario 1? What is the linear price change when volatility moves from 0.20 to 0.21?
+
+<details class="bs-paper-answer">
+<summary> paper pause B answer</summary>
+
+
+$\nu\approx39.69525475$, one percentage point is $\delta\sigma=0.01$, and the price changes linearly by approximately 0.39695255. If mistakenly multiplied by 1, the change is exaggerated by a factor of 100. The Vega for scenario 2 is approximately 2.08815926; a large Gamma does not imply a large Vega, as they differ by $\sigma T S^2$.
+
+
+</details>
+
+## 3. Rho and dividend sensitivity
+
+Differentiating with respect to $r$, $A_r=0$, $B_r=-TB$, and $d_{1,r}=d_{2,r}$. The CDF derivative terms cancel, leaving
+
+$$
+\rho_C=C_r=TB\Phi(d_2).
+$$
+
+Differentiating with respect to $q$, $A_q=-TA$, $B_q=0$, similarly
+
+$$
+\psi_C=C_q=-TA\Phi(d_1)=-TS\Delta_C.
+$$
+
+These derivatives depend on the convention that "other variables are held fixed." In reality, term structures, dividends, and forwards may change simultaneously; true portfolio shocks require chaining the propagation of input changes.
+
+## 4. Theta: First determine the remaining time to maturity, then change the sign
+
+$A_T=-qA$, $B_T=-rB$, $d_{1,T}-d_{2,T}=\tau/(2T)$. Therefore
+
+$$
+C_T=-qA\Phi(d_1)+rB\Phi(d_2)+H\frac{\tau}{2T}.
+$$
+
+As calendar time moves forward, the remaining time to maturity decreases, so $\Theta=-C_T$:
+
+$$
+\Theta_C=-\frac{A\phi(d_1)\sigma}{2\sqrt T}-rB\Phi(d_2)+qA\Phi(d_1).
+$$
+
+The first term is the diffusion/curvature contribution, the second term relates to cash discounting, and the third term relates to dividends. Theta is not negative for all parameter values; for example, the dividend term may change the sign, so one should not treat "usual time decay" as a sign theorem.
+
+Substitute it and Delta/Gamma back into the PDE; it should satisfy
+
+$$
+\Theta+\frac12\sigma^2S^2\Gamma+(r-q)S\Delta-rV=0.
+$$
+
+**Paper pause C:** In scenario 1, $r=q=0$, use the PDE rather than the Theta closed-form expression to find Theta.
+
+<details class="bs-paper-answer">
+<summary> paper pause C answer</summary>
+
+
+$\Theta=-\sigma^2S^2\Gamma/2\approx-3.969525475$ (per year). The daily linear approximation is $\Theta/365\approx-0.01087541$, which is not obtained by directly changing the original formula to daily maturity; the price difference for a finite day also includes higher-order time effects.
+
+
+</details>
+
+## 5. How do numerical methods uniformly handle these Greeks?
+
+Treat the price as a function of six inputs $V(S,K,r,q,\sigma,T)$. For a selected input $x$, define the central difference and CS:
+
+$$
+V_x\approx\frac{V(x+h_x)-V(x-h_x)}{2h_x},\quad V_x\approx\frac{\operatorname{Im}V(x+ih_x)}{h_x}.
+$$
+
+Vega bump $\sigma$; Rho bump $r$; dividend sensitivity bump $q$; Theta is the negative of the derivative obtained from bump $T$. Each input has different dimensions, so a single absolute step size cannot be used uniformly.
+
+For the central difference of $\sigma,T$, it is necessary to ensure $x-h_x>0$. One-sided formulas may be used near boundaries, but the order of accuracy must be re-analyzed. CS can mathematically avoid crossing the real axis, yet it still relies on internal complex sqrt/log and dispatching; simply forcing complex numbers into double parameters does not guarantee it will work.
+
+For ordinary first-order partial derivatives, both central differences and complex-step using the full analytic price have truncation error $O(h_x^2)$. After the finite truncation CDF passes through the composite chain of new parameters, verification should be performed direction by direction; having verified Spot Delta does not imply that Vega/Theta are automatically verified.
+
+## 6. Establishing three types of consistency checks
+
+Comparing analytic formulas with numerical partial derivatives is the first type. The PDE residual $R_{PDE}$ is the second type. The Vega-Gamma relationship residual is the third type:
+
+$$
+R_\nu=\nu-\sigma TS^2\Gamma.
+$$
+
+These residuals can locate unit, sign, and formula errors, but shared code errors may simultaneously reduce multiple residuals. At least combine independent high-precision price differentiation and non-zero $r,q$ scenarios; zero interest rate and zero dividend will hide many errors.
+
+<Figure id="bs-06-figure-0">
+
+<img class="bs-paper-image" src={bsFigure0} alt="Greeks vary with maturity" />
+
+<figcaption>Greeks vary with maturity</figcaption>
+
+</Figure>
+
+The figure assumes zero carry, ATM, $\sigma=0.2$, and shows how Gamma, Vega, and annual Theta change with maturity. Do not compare the magnitude of vertical axis values to judge which risk is "larger," because the units are different.
+
+## 7. Formula status and next steps
+
+The Vega, Theta, Rho, and dividend sensitivity derived in this article are for educational reference scripts; the current production batch interface only returns Call price/Delta/Gamma. When extending production, first clarify units, boundaries, and output fields, then expose the interface layer by layer.
+
+The software unit conversion for annual Theta can be cross-referenced with the [MathWorks documentation](https://www.mathworks.com/help/finance/blstheta.html). This article consistently follows the $-V_T$ definition; systems that output 'per percentage point' must explicitly apply 0.01 scaling. The next article uses put-call parity to extend the entire derivation to the Put.
+
+</div>
+
+<BSMaterials lang="en" lesson={6} />

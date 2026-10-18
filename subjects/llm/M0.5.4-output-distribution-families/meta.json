@@ -1,0 +1,39 @@
+{
+  "subject": "llm",
+  "id": "M0.5.4",
+  "module": "M0.5",
+  "title": {
+    "en": "Output distribution families: Bernoulli, Gaussian, and mixtures",
+    "zh": "输出分布族：伯努利、高斯及其混合"
+  },
+  "prereqs": [
+    "M0.5.3"
+  ],
+  "estimatedHours": 6,
+  "spine": {
+    "en": {
+      "a": "Show that the output head, not only the hidden architecture, determines what uncertainty the model can represent.",
+      "b": "Connect familiar losses to likelihoods and derive the mixture responsibilities used by both EM and gradient descent."
+    },
+    "zh": {
+      "a": "证明输出层而不仅仅是隐藏架构决定了模型能够表示的不确定性类型。",
+      "b": "将熟悉的损失函数与似然函数联系起来，并推导出 EM 和梯度下降所使用的混合责任。"
+    }
+  },
+  "derivations": [
+    "D-M0.5.4-01",
+    "D-M0.5.4-02",
+    "D-M0.5.4-03",
+    "D-M0.5.4-04",
+    "D-M0.5.4-05"
+  ],
+  "visualizations": [
+    "V-M0.5-c"
+  ],
+  "assignment": "A-M0.5",
+  "references": [
+    "pixelcnnpp",
+    "nade2011",
+    "rnade2013"
+  ]
+}

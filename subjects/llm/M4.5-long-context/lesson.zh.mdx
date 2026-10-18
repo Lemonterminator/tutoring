@@ -1,0 +1,315 @@
+## 1. 动机
+
+M3.2 表明，RoPE 以特定频率旋转每对坐标。在超出训练长度的位置时，相位范围和注意力分布会偏离训练期间所见的范围。仅增加 KV cache 的长度无法解决此缺陷。
+
+M4.5 区分了五种修复方法。波长分析告诉我们哪些平面属于高频或低频。位置插值和 NTK-aware scaling 改变了相位调度。YaRN 在它们之间进行平滑过渡并调整注意力温度。滑动窗口和 sink 机制改变了哪些位置接收注意力权重。稀疏索引器则在精确注意力计算前选择更小的键集合。
+
+## 2。前向定义
+
+对于偶数旋转维度 $d_R\in\mathbb{N}$ 和基数 $\theta_{\mathrm{base}}>1$，RoPE 平面 $i$ 的角频率为
+
+$$
+\theta_i=\theta_{\mathrm{base}}^{-2i/d_R}>0,
+\qquad
+\theta_i\in\mathbb{R},
+\qquad
+i=0,\ldots,d_R/2-1.
+$$
+
+其波长为
+
+$$
+\lambda_i=\frac{2\pi}{\theta_i}\in\mathbb{R}_{>0}.
+$$
+
+带有扩展比例 $s>0$ 的位置插值将位置 $p\in\mathbb{R}$ 映射为
+
+$$
+p'=\frac{p}{s}\in\mathbb{R}.
+$$
+
+对于 YaRN，设 $L_{\mathrm{train}}\in\mathbb{R}_{>0}$ 为原始预训练上下文长度，$L_{\mathrm{target}}\in\mathbb{R}_{>0}$ 为目标长度。扩展比例为
+
+$$
+s=\frac{L_{\mathrm{target}}}{L_{\mathrm{train}}}>0,
+\qquad
+r_i=\frac{L_{\mathrm{train}}}{\lambda_i}.
+$$
+
+给定阈值 $\alpha=1,\beta=32$，定义
+
+$$
+\gamma(r_i)=
+\operatorname{clip}\left(\frac{r_i-\alpha}{\beta-\alpha},0,1\right)\in[0,1],
+$$
+
+$$
+\theta'_i=(1-\gamma(r_i))\frac{\theta_i}{s}
++\gamma(r_i)\theta_i\in\mathbb{R}.
+$$
+
+YaRN 温度曲线是一个经验拟合：
+
+$$
+a=0.1\ln s+1,
+\qquad
+t=\frac{1}{a^2}.
+$$
+
+因子 $a$ 应用于每个查询和键向量。因此，logit $q^\top k$ 乘以 $a^2=1/t$。
+
+**参考文献。** RoPE 出自 Su 等人，[RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864)。YaRN 出自 Peng 等人，[YaRN: Efficient Context Window Extension of Large Language Models](https://arxiv.org/abs/2309.00071)。Attention sinks 出自 Xiao 等人，[Efficient Streaming Language Models with Attention Sinks](https://arxiv.org/abs/2309.17453)。DSA 模型特定描述出自 DeepSeek-AI，[DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models](https://arxiv.org/abs/2512.02556)。
+
+## 3。推导过程
+
+### D-M4.5-01 · 波长、位置插值与 NTK 感知缩放
+
+**定理，限定于 RoPE 公式。** 平面 $i$ 的波长为 $2\pi/\theta_i$。位置插值将位置除以 $s$，而常见的 NTK 感知惯例会改变基数；仅凭其中任一操作本身都无法证明任务级的外推能力。
+
+**步骤。**
+
+1. RoPE 平面将二维向量旋转角度 $p\theta_i$。一个完整周期的角度为 $2\pi$。设 $p\theta_i=2\pi$ 并求解 $p$：
+   $$
+   \lambda_i\theta_i=2\pi,
+   \qquad
+   \lambda_i=\frac{2\pi}{\theta_i}.
+   $$
+   波长是 $\mathbb{R}_{>0}$ 中的标量。
+2. 对于 $\theta_i=\theta_{\mathrm{base}}^{-2i/d_R}$，代入得：
+   $$
+   \lambda_i
+   =2\pi\theta_{\mathrm{base}}^{2i/d_R}.
+   $$
+   在此惯例下，较高的平面索引对应更长的波长。
+3. 位置插值将 $p$ 映射为 $p'=p/s$。新的相位为
+   $$
+   p'\theta_i=\frac{p\theta_i}{s}.
+   $$
+   因此，所有相位均以相同因子减慢，使目标位置范围更接近原始相位范围。这是一种代数相位变换，并非证明模型保留了所有长程行为。
+4. 常见的 NTK 感知基数变更惯例为
+   $$
+   \theta_{\mathrm{base}}'
+   =\theta_{\mathrm{base}}s^{d_R/(d_R-2)},
+   \qquad
+   \theta_{\mathrm{base}}>1,\ s>0,\ d_R>2.
+   $$
+   指数和实现变体是一种启发式/工程惯例。该检查仅验证此惯例是否增加了 $s>1$ 的基数。
+5. 该检查评估 $\lambda_i$，在 $[0,4,8]$ 下的位置 $s=4$，以及 $d_R=8$ 处的基数变更。它获得了夹具中四个平面的波长 $[6.283185307179586,62.83185307179586,628.3185307179587,6283.185307179586]$。
+
+**检查。** checks/M4/D-M4.5-01.py 验证了波长恒等式、位置插值以及所述的 NTK 感知惯例；输出 passed: True。
+
+**近似，已标注。** NTK 感知缩放是一族启发式方法，而非位置泛化的定理。其确切的指数和基数调度必须归因于所选的实现。
+
+### D-M4.5-02 · YaRN 频带与注意力温度
+
+**主张，已注明来源且限定范围。** YaRN 在 $r_i=L_{\mathrm{train}}/\lambda_i$ 中使用原始预训练长度。低频维度接收完整的位置插值，高频维度保持不变，中间维度使用平滑斜坡。物理解释是论文中的解读，而非已证明的定理。
+
+**步骤。**
+
+1. 从 D-M4.5-01 的波长开始并定义
+   $$
+   r_i=\frac{L_{\mathrm{train}}}{\lambda_i}.
+   $$
+   $r_i$ 计算在原始训练上下文（直至 $2\pi$ 惯例）中容纳了多少个波长。关键在于，分子是 $L_{\mathrm{train}}$，而非 $L_{\mathrm{target}}$。
+2. 定义斜坡：
+   $$
+   \gamma(r_i)=
+   \begin{cases}
+   0,&r_i<\alpha,\\
+   (r_i-\alpha)/(\beta-\alpha),&\alpha\le r_i\le\beta,\\
+   1,&r_i>\beta.
+   \end{cases}
+   $$
+   对于 LLaMA 调优值 $\alpha=1,\beta=32$，第 2 节中的紧凑裁剪表达式给出了相同的三种情况。
+3. 插值频率：
+   $$
+   \theta'_i
+   =(1-\gamma(r_i))\frac{\theta_i}{s}
+   +\gamma(r_i)\theta_i.
+   $$
+   如果 $r_i<\alpha$，则 $\gamma=0$ 且 $\theta'_i=\theta_i/s$。如果 $r_i>\beta$，则 $\gamma=1$ 且 $\theta'_i=\theta_i$。在两者之间，两个频率连续混合。
+4. 若在比率中使用 $L_{\mathrm{target}}$，则会得到
+   $$
+   r_i^{\mathrm{wrong}}
+   =\frac{L_{\mathrm{target}}}{\lambda_i}
+   =s\frac{L_{\mathrm{train}}}{\lambda_i}
+   =sr_i.
+   $$
+   因此阈值实际上被移至 $\alpha/s$ 和 $\beta/s$，导致频带分类错误。这是与版本无关的实现陷阱。
+5. 论文的物理动机是：高频维度在训练上下文中完成多次旋转，主要编码相对位置；而低频维度尚未完成完整旋转，主要编码绝对位置。本课将此标记为一种解读，而非定理。
+6. YaRN 定义了一条经验曲线
+   $$
+   a=0.1\ln s+1.
+   $$
+   因子 $a$ 单独应用：
+   $$
+   q'=aq,\qquad k'=ak,
+   \qquad
+   q,k,q',k'\in\mathbb{R}^{d}.
+   $$
+   因此
+   $$
+   (q')^\top k'
+   =(aq)^\top(ak)
+   =a^2q^\top k.
+   $$
+7. 定义 $t=1/a^2$。将 logits 除以 $t$ 等价于：
+   $$
+   \frac{(q')^\top k'}{\sqrt d}
+   =\frac{q^\top k}{t\sqrt d}.
+   $$
+   对于 $s>1$，$a>1$，因此 $t<1$ 且 softmax 变得更尖锐。它并未变软。论文的熵动机是经验性的/定性的；后续分析可能给出不同的解释，但此处未声称有定理支持。
+8. 存在版本陷阱。YaRN arXiv v1 版本对其 $t$ 使用了倒数惯例，这与 v2/ICLR 惯例不同。除非记录版本，否则符号看起来是矛盾的。本课使用 $t=1/(0.1\ln s+1)^2$ 并明确说明该惯例。
+9. 该检查使用 $L_{\mathrm{train}}=2\pi$、频率 $[0.5,2,64]$ 和 $s=4$。它获得了比率 $[0.5,2,64]$、斜坡值 $[0,1/31,1]$、$a=1.138629436111989$、logit 因子 $a^2=1.2964769927807063$ 以及 $t=0.7713210535693215$。
+
+**检查。** checks/M4/D-M4.5-02.py 验证了原始长度比率、低/斜坡/高频带以及平方温度因子；输出 passed: True。
+
+**近似，已标注。** YaRN 的频带解读和温度曲线是经验性的设计选择。一旦选定惯例，插值代数和 $a^2$ logit 因子即为精确的。
+
+### D-M4.5-03 · 滑动窗口注意力
+
+**定义。** 给定因果窗口宽度 $w\in\mathbb{N}$，查询位置 $i$ 可以关注：
+
+$$
+\mathcal{W}(i)
+=\{\max(0,i-w+1),\ldots,i\}\subseteq\{0,\ldots,n-1\}.
+$$
+
+每层的注意力计算量为 $O(nwd)$，而非 $O(n^2d)$。
+
+**步骤。**
+
+1. 因果性排除了位置 $j>i$。宽度为 $w$ 的窗口也排除了位置 $j<i-w+1$。取两个条件的交集得到 $\mathcal{W}(i)$。
+2. 对于内部位置，该集合包含 $w$ 个键。跨越 $n$ 个查询，共有 $O(nw)$ 对分数。每个分数/值操作的宽度为 $d$，因此主导算术运算为
+   $$
+   F_{\mathrm{window}}=O(nwd).
+   $$
+3. 一个 token 每层最多可通过 $w$ 个更早的位置传递信息。在粗略的无跳跃模型中，依赖关系每层可增加 $w$，经过 $O(Lw)$ 层后，感受野规模达到 $L$。
+4. 交错插入全注意力层会定性改变此界限：全层提供全局路径。此时确切的感受野取决于层的放置位置，而不仅仅取决于 $Lw$。
+5. 该检查针对查询 $[2,3,4,5]$ 和宽度 5 获取窗口索引 4，三层粗略感受野为 12，并在夹具中交错插入全层时获得无界标记。
+
+**检查。** checks/M4/D-M4.5-03.py 验证了因果窗口和所述感受野计算；输出 passed: True。
+
+**近似，已标注。** $O(Lw)$ 是路径长度估计。它并未证明每个任务依赖关系都被保留，也未证明全层总是产生有用信息。
+
+### D-M4.5-04 · 注意力汇聚点（Attention Sinks）
+
+**定理，限定于 softmax 归一化。** 如果 softmax 没有空选项，其概率质量必须分配给可用的键之一。添加一个学习到的汇聚点 logit 为分母提供了一个显式的占位符选项，其质量随后可以从值输出中丢弃。
+
+**步骤。**
+
+1. 对于 token 分数 $s\in\mathbb{R}^{n}$，普通 softmax 为
+   $$
+   p_j=\frac{e^{s_j}}{\sum_{r=1}^{n}e^{s_r}},
+   \qquad
+   p\in\mathbb{R}^{n},
+   \qquad
+   \sum_{j=1}^{n}p_j=1.
+   $$
+   没有“不关注任何地方”的坐标。即使是语义上无用的早期 token 也必须接收部分质量。
+2. 添加标量汇聚点 logit $s_{\mathrm{sink}}\in\mathbb{R}$ 形成
+   $$
+   \widetilde s=[s_1,\ldots,s_n,s_{\mathrm{sink}}]\in\mathbb{R}^{n+1}.
+   $$
+   其 softmax 具有 token 概率 $\widetilde p_{1:n}\in\mathbb{R}^{n}$ 和汇聚点质量 $\widetilde p_{\mathrm{sink}}\in\mathbb{R}$，满足
+   $$
+   \sum_{j=1}^{n}\widetilde p_j+\widetilde p_{\mathrm{sink}}=1.
+   $$
+3. 值输出仅使用 token 值 $V\in\mathbb{R}^{n\times d_v}$：
+   $$
+   y=\sum_{j=1}^{n}\widetilde p_jv_j\in\mathbb{R}^{d_v}.
+   $$
+   汇聚点没有值行；其质量在归一化后被故意丢弃。
+4. 对于两个相等的 token 分数 $[-100,-100]$ 和汇聚点 logit $4$，检查获得汇聚点质量 $1.0$（精度为 float64）以及剩余 token 质量 $1.3627113643090597\times10^{-45}$。若无显式汇聚点，相等的 token 分数将平分质量 $[0.5,0.5]$。
+5. StreamingLLM 报告了经验性的注意力汇聚现象，并使用初始 token 或专用汇聚点来稳定有限缓存。观察结果和部署方法是来源主张；上述归一化代数是精确的。
+
+**检查。** checks/M4/D-M4.5-04.py 验证了无空 softmax 质量和显式汇聚点分母；输出 passed: True。
+
+**主张，已注明来源且限定范围。** 汇聚点是一个学习到的或指定的质量吸收选项。它并非证明汇聚点 token 在语义上很重要；其作用是使归一化有一个地方来容纳否则无法使用的质量。
+
+### D-M4.5-05 · 带索引器的稀疏注意力
+
+**定义，限定于 DSA 风格选择。** 廉价的索引器对键进行评分，选择前 $k$ 个索引，并在选定的集合上运行精确注意力。如果 $q\in\mathbb{R}^{d}$、键 $K\in\mathbb{R}^{n\times d}$、值 $V\in\mathbb{R}^{n\times d_v}$ 且 $W_I\in\mathbb{R}^{d_I\times d}$，一个简单的索引评分为
+
+$$
+\sigma_j=(W_Iq)^\top(W_Ik_j)\in\mathbb{R}.
+$$
+
+选择 $k$ 个键将选定注意力路径的分数/值计算量变为 $O(nkd)$。
+
+**步骤。**
+
+1. 将查询和键投影到廉价索引器空间：
+   $$
+   q_I=W_Iq\in\mathbb{R}^{d_I},
+   \qquad
+   K_I=KW_I^\top\in\mathbb{R}^{n\times d_I}.
+   $$
+2. 计算索引评分：
+   $$
+   \sigma=K_Iq_I\in\mathbb{R}^{n}.
+   $$
+   设 $J(q)$ 为 $k$ 个最大坐标的索引。Top-k 操作是离散的：
+   $$
+   J(q)\subseteq\{1,\ldots,n\},
+   \qquad
+   |J(q)|=k.
+   $$
+3. 在选定的键和值上运行精确注意力：
+   $$
+   s_J=K_{J(q)}q\in\mathbb{R}^{k},
+   \qquad
+   \alpha_J=\operatorname{softmax}(s_J)\in\mathbb{R}^{k},
+   $$
+   $$
+   y=\alpha_J^\top V_{J(q)}\in\mathbb{R}^{d_v}.
+   $$
+4. 条件于固定的 $J(q)$，选定的注意力计算在 $q,K,V$ 上是可微的。索引选择本身在 top-k 边界处不可微。索引器评分只能通过代理、直通规则、辅助目标或另一个明确选择的估计器进行训练；此处未静默假设任何此类估计器。
+5. 该检查选择键 $[0,2]$，获得归一化的选定权重 $[0.5498339973124778,0.4501660026875221]$，并验证小的查询扰动会改变条件注意力输出，而离散的选定掩码保持不变。
+6. DeepSeek-V3.2 的 DSA 描述是特定于模型的来源主张。小部件和检查实现了最小化的索引器抽象以显示可微性边界；它们并不声称能复现完整的生产级 DSA 系统。
+
+**检查。** checks/M4/D-M4.5-05.py 验证了 top-k 选择以及固定掩码可微路径与离散选择路径之间的区别；输出 passed: True。
+
+**主张，已注明来源且限定范围。** 仅当选定集合较小且索引器开销低于稠密注意力时，稀疏注意力才能减少计算量。选择机制可能会丢失键；性能和质量必须通过测量来确定，而不能仅从渐近表达式推断。
+
+## 4. 数值验证
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M4.5-01 | 波长、插值及 NTK 基检查；新基 $63496.04207872797$ | 通过 |
+| D-M4.5-02 | YaRN 比率 $[0.5,2,64]$; $\gamma=[0,1/31,1]$; $a^2=1.2964769927807063$; $t=0.7713210535693215$ | 通过 |
+| D-M4.5-03 | 查询处的窗口 5: $[2,3,4,5]$; 粗粒度场 12 | 通过 |
+| D-M4.5-04 | 汇质量 $1.0$; 剩余 token 质量 $1.3627113643090597\times10^{-45}$ | 通过 |
+| D-M4.5-05 | 选定的键 $[0,2]$; 权重 $[0.5498339973124778,0.4501660026875221]$ | 通过 |
+
+从 course/目录运行 python checks/M4/D-M4.5-01.py 至 python checks/M4/D-M4.5-05.py。V-M4-e 使用相同的 YaRN 频带和温度公式。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M4-e" />
+
+**V-M4-e — YaRN 频率斜坡。** 规范位于 viz/specs/V-M4-e.yaml，纯计算模块为 viz/compute/yarn.ts。可调整维度、基数、原始训练长度、目标长度及阈值。该组件绘制 $r_i$、$\gamma(r_i)$ 和 $\theta'_i$，并共同显示 $a$、$a^2$ 和 $t$，以确保平方项不可被隐藏。
+
+公式为 D-M4.5-02。可见的洞察必须指出频带使用的是原始训练长度，且 logit 因子为 $a^2$，而非 $a$。现有的前端可以使用纯输出在 SVG 或 Canvas2D 中渲染频率平面线条。
+
+## 6。结语
+
+**反直觉的问题。** 为什么增加目标上下文长度会使 YaRN 的注意力温度（attention temperature）变小，尽管每个向量的因子 $a$ 变得更大？
+
+**详细解答。** D-M4.5-02 定义了 $a=0.1\ln s+1$。YaRN 对查询（query）和键（key）均应用 $a$：
+
+$$
+q'=aq,\qquad k'=ak.
+$$
+
+Logit 包含它们的点积：
+
+$$
+(q')^\top k'=a^2q^\top k.
+$$
+
+将同一操作表示为注意力温度得到 $t=1/a^2$。对于 $s>1$，有 $a>1$ 且 $t<1$，因此 softmax 变得更尖锐。声称"logit 乘以 $a$"忽略了两个向量因子中的一个，并得出了相反的定量结论。
+
+**作业 A-M4。** 添加位置插值、选定的 NTK-aware 约定、带有原始长度阈值的 YaRN、滑动窗口、显式 sink（explicit sinks）以及最小稀疏索引器。导出至少一个目标扩展的 V-M4-e 数据，并记录哪些路径是精确恒等式、经验曲线或离散近似。
+
+**核心检查。** 从架构上看，模型仍然是从前缀预测下一个 token。长上下文方法改变了相位、可访问的键或归一化质量；因此，每种方法都以独特的近似边界改变了同一条件预测问题的计算表示。

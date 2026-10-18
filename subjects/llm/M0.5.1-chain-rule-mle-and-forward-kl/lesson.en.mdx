@@ -1,0 +1,215 @@
+## 1. Motivation
+
+M0.1 fixed the scalar-loss and reverse-mode conventions. The remaining probability-side defect is that a sequence model is often described as one opaque probability instead of as a product of conditional predictions. This lesson makes that product exact, separates the exact chain rule from the approximation used to parameterize each conditional, and connects maximum likelihood to forward KL and perplexity.
+
+## 2. Forward definition
+
+Let the vocabulary be a finite set $\mathcal{V}$ with $|\mathcal{V}|=V$, and let a sequence be $x_{1:T}=(x_1,\ldots,x_T)\in\mathcal{V}^{T}$. Each token probability is a scalar in $[0,1]$. The autoregressive model is
+
+$$
+p_\theta(x_{1:T})=\prod_{t=1}^{T}p_\theta(x_t\mid x_{<t})\in[0,1],
+\qquad x_{<t}=(x_1,\ldots,x_{t-1})\in\mathcal{V}^{t-1}.
+$$
+
+For a finite support $\mathcal{X}$, let $p_{\mathrm{data}},p_\theta\in\Delta^{|\mathcal{X}|-1}$ be probability vectors, where each coordinate is a scalar and $\sum_{x\in\mathcal{X}}p(x)=1$. The cross-entropy, entropy, and forward KL are
+
+$$
+H(p_{\mathrm{data}})=-\sum_{x\in\mathcal{X}}p_{\mathrm{data}}(x)\log p_{\mathrm{data}}(x)\in\mathbb{R},
+$$
+
+$$
+H(p_{\mathrm{data}},p_\theta)=-\sum_{x\in\mathcal{X}}p_{\mathrm{data}}(x)\log p_\theta(x)\in\mathbb{R},
+\qquad
+\mathrm{KL}(p_{\mathrm{data}}\Vert p_\theta)=\sum_{x\in\mathcal{X}}p_{\mathrm{data}}(x)\log\frac{p_{\mathrm{data}}(x)}{p_\theta(x)}\in[0,\infty].
+$$
+
+For a dataset of sequences with $N=\sum_s T_s$ observed tokens, the empirical mean token cross-entropy and perplexity are
+
+$$
+H_N=-\frac{1}{N}\sum_s\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})\in\mathbb{R},
+\qquad
+\mathrm{ppl}=\exp(H_N)\in[1,\infty).
+$$
+
+The numerical checks in `checks/M0.5` use float64 probability vectors with strictly positive coordinates, so every displayed logarithm is finite.
+
+## 3. Derivations
+
+### D-M0.5.1-01 · Chain-rule factorization is an identity
+
+**Theorem.** For every joint distribution on $x_{1:T}\in\mathcal{V}^{T}$ whose required conditional probabilities are defined,
+
+$$
+p(x_{1:T})=p(x_1)\prod_{t=2}^{T}p(x_t\mid x_{<t})\in[0,1].
+$$
+
+The factorization is exact. The modeling approximation begins only when the true conditional $p(x_t\mid x_{<t})$ is replaced by a parameterized family $p_\theta(x_t\mid x_{<t})$.
+
+**Steps.**
+
+1. For $T=1$, the product has one factor and the statement is $p(x_1)=p(x_1)$. (The base case is the definition of the one-token joint distribution.)
+2. For $T=2$, apply the definition of conditional probability:
+   $$
+   p(x_1,x_2)=p(x_1)p(x_2\mid x_1)\in[0,1].
+   $$
+   (The joint probability equals the first marginal times the second conditional.)
+3. Assume the factorization holds through time $T-1$:
+   $$
+   p(x_{1:T-1})=p(x_1)\prod_{t=2}^{T-1}p(x_t\mid x_{<t})\in[0,1].
+   $$
+   (This is the induction hypothesis for a prefix of length $T-1$.)
+4. Apply the two-variable conditional identity to the prefix and the final token:
+   $$
+   p(x_{1:T})=p(x_{1:T-1})p(x_T\mid x_{<T})\in[0,1].
+   $$
+   (Treating the prefix as one random variable exposes the final conditional factor.)
+5. Substitute the induction hypothesis:
+   $$
+   p(x_{1:T})=\left[p(x_1)\prod_{t=2}^{T-1}p(x_t\mid x_{<t})\right]p(x_T\mid x_{<T})
+   =p(x_1)\prod_{t=2}^{T}p(x_t\mid x_{<t}).
+   $$
+   (Appending the final factor completes the induction.)
+6. Replace every true conditional by a parameterized conditional and define
+   $$
+   p_\theta(x_{1:T})=\prod_{t=1}^{T}p_\theta(x_t\mid x_{<t})\in[0,1].
+   $$
+   (This is the modeling choice; it is not a new probability identity about the data distribution.)
+7. Therefore the chain-rule decomposition is an identity, while the approximation is the restriction from all valid conditionals to the chosen family indexed by $\theta$. (This distinction prevents an architecture choice from being mistaken for a probability law.)
+
+**Comparison, labeled.** A variational autoencoder introduces a variational posterior and generally optimizes an evidence lower bound rather than the exact marginal log-likelihood. That is a different approximation mechanism; the autoregressive factorization above does not introduce a lower bound.
+
+**Check.** `checks/M0.5/D-M0.5.1-01.py` — reconstructed joint `max_abs_err = 5.551e-17`, model normalization `1.0`, `passed = True`.
+
+**Intuition.** The chain rule says that any joint distribution can be read one conditional at a time. An RNN, Transformer, or another architecture changes how a conditional is computed, not the identity that multiplies the conditionals.
+
+### D-M0.5.1-02 · Maximum likelihood minimizes forward KL
+
+**Theorem.** For strictly positive $p_\theta(x)$ on the support of $p_{\mathrm{data}}(x)$,
+
+$$
+\mathbb{E}_{x\sim p_{\mathrm{data}}}\left[-\log p_\theta(x)\right]
+=H(p_{\mathrm{data}})+\mathrm{KL}(p_{\mathrm{data}}\Vert p_\theta)\in\mathbb{R}.
+$$
+
+Since $H(p_{\mathrm{data}})$ is independent of $\theta$, maximum likelihood minimizes forward KL.
+
+**Steps.**
+
+1. Expand the expectation as a finite sum:
+   $$
+   \mathbb{E}_{p_{\mathrm{data}}}[-\log p_\theta(x)]
+   =-\sum_{x\in\mathcal{X}}p_{\mathrm{data}}(x)\log p_\theta(x)\in\mathbb{R}.
+   $$
+   (The expectation of a scalar function over a finite distribution is a weighted scalar sum.)
+2. Add and subtract $\log p_{\mathrm{data}}(x)$ inside the summand:
+   $$
+   -p_{\mathrm{data}}(x)\log p_\theta(x)
+   =-p_{\mathrm{data}}(x)\log p_{\mathrm{data}}(x)
+   +p_{\mathrm{data}}(x)\left[\log p_{\mathrm{data}}(x)-\log p_\theta(x)\right].
+   $$
+   (The added term cancels, so the scalar expression is unchanged.)
+3. Sum over $x$ and split the finite sum:
+   $$
+   -\sum_xp_{\mathrm{data}}(x)\log p_\theta(x)
+   =-\sum_xp_{\mathrm{data}}(x)\log p_{\mathrm{data}}(x)
+   +\sum_xp_{\mathrm{data}}(x)\log\frac{p_{\mathrm{data}}(x)}{p_\theta(x)}.
+   $$
+   (Linearity of summation separates the entropy term from the divergence term.)
+4. Identify the two terms:
+   $$
+   H(p_{\mathrm{data}},p_\theta)=H(p_{\mathrm{data}})+\mathrm{KL}(p_{\mathrm{data}}\Vert p_\theta)\in\mathbb{R}.
+   $$
+   (The left side is cross-entropy and the right side is entropy plus forward KL.)
+5. Let $\theta^*$ minimize cross-entropy. Since $H(p_{\mathrm{data}})$ has no $\theta$ dependence,
+   $$
+   \arg\min_\theta H(p_{\mathrm{data}},p_\theta)
+   =\arg\min_\theta\mathrm{KL}(p_{\mathrm{data}}\Vert p_\theta).
+   $$
+   (Removing an additive constant preserves the set of minimizers.)
+6. Choose a state $x^*$ with $p_{\mathrm{data}}(x^*)>0$ and set $p_\theta(x^*)=\varepsilon>0$. Its cross-entropy contribution is
+   $$
+   -p_{\mathrm{data}}(x^*)\log\varepsilon\xrightarrow[\varepsilon\to0^+]{}+\infty.
+   $$
+   (A positive data mass multiplied by a diverging negative log probability diverges positively.)
+7. Therefore forward KL is mass-covering in this sense: assigning vanishing model mass to any data-supported state makes the objective diverge. (The phrase describes the penalty on missing data support, not a claim that every fitted model has equal density everywhere.)
+
+**Check.** `checks/M0.5/D-M0.5.1-02.py` — decomposition error `2.220e-16`; cross-entropies as one model probability approaches zero are `[1.916..., 3.864..., 8.008...]`; `passed = True`.
+
+**Intuition.** Maximum likelihood is unforgiving when the data distribution assigns mass to an event the model nearly rules out. This is why sampling from a trained model can still produce unlikely outputs: the training objective must cover observed modes, while generation later chooses how to traverse them.
+
+### D-M0.5.1-03 · Sequence NLL decomposes into token cross-entropies
+
+**Theorem.** For a dataset of sequences $\{x_{s,1:T_s}\}_{s=1}^{S}$ with $N=\sum_sT_s$ tokens,
+
+$$
+\mathrm{NLL}(\theta)=-\sum_{s=1}^{S}\log p_\theta(x_{s,1:T_s})
+=-\sum_{s=1}^{S}\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})\in\mathbb{R}.
+$$
+
+The mean token cross-entropy and perplexity are
+
+$$
+H_N=\frac{\mathrm{NLL}(\theta)}{N}\in\mathbb{R},
+\qquad
+\mathrm{ppl}=\exp(H_N)=\left(\prod_{s=1}^{S}\prod_{t=1}^{T_s}p_\theta(x_{s,t}\mid x_{s,<t})\right)^{-1/N}\in[1,\infty).
+$$
+
+**Steps.**
+
+1. Apply the chain-rule factorization to each sequence:
+   $$
+   p_\theta(x_{s,1:T_s})=\prod_{t=1}^{T_s}p_\theta(x_{s,t}\mid x_{s,<t})\in[0,1].
+   $$
+   (D-M0.5.1-01 supplies the exact product for each observed sequence.)
+2. Take the negative logarithm of that product:
+   $$
+   -\log p_\theta(x_{s,1:T_s})
+   =-\log\prod_{t=1}^{T_s}p_\theta(x_{s,t}\mid x_{s,<t})
+   =-\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})\in\mathbb{R}.
+   $$
+   (The logarithm turns multiplication into addition.)
+3. Sum over sequences:
+   $$
+   \mathrm{NLL}(\theta)=-\sum_{s=1}^{S}\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})\in\mathbb{R}.
+   $$
+   (Each observed token contributes one conditional negative log probability.)
+4. Divide by the total token count $N$:
+   $$
+   H_N=-\frac1N\sum_{s=1}^{S}\sum_{t=1}^{T_s}\log p_\theta(x_{s,t}\mid x_{s,<t})=\frac{\mathrm{NLL}(\theta)}{N}\in\mathbb{R}.
+   $$
+   (The division changes a dataset total into a per-token average.)
+5. Exponentiate the mean:
+   $$
+   \exp(H_N)=\exp\left(-\frac1N\sum_{s,t}\log p_{s,t}\right)
+   =\left(\prod_{s,t}p_{s,t}\right)^{-1/N}\in[1,\infty),
+   $$
+   where $p_{s,t}=p_\theta(x_{s,t}\mid x_{s,<t})\in(0,1]$. (Exponentiating a mean of logarithms gives the inverse geometric mean.)
+6. Define the result as perplexity: $\mathrm{ppl}=\exp(H_N)\in[1,\infty)$. (A value of $k$ is the effective branching factor of a uniform $k$-way predictor.)
+
+**Check.** `checks/M0.5/D-M0.5.1-03.py` — NLL error `0.000e+00`, perplexity identity error `0.000e+00`, `perplexity = 2.553...`, `passed = True`.
+
+**Intuition.** Sequence likelihood is a product, but training and reporting are easier in log space. Perplexity exponentiates the average token surprise so that it reads like an effective number of equally likely choices.
+
+## 4. Numerical verification
+
+The three checks use deterministic float64 values and no sampled randomness. Their current reports are:
+
+| Derivation | Numerical claim | Result |
+| --- | --- | --- |
+| D-M0.5.1-01 | reconstructed joint `max_abs_err = 5.551e-17`; model normalization `1.0` | pass |
+| D-M0.5.1-02 | decomposition error `2.220e-16`; zero-support limit increases cross-entropy | pass |
+| D-M0.5.1-03 | NLL error `0.000e+00`; perplexity identity error `0.000e+00` | pass |
+
+Run `python -m pytest course/tests` from the repository parent. These checks are shown as static output because the current frontend has no reader-facing Python runtime.
+
+## 5. Interactive visualizations
+
+This lesson has no independent widget: its exact probability identities are exercised by the executable checks above. The next lesson introduces **V-M0.5-a**, the AR(1) explorer, where the same scalar factor $\phi^k$ becomes both an autocorrelation and a recurrent gradient multiplier. The widget is referenced there rather than detached from the recurrence derivation it visualizes.
+
+## 6. Closing
+
+**Counterintuitive question.** If the chain-rule factorization is exact, where does an autoregressive model make an approximation? **Worked answer:** the identity in D-M0.5.1-01 is exact for the true conditional probabilities. The approximation begins when those conditionals are restricted to the parameterized family $p_\theta(x_t\mid x_{<t})$. D-M0.5.1-02 then shows what maximum likelihood optimizes within that family: forward KL, with an infinite penalty for assigning vanishing mass to a data-supported event.
+
+**Assignment A-M0.5.** Fit an AR(1) model by its closed form and by gradient descent, implement a smoothed bigram model, and reproduce the BPE example in later lessons. The assignment contract is in `code/common/A-M0.5-README.md`.
+
+**Spine check.** Architecture-wise, every later sequence architecture supplies a mechanism for computing $p_\theta(x_t\mid x_{<t})$. Probability-wise, this lesson fixes the exact chain-rule decomposition, the MLE-to-forward-KL objective, and the token-level quantity reported as perplexity.

@@ -1,0 +1,210 @@
+## 1. Motivation
+
+M7.2 described how tokens move. This lesson asks what a retrieval step optimizes and what a recurrent memory writes. The same softmax that looks like a normalization in Transformer notation is the solution of a regularized maximization problem. A modern Hopfield update is a majorization-minimization step for an energy. A linear-attention state is an online regressor, and the delta rule turns its write into one LMS/SGD step.
+
+The scopes matter. The Hopfield descent proof controls the bare associative update with $Q=\xi$ and $K=V=X$. General $Q,K,V$ attention needs learned projections and a value readout; only the association weights inherit the Hopfield proof. The capacity statement is a probabilistic lower bound under a separation condition, not an unconditional $\Theta(e^d)$ law.
+
+## 2. Forward definition
+
+For scores $z\in\mathbb{R}^{N}$ and probabilities $p\in\Delta_N=\{p\in\mathbb{R}^{N}:p_i\ge0,\sum_i p_i=1\}$, define Shannon entropy
+
+$$
+H(p)=-\sum_{i=1}^{N}p_i\log p_i.
+$$
+
+For a memory of $N$ patterns $X=[x_1,\ldots,x_N]\in\mathbb{R}^{d\times N}$ and associative state $\xi\in\mathbb{R}^{d}$, define
+
+$$
+E(\xi)=-\frac{1}{\beta}\operatorname{lse}(\beta X^\top\xi)+\frac12\lVert\xi\rVert_2^2,
+\qquad X^\top\xi\in\mathbb{R}^{N}.
+$$
+
+The attention-shaped association weights are $p=\operatorname{softmax}(\beta X^\top\xi)\in\Delta_N$, and the retrieved state is $Xp\in\mathbb{R}^{d}$. For online regression, let $S_t\in\mathbb{R}^{d_v\times d_k}$ store a key-to-value map, $k_t\in\mathbb{R}^{d_k}$ be a key, and $v_t\in\mathbb{R}^{d_v}$ be its target.
+
+## 3. Derivations
+
+### D-M7.3-01 · Gibbs variational principle and simplex siblings
+
+**Theorem.** For $z\in\mathbb{R}^{N}$,
+
+$$
+\operatorname{softmax}(z)
+=\underset{p\in\Delta_N}{\operatorname{argmax}}\;\langle p,z\rangle+H(p),
+$$
+
+and the optimal value is $\operatorname{lse}(z)=\log\sum_i e^{z_i}$.
+
+**Steps.**
+
+1. On the interior of the simplex, form the Lagrangian
+   $$
+   \mathcal{L}(p,\lambda)=\sum_i p_i z_i-\sum_i p_i\log p_i+\lambda\left(\sum_i p_i-1\right).
+   $$
+2. Differentiate with respect to each scalar $p_i$:
+   $$
+   \frac{\partial\mathcal{L}}{\partial p_i}=z_i-(\log p_i+1)+\lambda=0.
+   $$
+   Hence $p_i=\exp(z_i+\lambda-1)$.
+3. Normalize:
+   $$
+   1=\sum_i p_i=e^{\lambda-1}\sum_i e^{z_i},
+   \qquad p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.
+   $$
+4. Substitute the optimizer. Since $\log p_i=z_i-\operatorname{lse}(z)$,
+   $$
+   \langle p,z\rangle+H(p)=\sum_i p_i\operatorname{lse}(z)=\operatorname{lse}(z).
+   $$
+   Strict concavity of $H$ on the simplex interior makes this optimizer unique when the scores are finite.
+5. With inverse temperature $\beta>0$, maximize $\langle p,z\rangle+H(p)/\beta$. The same steps give
+   $$
+   p=\operatorname{softmax}(\beta z),
+   \qquad \max=\frac{1}{\beta}\operatorname{lse}(\beta z).
+   $$
+6. Sparsemax replaces the negative-entropy regularizer with a quadratic one and projects onto $\Delta_N$; entmax interpolates sparse and dense choices. These are siblings, not alternative derivations of softmax. [Fenchel–Young losses](https://arxiv.org/abs/1901.02324) gives the convex-conjugate and regularized-prediction framework.
+7. The float64 check verifies the objective value, the finite-difference gradient $\nabla_z\operatorname{lse}(z)=\operatorname{softmax}(z)$, random simplex upper bounds, and the simplex constraints of sparsemax.
+
+**Check.** checks/M7/D-M7.3-01.py reports objective gap $0$, gradient error $6.561998860954432\times10^{-11}$, and a negative random-simplex violation of $-0.0380489323599188$.
+
+### D-M7.3-02 · Modern Hopfield retrieval by MM/CCCP
+
+**Theorem, scoped to the bare associative update.** Let
+
+$$
+g(\xi)=\frac12\lVert\xi\rVert_2^2,
+\qquad
+h(\xi)=-\frac{1}{\beta}\operatorname{lse}(\beta X^\top\xi),
+\qquad E=g+h.
+$$
+
+Then $g$ is strictly convex and $h$ is concave. The update
+
+$$
+\xi_{t+1}=X\operatorname{softmax}(\beta X^\top\xi_t)
+$$
+
+is the unique minimizer of the tangent majorizer of $E$ at $\xi_t$ and decreases $E$ monotonically.
+
+**Steps.**
+
+1. Let $p_t=\operatorname{softmax}(\beta X^\top\xi_t)$. The Hessian of the log-sum-exp part is
+   $$
+   \nabla^2_\xi\operatorname{lse}(\beta X^\top\xi)
+   =\beta X\bigl(\operatorname{Diag}(p)-pp^\top\bigr)X^\top\succeq0.
+   $$
+   The middle matrix is a categorical covariance, so $h$ is concave.
+2. Concavity gives the tangent upper bound
+   $$
+   h(\xi)\le h(\xi_t)+\nabla h(\xi_t)^\top(\xi-\xi_t),
+   \qquad \nabla h(\xi_t)=-Xp_t.
+   $$
+3. Define the quadratic surrogate
+   $$
+   Q_t(\xi)=\frac12\lVert\xi\rVert_2^2-(Xp_t)^\top\xi
+   +h(\xi_t)+(Xp_t)^\top\xi_t.
+   $$
+   Its Hessian is $I_d\succ0$, so its unique minimizer solves
+   $$
+   \nabla Q_t(\xi)=\xi-Xp_t=0,
+   \qquad \xi_{t+1}=Xp_t.
+   $$
+4. The majorization chain is
+   $$
+   E(\xi_{t+1})\le Q_t(\xi_{t+1})\le Q_t(\xi_t)=E(\xi_t).
+   $$
+   This proves monotone energy descent for the associative/key-space update.
+5. The bare correspondence is exactly scaled dot-product attention with $Q=\xi$, $K=V=X$: the weights are $\operatorname{softmax}(\beta X^\top\xi)$ and the readout is $Xp$. General Transformer attention $\operatorname{softmax}(QK^\top/\sqrt{d_k})V$ adds learned projections $x_i=W_K^\top y_i$, $\xi=W_Q^\top r$, and a value readout $p^\top V$ when $V\ne K$. The readout is not claimed to be an MM step on the same $E$; the association weights are the part controlled by the proof.
+6. Define the pattern separation
+   $$
+   \Delta_i=x_i^\top x_i-\max_{j\ne i}x_i^\top x_j.
+   $$
+   For equal-norm patterns $\lVert x_i\rVert=M$,
+   $$
+   \Delta_i=\frac12\min_{j\ne i}\lVert x_i-x_j\rVert_2^2.
+   $$
+   The paper's sufficient master inequality is
+   $$
+   \Delta_{\min}\ge\frac{2}{\beta N}+\frac{1}{\beta}\log(2N^2\beta M^2).
+   $$
+7. For random patterns on a sphere with radius $M=K\sqrt{d-1}$ and failure probability $p$, the Appendix bound uses $c=b/W_0(be^a)$ and gives, with probability at least $1-p$,
+   $$
+   N\ge\sqrt{p}\,c^{(d-1)/4}.
+   $$
+   This is an $N=\exp(\Omega(d))$ lower bound under the random-pattern, separation-conditioned setup. It is not an unconditional $\Theta(e^d)$ or $O(e^d)$ capacity theorem. Classical discrete Hopfield capacity is criterion-dependent, so numbers such as $0.138d$ and $O(d/\log d)$ cannot be compared without naming the criterion.
+8. The [modern Hopfield paper](https://arxiv.org/abs/2008.02217) is the source for the energy/update correspondence and capacity scope. The check verifies energy descent, the gradient, categorical-covariance positivity, the separation identity, the master inequality witness, and the Lambert-$W$ algebra.
+
+**Check.** checks/M7/D-M7.3-02.py reports energy $-0.3820023603796427\to-0.4999873687143783$, gradient error $2.919567886061625\times10^{-11}$, and separation error $0$.
+
+### D-M7.3-03 · Test-time regression unifies writes and reads
+
+**Theorem, for the stated state updates.** The online squared-loss objective at token $t$ is
+
+$$
+\ell_t(S)=\frac12\lVert Sk_t-v_t\rVert_2^2,
+\qquad S\in\mathbb{R}^{d_v\times d_k}.
+$$
+
+Its gradient is $\nabla_S\ell_t=(Sk_t-v_t)k_t^\top$.
+
+**Steps.**
+
+1. Hebbian accumulation writes the outer product:
+   $$
+   S_t=S_{t-1}+v_tk_t^\top.
+   $$
+   It does not subtract the current prediction error.
+2. One delta/LMS/SGD step with learning rate $\eta_t$ is
+   $$
+   S_t=S_{t-1}-\eta_t\nabla_S\ell_t(S_{t-1})
+   =S_{t-1}+\eta_t(v_t-S_{t-1}k_t)k_t^\top.
+   $$
+   This is the exact one-step identity used in M4.6.
+3. Gated DeltaNet first decays the state and then applies one delta step:
+   $$
+   \widetilde S_t=\alpha_tS_{t-1},
+   \qquad
+   S_t=\widetilde S_t+\beta_t(v_t-\widetilde S_tk_t)k_t^\top.
+   $$
+   Expanding gives
+   $$
+   S_t=\alpha_tS_{t-1}(I-\beta_tk_tk_t^\top)+\beta_tv_tk_t^\top.
+   $$
+   This is the exact sense in which the paper calls $\alpha_t$ a weight-decay gate. It is not the same as one step on a textbook L2-regularized loss: the decay happens before the delta residual is evaluated.
+4. Softmax attention is nonparametric kernel regression: for query $q$, keys $k_j$, and values $v_j$,
+   $$
+   \widehat v(q)=\sum_j\frac{e^{\beta q^\top k_j}}{\sum_r e^{\beta q^\top k_r}}v_j.
+   $$
+   Linear attention replaces the normalized kernel read with a finite state. Hebbian, delta, and gated-delta updates are different inner optimizers for the same associative regression problem.
+5. [Test-time regression](https://arxiv.org/abs/2501.12352) gives this unifying framing. [Gated DeltaNet](https://arxiv.org/abs/2412.06464) supplies the gated-delta update. The official [Qwen3-Next model card](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) is the source to consult when mapping this abstraction to that model's hybrid layer; this lesson does not infer undocumented implementation details.
+6. The float64 check compares the delta step with a finite gradient directional derivative, expands the gated recurrence two ways, and runs all three rules on the same stream.
+
+**Check.** checks/M7/D-M7.3-03.py reports delta error $0$, gated expansion error $1.1102230246251565\times10^{-16}$, and finite-gradient error $1.121334580744815\times10^{-9}$.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Status |
+| --- | --- | --- |
+| D-M7.3-01 | Gibbs objective gap $0$; $\nabla\operatorname{lse}$ error $6.561998860954432\times10^{-11}$ | pass |
+| D-M7.3-02 | energy decreases $-0.3820023603796427\to-0.4999873687143783$; separation error $0$ | pass |
+| D-M7.3-03 | delta error $0$; gated expansion error $1.1102230246251565\times10^{-16}$ | pass |
+
+Run checks/M7/D-M7.3-01.py through checks/M7/D-M7.3-04.py. The fourth check validates the online-regression viewer's state shapes and finite trajectories. Exact identities use float64; capacity language remains explicitly scoped.
+
+## 5. Interactive visualization
+
+<CourseWidget id="V-M7-c" />
+
+<CourseWidget id="V-M7-d" />
+
+**V-M7-c — Hopfield retrieval.** The specification is viz/specs/V-M7-c.yaml and the pure compute module is viz/compute/hopfield_retrieval.ts. Store patterns, move a query, and change $\beta$ and the number of MM/CCCP steps. The widget shows association weights, the retrieved mixture, the energy trajectory, and the before/after energy.
+
+**V-M7-d — Online-regression viewer.** The specification is viz/specs/V-M7-d.yaml and the pure compute module is viz/compute/online_regression.ts. Feed the same $(k_t,v_t)$ stream to Hebbian, delta, or gated updates. Compare state matrices, predictions, and reconstruction errors. The widget makes “different optimizer for the same regression memory” concrete; it does not claim that the three rules have equal capacity.
+
+## 6. Closing
+
+**Counterintuitive question.** If Hopfield retrieval is attention, why does the energy proof not automatically prove monotone descent for an arbitrary Transformer attention block?
+
+**Worked answer.** D-M7.3-02 controls the bare update $\xi\mapsto X\operatorname{softmax}(\beta X^\top\xi)$, where the same pattern matrix supplies both keys and values. General attention inserts $W_Q$, $W_K$, and a separate value readout. The association weights still have the softmax form, but the output $p^\top V$ need not be the minimizer $Xp$ of the Hopfield surrogate. The theorem transfers to the association step at the stated scope, not to every projected block.
+
+**Assignment A-M7.** Add a Sinkhorn mode to V-M7-b, then use V-M7-c to compare softmax retrieval with low-temperature metastable mixtures. Use V-M7-d to report Hebbian, delta, and gated errors on the same stream. Include the capacity separation inequality and mark every extrapolation beyond it as an approximation or analogy.
+
+**Spine check.** Softmax is an entropy-regularized simplex optimizer; Hopfield retrieval is an MM/CCCP associative update; recurrent linear memories are online regressors with distinct write rules. The variational view leaves open the learned outer parameters and the quality/cost trade-offs of a complete model.

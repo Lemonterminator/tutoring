@@ -1,0 +1,283 @@
+## 1. 动机
+
+前面的课程使用有限矩阵，因为序列包含有限数量的 token。这种记号掩盖了一个有用的区别：Softmax 注意力机制在查询（query）或键（key）改变时会改变其核；而线性时不变（LTI）状态空间模型（SSM）则应用一个时不变的因果核。线性注意力和选择性 SSM 介于这两个极端之间：前者使用有限特征状态，后者使其转移依赖于输入。
+
+本课程将这些事实转化为算子语言。定理被明确标记为定理。结构恒等式不会被提升为收敛结果。随机特征表示被标记为近似。算子视角存在一个实际缺陷：算子分类本身并不能预测质量或硬件吞吐量。
+
+## 2. 前向定义
+
+设 $(\mathcal{X},\mu)$ 为测量输入域，$q\in\mathcal{X}$ 为查询，$k(x')\in\mathbb{R}^{d_k}$ 为键映射，$v(x')\in\mathbb{R}^{d_v}$ 为值映射。对于具有非负分母的标量核 $\kappa$，定义
+
+$$
+\mathcal{A}_{\mu}[v](q)
+=
+\frac{\int_{\mathcal{X}}\kappa(q,k(x'))v(x')\,d\mu(x')}
+{\int_{\mathcal{X}}\kappa(q,k(x'))\,d\mu(x')}
+\in\mathbb{R}^{d_v}.
+$$
+
+对于 Softmax 注意力机制，
+
+$$
+\kappa_\beta(q,k)=e^{\beta q^\top k},
+\qquad
+\beta=\frac{1}{\sqrt{d_k}},
+$$
+
+且该测度为经验 token 测度。[Neural Operator paper](https://arxiv.org/abs/2108.08481) 研究了函数空间之间学习到的映射。[Galerkin Transformer paper](https://arxiv.org/abs/2105.14995) 给出了基于投影的注意力算子学习视角；“Petrov–Galerkin”是源自架构的解释，并非声称每个 Transformer 层都是 Galerkin 离散化。
+
+一个 LTI 状态空间系统具有
+
+$$
+\dot x(t)=Ax(t)+Bu(t),\qquad y(t)=Cx(t),
+$$
+
+其中 $x(t)\in\mathbb{R}^{N}$、$u(t)\in\mathbb{R}^{m}$ 和 $y(t)\in\mathbb{R}^{p}$。其因果输入输出算子具有滞后核。以下推导将有限注意力矩阵、积分算子与该格林函数核联系起来，但并未将它们识别为同一算子。
+
+## 3。推导过程
+
+### D-M7.1-01 · 经验测度注意力是有限 Softmax 注意力
+
+**定理。** 设
+
+$$
+\mu_N=\frac{1}{N}\sum_{j=1}^{N}\delta_{x_j}.
+$$
+
+则 $\mathcal{A}_{\mu_N}[v](q)$ 正是归一化的有限核和，而非随机近似：
+
+$$
+\mathcal{A}_{\mu_N}[v](q)
+=
+\frac{\sum_{j=1}^{N}\kappa(q,k(x_j))v(x_j)}
+{\sum_{j=1}^{N}\kappa(q,k(x_j))}.
+$$
+
+**步骤。**
+
+1. 应用狄拉克测度的定义性质：
+   $$
+   \int f(x')\,d\delta_{x_j}(x')=f(x_j).
+   $$
+2. 在分子中代入经验测度：
+   $$
+   \int \kappa(q,k(x'))v(x')\,d\mu_N(x')
+   =\frac{1}{N}\sum_{j=1}^{N}\kappa(q,k(x_j))v(x_j).
+   $$
+3. 对分母应用相同的代换：
+   $$
+   \int \kappa(q,k(x'))\,d\mu_N(x')
+   =\frac{1}{N}\sum_{j=1}^{N}\kappa(q,k(x_j)).
+   $$
+4. 相除。公共因子 $1/N$ 被消去：
+   $$
+   \mathcal{A}_{\mu_N}[v](q)
+   =
+   \frac{\sum_j\kappa(q,k(x_j))v(x_j)}
+   {\sum_j\kappa(q,k(x_j))}.
+   $$
+5. 当 $\kappa_\beta(q,k)=e^{\beta q^\top k}$ 时，这些归一化权重即为有限序列的 Softmax 权重。float64 检查将两种实现与独立构建的有限 Softmax 参考值进行比较；两者的最大误差为 $2.7755575615628914\times10^{-17}$。
+
+**检查。** checks/M7/D-M7.1-01.py 在具有均匀经验测度的随机键（keys）和值（values）上验证了该恒等式。
+
+**解释。** 将此称为蒙特卡洛离散化，描述了有限样本如何在另一个实验中近似连续测度。对于上述固定的经验测度，该等式是精确的代数关系。
+
+### D-M7.1-02 · 核分解与有限随机特征
+
+**定理。** 对于 $\beta=1$，
+
+$$
+e^{q^\top k}
+=
+e^{-\lVert q-k\rVert^2/2}
+e^{\lVert q\rVert^2/2}
+e^{\lVert k\rVert^2/2}.
+$$
+
+**步骤。**
+
+1. 展开平方距离：
+   $$
+   -\frac12\lVert q-k\rVert^2
+   =-\frac12\lVert q\rVert^2+q^\top k-\frac12\lVert k\rVert^2.
+   $$
+2. 在指数项中加上 $\lVert q\rVert^2/2+\lVert k\rVert^2/2$。剩余的指数项为 $q^\top k$，从而证明了分解。
+3. 在 Softmax 行中，仅与查询（query）相关的因子 $e^{\lVert q\rVert^2/2}$ 同等地乘以每个键（key）的分数，并在归一化过程中被消去。仅与键相关的因子在不同键之间不会消去。
+4. 如果 QK-norm 固定了 $\lVert q\rVert=\lVert k\rVert=r$，且 $q^\top k=r^2\cos\theta$，则核为
+   $$
+   e^{r^2\cos\theta},
+   $$
+   即 von Mises–Fisher 形状的角核。这是在范数约束下的精确重写。
+5. 设 $\omega\sim\mathcal{N}(0,I)$ 并定义
+   $$
+   \varphi_\omega(x)
+   =e^{\omega^\top x-\lVert x\rVert^2/2}.
+   $$
+   完成高斯平方后得到
+   $$
+   e^{q^\top k}
+   =
+   \mathbb{E}_{\omega}
+   \left[
+   e^{\omega^\top q-\lVert q\rVert^2/2}
+   e^{\omega^\top k-\lVert k\rVert^2/2}
+   \right].
+   $$
+6. 用 $m$ 个样本替换期望值，可产生有限特征映射和有限秩近似。[Performer 论文](https://arxiv.org/abs/2009.14794) 提供了随机特征注意力的背景。近似误差并非恒等式，且取决于特征的抽取和输入尺度。
+7. 该检查验证了精确分解、归一化权重中的查询因子消去以及一个有限随机特征估计值。随机特征误差会被报告，而不会静默地视为零。
+
+**检查。** checks/M7/D-M7.1-02.py 报告独立的直接误差和分解误差 $0$、QK 归一化误差 $2.7755575615628914\times10^{-17}$ 以及随机特征误差 $0.0012643508065883768$。
+
+### D-M7.1-03 · 因果注意力作为 Volterra 算子；残差迭代作为 Picard 迭代
+
+**结构恒等式。** 对于有限序列，因果核矩阵是下三角矩阵。双向核则是全矩阵。在连续类比中，它们分别对应 Volterra 和 Fredholm 算子模式。
+
+**步骤。**
+
+1. 设 $K\in\mathbb{R}^{T\times T}$ 且 $V\in\mathbb{R}^{T\times d_v}$。因果算子为
+   $$
+   \mathcal{V}[V]=\operatorname{tril}(K)V,
+   $$
+   而非因果算子为 $\mathcal{F}[V]=KV$。
+2. 未来条目 $K_{ts}$（其中 $s>t$）被因果掩码移除。该检查统计这些条目并比较下三角输出与全矩阵输出。
+3. 考虑第二类方程
+   $$
+   u=f+\mathcal{K}u.
+   $$
+   从 $u^{(0)}$ 出发的 Picard 步长为
+   $$
+   u^{(r+1)}=f+\mathcal{K}u^{(r)}.
+   $$
+   当 $u^{(0)}=0$ 时，前两个非平凡迭代项为 $f$ 和 $f+\mathcal{K}f$。
+4. 如果满足如 $\lVert\mathcal{K}\rVert<1$ 这样的压缩条件，重复代入将给出收敛的 Neumann 级数
+   $$
+   u=\sum_{j=0}^{\infty}\mathcal{K}^j f.
+   $$
+   代数上的有限部分和在该收敛条件不存在时依然存在；收敛性是一个独立的命题。
+5. 权重共享堆叠重用相同的算子，因此在压缩假设成立时具有 Neumann 级数的解释。深度均衡极限此外还需要不动点的存在性以及有效的隐式微分条件。
+
+**检查。** checks/M7/D-M7.1-03.py 验证了因果掩码、Fredholm 比较、压缩界 $\lVert\mathcal{K}\rVert_2<1$，以及 80 项 Neumann 和与求解的不动点；它还检查了前两个 Picard 项。
+
+### D-M7.1-04 · SSM Green 函数
+
+**定理。** 对于
+
+$$
+\dot x(t)=Ax(t)+Bu(t),\qquad y(t)=Cx(t),\qquad x(0)=0,
+$$
+
+因果解为
+
+$$
+y(t)=\int_0^t C e^{A(t-s)}B\,u(s)\,ds.
+$$
+
+因此
+
+$$
+K(t-s)=C e^{A(t-s)}B
+$$
+
+是因果算子 $\frac{d}{dt}-A$ 的 Green 函数。
+
+**步骤。**
+
+1. 将状态方程乘以 $e^{-At}$ 并使用
+   $$
+   \frac{d}{dt}\left(e^{-At}x(t)\right)=e^{-At}Bu(t).
+   $$
+2. 从 $0$ 到 $t$ 积分，并乘以 $e^{At}$：
+   $$
+   x(t)=e^{At}x(0)+\int_0^t e^{A(t-s)}Bu(s)\,ds.
+   $$
+3. 设 $x(0)=0$ 并应用 $C$：
+   $$
+   y(t)=\int_0^t C e^{A(t-s)}B\,u(s)\,ds.
+   $$
+4. 在零阶保持（ZOH）下，M4.6 给出 $\overline A=e^{\Delta A}$ 和 $\overline B=\Delta\phi_1(A\Delta)B$。离散 Green 核为
+   $$
+   \overline K_k=C\overline A^k\overline B.
+   $$
+5. S4 报告 [Efficiently Modeling Long Sequences with Structured State Spaces](https://arxiv.org/abs/2111.00396) 研究了结构化状态空间序列模型。HiPPO 的 [Online Legendre Memory Units](https://arxiv.org/abs/2008.07669) 从多项式投影推导出了状态矩阵。这些是源自架构的连接；Green 函数恒等式本身则源于上述 ODE。
+6. 选择性 SSM 使 $A$、$B$ 或 $C$ 依赖于输入 token。此时 Green 核将依赖于中间序列，不再是一个固定的仅滞后卷积核。这是 M4.6 中的选择性扫描要点。
+
+**检查。** checks/M7/D-M7.1-04.py 比较了标量 Green 核与其矩阵指数值，测试了亏损 Jordan 块，并比较了递归 ZOH 评估与密集卷积，其中包括零特征值的情况。
+
+### D-M7.1-05 · 结构化矩阵与精确的门控线性等价性
+
+**定理。** 状态维度 $N$ 限制了通用选择性 SSM 序列矩阵的半分离秩，但标量衰减掩码本身是 1-半分离的。承载内容的完整矩阵通常不是 1-半分离的。
+
+**步骤。**
+
+1. 使用约定 $x_t=A_t x_{t-1}+B_tu_t$ 和 $y_t=C_t^\top x_t$，其中 $A_t\in\mathbb{R}^{N\times N}$、$B_t\in\mathbb{R}^{N\times m}$ 和 $C_t\in\mathbb{R}^{N\times p}$。对于 $t\ge s$，
+   $$
+   M_{t,s}=C_t^\top A_tA_{t-1}\cdots A_{s+1}B_s\in\mathbb{R}^{p\times m}.
+   $$
+2. 选择一个分隔符 $b$ 和一个严格下矩形块，其行位于 $b$ 的右侧，列位于左侧。在分隔符处拆分乘积：
+   $$
+   U_t=C_t^\top\prod_{r=b}^{t}A_r\in\mathbb{R}^{p\times N},
+   \qquad
+   V_s=\left(\prod_{r=s+1}^{b-1}A_r\right)B_s\in\mathbb{R}^{N\times m}.
+   $$
+   则 $M_{t,s}=U_tV_s$，因此该块的秩至多为 $N$。
+3. 在标量衰减情况 $A_t=a_tI$ 下，定义
+   $$
+   L_{t,s}=\mathbf{1}[s\le t]\prod_{r=s+1}^{t}a_r.
+   $$
+   $L$ 的每个分隔符块分解为一列乘以一行，因此 $L$ 是 1-半分离的。此分解不需要对 $a_t$ 进行非零假设。
+4. 对于内容矩阵 $C$ 和 $B$，完整矩阵为
+   $$
+   M=L\circ(CB^\top).
+   $$
+   掩码是 1-SS；承载内容的矩阵通常仅为 $N$-SS。
+5. 该 $N=2$ 反例使用了 $a_t=1$、$C_3=e_1$、$C_4=e_2$、$B_1=e_1$ 和 $B_2=e_2$。行 $3,4$ 和列 $1,2$ 构成单位矩阵，其秩为 $2$。因此“完整 M 是 1-SS"是错误的。
+6. 对于通用对角阵 $A_t=\operatorname{diag}(a_{t,1},\ldots,a_{t,N})$，完整矩阵的秩仍然至多为 $N$-SS。区别在于 $N$ 个独立的掩码：
+   $$
+   M=\sum_{r=1}^{N}L^{(r)}\circ(C_{:,r}B_{:,r}^{\top}),
+   \qquad
+   L^{(r)}_{t,s}=\prod_{j=s+1}^{t}a_{j,r}.
+   $$
+7. 对于门控线性注意力，
+   $$
+   S_t=a_tS_{t-1}+k_tv_t^\top,\qquad y_t^\top=q_t^\top S_t.
+   $$
+   展开后得到
+   $$
+   y_t=\sum_{s\le t}L_{t,s}(q_t^\top k_s)v_s,
+   \qquad
+   Y=(L\circ QK^\top)V.
+   $$
+   设 $B_t=k_t$、$C_t=q_t$ 和 $u_t=v_t$，这便精确地构成了标量恒等 SSM 递推关系。这是一个恒等式，而非类比。然而，注意力权重矩阵 $W=L\circ QK^\top$ 仍然继承了内容因子的 $N$-秩界；“1-SS"指的是 $L$，而非 $W$。
+8. [Mamba-2/SSD 报告](https://arxiv.org/abs/2405.21060) 提供了结构化状态空间对偶性的背景。该检查验证了通用秩界、秩一掩码、精确门控递推以及秩二反例。
+
+**检查。** checks/M7/D-M7.1-05.py 报告了状态维度 $3$ 下的通用块秩 $3$、掩码秩 $1$、门控等价误差 $7.077671781985373\times10^{-16}$ 以及反例秩 $2$。
+
+## 4。数值验证
+
+| 推导 | 数值输出 | 状态 |
+| --- | --- | --- |
+| D-M7.1-01 | 两条路径的独立有限 softmax 参考误差 $2.7755575615628914\times10^{-17}$ | 通过 |
+| D-M7.1-02 | 直接/分解误差 $0$；QK 归一化误差 $2.7755575615628914\times10^{-17}$；随机特征误差 $0.0012643508065883768$ | 通过；已标记近似 |
+| D-M7.1-03 | 收缩界 $0.3130901250502221$；不动点误差 $2.220446049250313\times10^{-16}$ | 通过 |
+| D-M7.1-04 | Green 误差 $0$；亏损矩阵指数误差 $0$；ZOH 卷积误差 $2.220446049250313\times10^{-16}$ | 通过 |
+| D-M7.1-05 | 秩界 $3$；掩码秩 $1$；门控误差 $7.077671781985373\times10^{-16}$；反例秩 $2$ | 通过 |
+
+运行 checks/M7/D-M7.1-01.py 至 checks/M7/D-M7.1-05.py。Float64 算术验证了精确恒等式；随机特征报告为具有非零误差的近似值。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M7-a" />
+
+**V-M7-a —— 结构化矩阵切换器。** 规范位于 viz/specs/V-M7-a.yaml，纯计算模块为 viz/compute/structured_matrix.ts。可在 Toeplitz、半分离（semiseparable）、低秩和稠密矩阵之间进行切换。更改 $\Delta$、状态维度、种子以及选择性开关。矩阵热力图和秩/谱读数使结构清晰可见。
+
+核心见解很明确：“半分离”并不意味着“整个承载内容的矩阵秩为一”。选择器展示了依赖 token 的衰减如何改变掩码；它并未声称稠密注意力矩阵变为 1-SS。
+
+## 6。结语
+
+**反直觉的问题。** 如果线性注意力机制和状态空间模型（SSM）能够生成相同的结构化序列矩阵，为什么它们不是同一个模型？
+
+**解答示例。** D-M7.1-05 指出了确切的共享对象：标量衰减门控线性注意力递推是恒等层级的 SSM 实现，且两者都暴露出半分离（semiseparable）的衰减掩码。然而，内容映射、参数化、归一化、训练规则以及硬件算法仍可能存在差异。在通用的选择性 SSM 中，转移矩阵可生成多达 $N$ 个半分离内容块；而在 Softmax 注意力机制中，数据依赖的 $QK^\top$ 因子与行归一化则构成了不同的算子。共享结构并不等同于相同架构。
+
+**作业 A-M7。** 实现结构化矩阵切换器，针对 M4.6 门控状态验证半分离恒等式，并撰写一份简短报告，区分 Toeplitz、半分离、低秩及稠密（dense）的断言。后续 M7 课程将把相同的对象扩展至动力学、能量、表示及表达能力领域。
+
+**核心检查。** 自回归接口保持不变。算子视角说明了前缀交互是核积分、格林函数、Volterra 映射、有限秩特征状态还是半分离状态转移。但这并未消除衡量质量与服务成本的必要性。

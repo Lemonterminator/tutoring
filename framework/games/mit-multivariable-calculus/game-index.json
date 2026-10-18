@@ -1,0 +1,278 @@
+{
+  "MIT-MV-01": {
+    "chunk": "batch01",
+    "stages": 9
+  },
+  "MIT-MV-02": {
+    "chunk": "pilot",
+    "stages": 8
+  },
+  "MIT-MV-03": {
+    "chunk": "batch01",
+    "stages": 8
+  },
+  "MIT-MV-04": {
+    "chunk": "batch01",
+    "stages": 9
+  },
+  "MIT-MV-05": {
+    "chunk": "batch01",
+    "stages": 9
+  },
+  "MIT-MV-06": {
+    "chunk": "pilot",
+    "stages": 8
+  },
+  "MIT-MV-07": {
+    "chunk": "batch02",
+    "stages": 9
+  },
+  "MIT-MV-08": {
+    "chunk": "batch02",
+    "stages": 8
+  },
+  "MIT-MV-09": {
+    "chunk": "batch02",
+    "stages": 7
+  },
+  "MIT-MV-10": {
+    "chunk": "batch02",
+    "stages": 8
+  },
+  "MIT-MV-11": {
+    "chunk": "batch02",
+    "stages": 7
+  },
+  "MIT-MV-12": {
+    "chunk": "batch03",
+    "stages": 8
+  },
+  "MIT-MV-13": {
+    "chunk": "batch03",
+    "stages": 9
+  },
+  "MIT-MV-14": {
+    "chunk": "batch03",
+    "stages": 8
+  },
+  "MIT-MV-15": {
+    "chunk": "batch03",
+    "stages": 13
+  },
+  "MIT-MV-16": {
+    "chunk": "batch03",
+    "stages": 13
+  },
+  "MIT-MV-17": {
+    "chunk": "pilot",
+    "stages": 8
+  },
+  "MIT-MV-18": {
+    "chunk": "batch04",
+    "stages": 8
+  },
+  "MIT-MV-19": {
+    "chunk": "batch04",
+    "stages": 9
+  },
+  "MIT-MV-20": {
+    "chunk": "batch04",
+    "stages": 8
+  },
+  "MIT-MV-21": {
+    "chunk": "batch05",
+    "stages": 9
+  },
+  "MIT-MV-22": {
+    "chunk": "batch05",
+    "stages": 9
+  },
+  "MIT-MV-23": {
+    "chunk": "batch05",
+    "stages": 9
+  },
+  "MIT-MV-24": {
+    "chunk": "batch05",
+    "stages": 9
+  },
+  "MIT-MV-25": {
+    "chunk": "batch05",
+    "stages": 9
+  },
+  "MIT-MV-26": {
+    "chunk": "batch06",
+    "stages": 9
+  },
+  "MIT-MV-27": {
+    "chunk": "batch06",
+    "stages": 9
+  },
+  "MIT-MV-28": {
+    "chunk": "batch06",
+    "stages": 9
+  },
+  "MIT-MV-29": {
+    "chunk": "batch06",
+    "stages": 9
+  },
+  "MIT-MV-30": {
+    "chunk": "batch06",
+    "stages": 12
+  },
+  "MIT-MV-31": {
+    "chunk": "batch07",
+    "stages": 14
+  },
+  "MIT-MV-32": {
+    "chunk": "batch07",
+    "stages": 8
+  },
+  "MIT-MV-33": {
+    "chunk": "batch07",
+    "stages": 9
+  },
+  "MIT-MV-34": {
+    "chunk": "batch07",
+    "stages": 8
+  },
+  "MIT-MV-35": {
+    "chunk": "batch07",
+    "stages": 9
+  },
+  "MIT-MV-36": {
+    "chunk": "batch08",
+    "stages": 9
+  },
+  "MIT-MV-37": {
+    "chunk": "batch08",
+    "stages": 9
+  },
+  "MIT-MV-38": {
+    "chunk": "batch08",
+    "stages": 9
+  },
+  "MIT-MV-39": {
+    "chunk": "batch08",
+    "stages": 9
+  },
+  "MIT-MV-40": {
+    "chunk": "batch08",
+    "stages": 8
+  },
+  "MIT-MV-41": {
+    "chunk": "batch09",
+    "stages": 9
+  },
+  "MIT-MV-42": {
+    "chunk": "batch09",
+    "stages": 8
+  },
+  "MIT-MV-43": {
+    "chunk": "batch09",
+    "stages": 9
+  },
+  "MIT-MV-44": {
+    "chunk": "batch09",
+    "stages": 9
+  },
+  "MIT-MV-45": {
+    "chunk": "batch09",
+    "stages": 8
+  },
+  "MIT-MV-46": {
+    "chunk": "batch10",
+    "stages": 9
+  },
+  "MIT-MV-47": {
+    "chunk": "batch10",
+    "stages": 9
+  },
+  "MIT-MV-48": {
+    "chunk": "batch10",
+    "stages": 12
+  },
+  "MIT-MV-49": {
+    "chunk": "batch10",
+    "stages": 12
+  },
+  "MIT-MV-50": {
+    "chunk": "batch10",
+    "stages": 9
+  },
+  "MIT-MV-51": {
+    "chunk": "batch11",
+    "stages": 8
+  },
+  "MIT-MV-52": {
+    "chunk": "batch11",
+    "stages": 9
+  },
+  "MIT-MV-53": {
+    "chunk": "batch11",
+    "stages": 9
+  },
+  "MIT-MV-54": {
+    "chunk": "batch11",
+    "stages": 9
+  },
+  "MIT-MV-55": {
+    "chunk": "batch11",
+    "stages": 9
+  },
+  "MIT-MV-56": {
+    "chunk": "batch12",
+    "stages": 9
+  },
+  "MIT-MV-57": {
+    "chunk": "batch12",
+    "stages": 9
+  },
+  "MIT-MV-58": {
+    "chunk": "batch12",
+    "stages": 9
+  },
+  "MIT-MV-59": {
+    "chunk": "batch12",
+    "stages": 9
+  },
+  "MIT-MV-60": {
+    "chunk": "batch12",
+    "stages": 8
+  },
+  "MIT-MV-61": {
+    "chunk": "batch13",
+    "stages": 9
+  },
+  "MIT-MV-62": {
+    "chunk": "batch13",
+    "stages": 9
+  },
+  "MIT-MV-63": {
+    "chunk": "batch13",
+    "stages": 9
+  },
+  "MIT-MV-64": {
+    "chunk": "batch13",
+    "stages": 10
+  },
+  "MIT-MV-65": {
+    "chunk": "batch14",
+    "stages": 9
+  },
+  "MIT-MV-66": {
+    "chunk": "batch14",
+    "stages": 10
+  },
+  "MIT-MV-67": {
+    "chunk": "batch14",
+    "stages": 10
+  },
+  "MIT-MV-68": {
+    "chunk": "batch14",
+    "stages": 10
+  },
+  "MIT-MV-69": {
+    "chunk": "batch14",
+    "stages": 10
+  }
+}

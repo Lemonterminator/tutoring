@@ -1,0 +1,233 @@
+## 1. Motivation
+
+An encoder--decoder RNN compresses a source sequence into a recurrent state and then asks a decoder to generate a target sequence. A single fixed vector makes the information path grow with source length. Attention adds a differentiable read: each decoder step scores every encoder state, normalizes the scores, and forms a context vector. The read is direct in graph depth, while the score calculation still performs work over all source positions.
+
+This lesson derives the gradient to an encoder state through both branches of the context: the direct value branch and the indirect softmax-alignment branch. The numerical objective is deliberately local, $L=u^\top c_t$, so every attention derivative can be checked without hiding it inside a full framework.
+
+## 2. Forward definition
+
+Let the source have length $S$, encoder states $h_j\in\mathbb{R}^{D}$ for $j=1,\ldots,S$, and decoder state $s_t\in\mathbb{R}^{D_s}$. At decoder step $t$, define alignment scores $e_t\in\mathbb{R}^{S}$, weights $\alpha_t\in\Delta^{S-1}$, and context $c_t\in\mathbb{R}^{D}$:
+
+$$
+\alpha_{tj}=\frac{\exp(e_{tj})}{\sum_{r=1}^{S}\exp(e_{tr})},
+\qquad
+c_t=\sum_{j=1}^{S}\alpha_{tj}h_j,
+$$
+
+$$
+\text{decoder input at step }t=[y_{t-1};c_t].
+$$
+
+The additive Bahdanau score is
+
+$$
+e_{tj}=v^\top\tanh(W_as_{t-1}+U_ah_j),
+$$
+
+where $W_a\in\mathbb{R}^{A\times D_s}$, $U_a\in\mathbb{R}^{A\times D}$, and $v\in\mathbb{R}^{A}$. The general multiplicative Luong score is
+
+$$
+e_{tj}=s_t^\top W h_j,
+$$
+
+with $W\in\mathbb{R}^{D_s\times D}$; the dot-product special case sets $W=I$ when dimensions agree. The decoder then updates its recurrent state and emits a target conditional distribution. The checks isolate the context map but use these exact score functions.
+
+**Source note.** Bahdanau, Cho, and Bengio introduce the additive alignment model in “Neural Machine Translation by Jointly Learning to Align and Translate” ([arXiv](https://arxiv.org/abs/1409.0473)). Luong, Pham, and Manning compare multiplicative attention in “Effective Approaches to Attention-based Neural Machine Translation” ([ACL Anthology](https://aclanthology.org/D15-1166/)). The equations in this lesson state the conventions used by the NumPy prototype.
+
+## 3. Derivations
+
+### D-M2.2-01 · Encoder-state gradient through attention
+
+**Theorem.** Fix one decoder step and write $H\in\mathbb{R}^{S\times D}$ for the matrix whose row $j$ is $h_j^\top$. Let $u=\nabla_{c_t}L\in\mathbb{R}^{D}$ and $r=Hu\in\mathbb{R}^{S}$. The softmax Jacobian is
+
+$$
+J_\alpha=\frac{\partial\alpha_t}{\partial e_t}
+=\operatorname{diag}(\alpha_t)-\alpha_t\alpha_t^\top\in\mathbb{R}^{S\times S}.
+$$
+
+Define
+
+$$
+\bar e:=J_\alpha^\top r
+=\alpha_t\odot\left(r-\alpha_t^\top r\right)\in\mathbb{R}^{S}.
+$$
+
+Then the attention contribution to an encoder-state gradient is
+
+$$
+\nabla_{h_j}L\ \ni\ \alpha_{tj}u+\bar e_j\frac{\partial e_{tj}}{\partial h_j}.
+$$
+
+For Bahdanau attention, with $a_j=W_as_{t-1}+U_ah_j$,
+
+$$
+\frac{\partial e_{tj}}{\partial h_j}
+=U_a^\top\left(v\odot(1-\tanh^2(a_j))\right)\in\mathbb{R}^{D},
+$$
+
+so
+
+$$
+\nabla_{h_j}L\ \ni\
+\alpha_{tj}u+\bar e_jU_a^\top\left(v\odot(1-\tanh^2(a_j))\right).
+$$
+
+For Luong attention,
+
+$$
+\frac{\partial e_{tj}}{\partial h_j}=W^\top s_t,
+\qquad
+\nabla_{h_j}L\ \ni\ \alpha_{tj}u+\bar e_jW^\top s_t.
+$$
+
+The symbol $\ni$ emphasizes that these are the paths through this attention context; a full model can add other paths from an encoder state.
+
+**Steps.**
+
+1. Start from $c_t=\sum_j\alpha_{tj}h_j$. Perturb one encoder row while temporarily holding the weights fixed. The direct value path is
+   $$
+   dc_t\big|_{\mathrm{value}}=\alpha_{tj}dh_j.
+   $$
+   Therefore reverse mode contributes $\alpha_{tj}u$ to $\nabla_{h_j}L$.
+2. The same perturbation can change the scores and hence every normalized weight. In matrix form, the weight differential is
+   $$
+   d\alpha_t=J_\alpha\,de_t.
+   $$
+   This is exactly the row softmax Jacobian from D-M0.1-01.
+3. The context differential due to weights is
+   $$
+   dc_t\big|_{\mathrm{weights}}=H^\top d\alpha_t.
+   $$
+   Taking the scalar loss differential and substituting $d\alpha_t$ gives
+   $$
+   dL\big|_{\mathrm{weights}}
+   =u^\top H^\top J_\alpha de_t
+   =(Hu)^\top J_\alpha de_t
+   =r^\top J_\alpha de_t.
+   $$
+4. Identify the score-space gradient by moving the matrix transpose:
+   $$
+   r^\top J_\alpha de_t
+   =(J_\alpha^\top r)^\top de_t
+   =\bar e^\top de_t.
+   $$
+   Since $J_\alpha$ is symmetric for softmax, $J_\alpha^\top=J_\alpha$, and coordinatewise
+   $$
+   \bar e_j=\alpha_{tj}r_j-\alpha_{tj}\sum_{r=1}^{S}\alpha_{tr}r_r
+   =\alpha_{tj}(r_j-\alpha_t^\top r).
+   $$
+5. In the additive case, $e_{tj}=v^\top\tanh(a_j)$ and $a_j=W_as_{t-1}+U_ah_j$. First,
+   $$
+   de_{tj}
+   =\left(v\odot(1-\tanh^2(a_j))\right)^\top da_j.
+   $$
+   Next, holding $s_{t-1}$ fixed, $da_j=U_adh_j$. Therefore
+   $$
+   de_{tj}
+   =\left[U_a^\top\left(v\odot(1-\tanh^2(a_j))\right)\right]^\top dh_j,
+   $$
+   which identifies the displayed additive score gradient.
+6. In the multiplicative case, $e_{tj}=s_t^\top Wh_j$. Holding $s_t$ fixed,
+   $$
+   de_{tj}=s_t^\top Wdh_j=(W^\top s_t)^\top dh_j.
+   $$
+   This identifies $\partial e_{tj}/\partial h_j=W^\top s_t$.
+7. Add the direct value contribution from step 1 to the indirect score contribution from steps 4--6. This yields the encoder-state formula for each scoring family. The same calculation also produces gradients for $v,W_a,U_a$ or $W$; the check compares all those arrays and the encoder/decoder states by central differences.
+8. The toy objective uses $L=u^\top c_t$, so $u$ is known exactly. The NumPy check runs both Bahdanau and Luong attention with $S=4,D=3,D_s=5$, confirms that each row of $\alpha_t$ sums to one, and reports maximum absolute errors below $9\times10^{-12}$.
+
+**Check.** checks/M2/D-M2.2-01.py checks the complete additive and multiplicative attention gradients and prints `passed: True`.
+
+**Intuition.** An encoder state is both a value being averaged and a key that can change the weights of every value. The $\alpha_{tj}u$ term is the direct read; the softmax-Jacobian term is the competition effect caused by changing one score.
+
+### D-M2.2-02 · Path length with and without attention
+
+**Claim.** In the serial encoder--decoder graph used by the course spine, information from $h_1$ reaches decoder state $s_t$ through $S+t$ recurrent transitions without attention. With attention, the dependency enters the context through one weighted sum at decoder step $t$; the score computation still examines all $S$ encoder states, but the sequential dependency path has length one for that read.
+
+**Steps.**
+
+1. Without attention, the encoder recurrence must carry source position $1$ through the remaining source transitions. Counting the source-side path as $S$ transitions and the decoder-side path to step $t$ as $t$ transitions gives
+   $$
+   \operatorname{path}_{\mathrm{no\ attention}}=S+t.
+   $$
+2. With attention, the decoder at step $t$ reads $h_1,\ldots,h_S$ through
+   $$
+   c_t=\sum_{j=1}^{S}\alpha_{tj}h_j.
+   $$
+   The graph has a direct weighted-sum edge from each $h_j$ to $c_t$, hence
+   $$
+   \operatorname{path}_{\mathrm{attention\ read}}=1.
+   $$
+3. For the checked example $S=7,t=5$, the two path lengths are $12$ and $1$. This is a statement about serial dependency depth, not about total arithmetic: computing $S$ scores and the weighted sum is still $O(S)$ work per decoder step.
+4. The shorter read path is the motivation for Spine A and for the Transformer in M3. It does not imply that attention is free or that the decoder can ignore causal masking on target outputs.
+
+**Check.** checks/M2/D-M2.2-02 evaluates $S=7,t=5$, obtains $12$ versus $1$, and prints `passed: True`.
+
+**Intuition.** Attention replaces “remember one source item through every recurrent step” with “ask for the relevant source rows now.” It reduces serial path length while retaining a scan over source positions for the current query.
+
+### D-M2.2-03 · Bidirectional and stacked recurrent encoders
+
+**Claim.** A bidirectional encoder computes
+
+$$
+\overrightarrow h_j=F_{\rightarrow}(x_j,\overrightarrow h_{j-1}),\qquad
+\overleftarrow h_j=F_{\leftarrow}(x_j,\overleftarrow h_{j+1}),
+$$
+
+and exposes
+
+$$
+h_j=[\overrightarrow h_j;\overleftarrow h_j]\in\mathbb{R}^{2H}.
+$$
+
+A stacked encoder applies another recurrent map to the representation sequence:
+
+$$
+h_j^{(1)}=[\overrightarrow h_j^{(1)};\overleftarrow h_j^{(1)}],\qquad
+h_j^{(\ell)}=F^{(\ell)}(h_j^{(\ell-1)},h_{j-1}^{(\ell)},h_{j+1}^{(\ell)}).
+$$
+
+Bidirectionality is valid on a completed source sequence, but a bidirectional recurrence on an autoregressively generated target would use future target tokens and violate the causal factorization.
+
+**Steps.**
+
+1. The forward encoder scans left to right. It initializes $\overrightarrow h_0$ and computes $\overrightarrow h_j$ from $x_j$ and $\overrightarrow h_{j-1}$.
+2. The backward encoder scans right to left. It initializes $\overleftarrow h_{S+1}$ and computes $\overleftarrow h_j$ from $x_j$ and $\overleftarrow h_{j+1}$. Both scans can see the entire source because the source is already available.
+3. Concatenation doubles the state width from $H$ to $2H$. Attention treats the concatenated vector as the encoder value; its scoring matrices use the corresponding input width $D=2H$.
+4. A stacked encoder feeds the previous layer's representation at the same source position into the next recurrent layer. The shape check constructs a $(T,D)$ input, a $(T,2H)$ bidirectional sequence, and a $(T,H_2)$ second-layer sequence.
+5. For autoregressive target generation, the conditional factorization is
+   $$
+   p(y_{1:T}\mid x)=\prod_{t=1}^{T}p(y_t\mid y_{<t},x).
+   $$
+   A backward target recurrence would depend on $y_{t+1:T}$, which is unavailable at generation time. Therefore bidirectionality belongs on the source encoder in this seq2seq setup, not on the causal target decoder.
+
+**Check.** checks/M2/D-M2.2-03 verifies the forward/backward/stacked shapes and records the compatibility boundary as `encoder-side only`; `passed: True`.
+
+**Intuition.** “Bidirectional” is about which sequence is already complete. It is useful for encoding a known source, but it cannot be used to peek at future tokens in a causal generator.
+
+## 4. Numerical verification
+
+The attention gradient check uses deterministic float64 NumPy computations and the common finite-difference harness. The path-length and bidirectional checks make their discrete assumptions explicit so a widget or lesson cannot silently confuse dependency depth with arithmetic count.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M2.2-01 | Bahdanau/Luong full gradient errors below $9\times10^{-12}$; all attention rows sum to one | pass |
+| D-M2.2-02 | $S=7,t=5$: path length $12$ without attention versus $1$ for the weighted read | pass |
+| D-M2.2-03 | forward $(6,5)$, bidirectional $(6,10)$, stacked $(6,3)$; encoder-side only | pass |
+
+Run `python -m pytest course/tests` from the repository parent. The page displays static check summaries; CI executes the NumPy checks.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M2-c" />
+
+**V-M2-c — Seq2seq alignment matrix.** The specification is `viz/specs/V-M2-c.yaml`, the pure compute module is `viz/compute/alignment_matrix.ts`, and the reproducible fixture is `viz/data/V-M2-c-reverse-alignment.json`. Choose copy or reverse mode, source length, and temperature. The heatmap returns one normalized attention row per decoder step, while the A-M2 trainer exports a learned alignment matrix from the deterministic reverse fixture.
+
+The current frontend can render the returned two-dimensional array with its existing Canvas2D layer. No plotting library or browser-side Python runtime is required by the compute contract.
+
+## 6. Closing
+
+**Counterintuitive question.** If attention shortens the dependency path to one weighted read, why is a long source sequence still expensive? **Worked answer:** D-M2.2-02 separates serial path length from arithmetic cost. At decoder step $t$, the model still forms $S$ scores, applies a softmax over $S$ positions, and accumulates $S$ value contributions. Attention changes the graph depth of the information route, not the number of source positions inspected by that query. Later architectures will change the way those reads are batched or approximated, but the distinction remains.
+
+**Assignment A-M2.** Use `code/numpy_rnn/seq2seq_attn.py` to reproduce the Bahdanau/Luong gradient checks, export row-by-row V-M2-c alignment data, and train the declared reverse-sequence fixture to at least 95% exact token accuracy within 500 updates. Keep the encoder-side bidirectional convention explicit in the README.
+
+**Spine check.** Architecture-wise, seq2seq attention turns the fixed-vector bottleneck into a differentiable read over encoder states; probability-wise, the decoder still factors target likelihood causally, and the attention weights are internal normalized computation rather than a new target distribution.

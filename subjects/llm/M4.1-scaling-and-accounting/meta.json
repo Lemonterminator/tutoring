@@ -1,0 +1,36 @@
+{
+  "subject": "llm",
+  "id": "M4.1",
+  "module": "M4",
+  "title": {
+    "en": "Scaling laws and accounting: compute, data, and memory",
+    "zh": "缩放定律与核算：计算、数据与内存"
+  },
+  "prereqs": [
+    "M3.5"
+  ],
+  "estimatedHours": 7,
+  "spine": {
+    "en": {
+      "a": "A fixed compute budget must be allocated between parameter updates, training tokens, and memory traffic; scaling laws describe an empirical allocation, while accounting identities expose the cost terms.",
+      "b": "The model still defines a prefix-conditioned next-token distribution. N, D, and C determine how much evidence and computation can shape that distribution, and memory accounting determines whether the computation can be executed."
+    },
+    "zh": {
+      "a": "固定的计算预算必须在参数更新、训练令牌和内存流量之间进行分配；缩放定律描述了经验性的分配方式，而核算恒等式则揭示了成本项。",
+      "b": "模型仍然定义了一个前缀条件化的下一个令牌分布。N、D 和 C 决定了有多少证据和计算可以塑造该分布，而内存核算则决定了计算是否可以执行。"
+    }
+  },
+  "derivations": [
+    "D-M4.1-01",
+    "D-M4.1-02",
+    "D-M4.1-03"
+  ],
+  "visualizations": [
+    "V-M4-a"
+  ],
+  "assignment": "A-M4",
+  "references": [
+    "kaplan2020",
+    "hoffmann2022"
+  ]
+}

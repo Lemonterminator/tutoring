@@ -1,0 +1,57 @@
+## 1. Motivation
+
+The earlier appendix lessons gave exact identities and scoped theorems. This short lesson collects expressivity results that are often mixed together. “Universal approximator” concerns a function class on a domain. “Lipschitz” concerns sensitivity to perturbations. “TC0” concerns a formal finite-precision computation model. NNGP and NTK concern an infinite-width limit. μP concerns parameterization and hyperparameter transfer. These are different axes.
+
+## 2. Scope map
+
+The following statements are the claims used in this course:
+
+| Statement | Status | Conditions and caution |
+| --- | --- | --- |
+| Transformers with positional encodings approximate arbitrary continuous sequence-to-sequence maps | **Theorem, scoped** | Compact domain and the architecture/width assumptions in Yun et al.; not a finite-budget quality guarantee |
+| Standard dot-product self-attention is Lipschitz on every unbounded input domain | **False as stated** | Kim et al. prove non-Lipschitzness on an unbounded domain; L2 attention has a boundedness result under its assumptions |
+| Log-precision Transformers are contained in uniform $\mathrm{TC}^0$ | **Theorem, formal model** | Precision, depth, size, and input/output conventions matter |
+| Chain-of-thought increases expressivity | **Theorem/claim, model-dependent** | Intermediate generated tokens add computation steps; the result depends on their number and the formal decoder model |
+| Infinite-width attention has an NNGP/NTK description | **Theorem, asymptotic** | Multi-head and width limits are specified; finite models are approximations |
+| μP makes hyperparameters transfer across scale | **Empirical/theoretical prescription** | Transfer stability is supported under μP parameterization and tested regimes; it is not a universal optimizer theorem |
+
+## 3. Short results
+
+**Theorem, scoped: universal approximation.** [Yun et al.](https://arxiv.org/abs/1912.10077) prove universal approximation for continuous permutation-equivariant sequence-to-sequence functions with compact support, and show that positional encodings remove the permutation-equivariance restriction for arbitrary continuous sequence-to-sequence functions on a compact domain. The result identifies different roles for self-attention and feed-forward layers. It does not say that a fixed-depth, fixed-width model trained on finite data will fit every target well.
+
+**Theorem, scoped: stability.** [Kim, Papamakarios, and Mnih](https://arxiv.org/abs/2006.04710) show that standard dot-product self-attention is not Lipschitz on an unbounded input domain, and give a Lipschitz alternative based on L2 attention. QK-norm and Pre-LN are useful stability-motivated design choices, but that engineering rationale is an **Analogy, labeled**; the paper's theorem is about the specified attention maps and domains.
+
+**Theorem, formal model: circuit complexity.** [Merrill and Sabharwal](https://arxiv.org/abs/2310.07923) analyze log-precision Transformers and the effect of generated intermediate tokens. A forward pass without a long scratchpad has a different computational budget from a decoder allowed to generate and consume intermediate tokens. “CoT makes the model smarter” is therefore too broad. The rigorous statement names the number of steps, precision, depth, and complexity class.
+
+**Theorem, asymptotic: NNGP/NTK.** [Hron et al.](https://arxiv.org/abs/2006.10540) derive infinite-width attention limits. In their setting, multi-head attention approaches Gaussian-process behavior as the head count grows, with attention NNGP/NTK kernels. This is an asymptotic analysis, not a claim that a finite LLM is exactly a Gaussian process.
+
+**Prescription, labeled as approximation/engineering.** [Tensor Programs V](https://arxiv.org/abs/2203.03466) studies μP and zero-shot hyperparameter transfer. The practical message is that a smaller μP-parameterized model can guide hyperparameters for a larger model in the tested settings. The theory describes scaling behavior; it does not remove the need to validate the target model.
+
+## 4. Theorem versus analogy table
+
+| Statement | Status | Condition |
+| --- | --- | --- |
+| $K(t-s)=Ce^{A(t-s)}B$ is the Green's function of an LTI SSM | Theorem | Linear time-invariant $A,B,C$ |
+| Causal attention is Volterra; residual is a Picard step; shared-weight stacking is a Neumann series | Structural identity | Algebra is exact; convergence needs contraction |
+| An $N$-state SSM sequence matrix is at most $N$-semiseparable; the scalar decay mask is 1-semiseparable | Theorem | The 1-SS claim is for the scalar-times-identity mask, not the full content matrix |
+| Hopfield update equals the scoped attention step; capacity is exponential | Theorem, scoped | Bare associative update; probabilistic $\Omega(d)$ lower bound under separation, not unconditional $\Theta(e^d)$ |
+| $\operatorname{softmax}(z)=\arg\max_{p\in\Delta}\langle p,z\rangle+H(p)$ | Theorem | Finite simplex and Shannon entropy |
+| Pure attention collapses rank doubly exponentially | Theorem, scoped | No residual, no FFN safeguard, bounded weights, self-attention feedback |
+| Attention dynamics is a Wasserstein gradient flow | Theorem, regime-dependent | Raw symmetric and Sinkhorn regimes have potentials; row-softmax generically does not |
+| Tokens cluster with depth | Theorem in stated regimes | Specific $\beta,V,Q=K$ settings; not all trained models |
+| Attention is a “learned Green's function” | Analogy | Green's functions are linear solution operators; attention is nonlinear in the input |
+| Attention layers are heat-equation/diffusion steps | Analogy | Exact only for the appropriate symmetric/Sinkhorn limits |
+
+## 5. Interactive visualization
+
+This short synthesis adds no new widget. V-M7-a through V-M7-e are the computational objects for the appendix. Their checks are the appropriate numerical evidence: finite identities are tested directly, while scoped theorems retain their hypotheses and asymptotic limits.
+
+## 6. Closing
+
+**Counterintuitive question.** How can a model class be a universal approximator while a formal finite-precision Transformer has a circuit-complexity ceiling?
+
+**Worked answer.** The statements quantify different resources. Universal approximation allows the architecture, width, depth, and parameters required by the theorem on a compact domain. A TC0 result fixes a formal depth/precision/size regime and studies the computation available there. Chain-of-thought changes the number of serial generated steps. There is no contradiction because the quantifiers and computational budgets differ.
+
+**Assignment A-M7.** Finish the appendix report by putting every claim you use in the theorem/approximation/analogy table. Attach the passing outputs from D-M7.1, D-M7.2, D-M7.3, and D-M7.4, compare row-softmax with Sinkhorn on V-M7-b, compare retrieval and online rules on V-M7-c/V-M7-d, and record which claims are empirical, asymptotic, or exact.
+
+**Spine check.** Expressivity, stability, circuit complexity, infinite-width kernels, and scaling parameterizations are complementary lenses. A theorem's conditions are part of its content; none is a substitute for evaluating a concrete trained model.

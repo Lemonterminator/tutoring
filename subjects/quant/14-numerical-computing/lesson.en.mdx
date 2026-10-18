@@ -1,0 +1,58 @@
+## Place in the pricing track
+
+Course 1 of 4. Read this before refactoring the Black–Scholes library. The goal is to explain which errors belong to the mathematical problem and which are introduced by an algorithm. The running case is the assignment's call price at $S=K=100$, $r=q=0$, with $(\sigma,T)=(0.20,1)$ and $(0.01,1/365)$.
+
+## Floating-point numbers and conditioning
+
+For IEEE 754 binary64, `std::numeric_limits<double>::epsilon()` is $2^{-52}\approx2.22\times10^{-16}$: the gap from $1$ to the next representable number. Unit roundoff under round-to-nearest is $u=2^{-53}\approx1.11\times10^{-16}$. State which convention you mean when writing $\epsilon$.
+
+The model $\operatorname{fl}(a\circ b)=(a\circ b)(1+\delta)$ with $|\delta|\lesssim u$ is useful for ordinary finite results, but subtraction of nearly equal computed values can have large **relative** error. $0/0$ yields NaN under usual IEEE settings, while nonzero divided by zero yields an infinity; an API should validate the domain before relying on either behavior.
+
+An ill-conditioned problem amplifies small input changes even with a good algorithm. An unstable algorithm creates avoidable error while solving a well-conditioned problem. For implied volatility, $d\sigma/dC=1/\mathrm{Vega}$ describes local inverse conditioning. For a finite-difference Gamma, cancellation in the numerator is an algorithmic problem.
+
+## Finite differences and the step-size trade-off
+
+Taylor expansion gives forward Delta error $O(h)$ and central Delta error $O(h^2)$. If each price has absolute error of order $u|C|$, the roundoff terms grow roughly as $u|C|/h$. Balancing terms gives $h_*\propto u^{1/2}$ for forward Delta and $h_*\propto u^{1/3}$ for central Delta, after choosing a meaningful price/spot scale.
+
+The assignment's forward three-point Gamma is
+
+$$D^2_{+,h}C=\frac{C(S+2h)-2C(S+h)+C(S)}{h^2}=\Gamma+hC^{(3)}(S)+O(h^2).$$
+
+Its roundoff term is roughly $u|C|/h^2$, so $h_*\propto u^{1/3}$ only as a scale law. The central second difference has $O(h^2)$ truncation and a corresponding $u^{1/4}$ scale law. Constants depend on derivatives, price magnitude and the implementation; $h_{\rm rel}=h/S$ does not remove this dependence.
+
+At extremely small $h$, floating-point addition can give `S + h == S`. The assignment's sweep down to $h_{\rm rel}=10^{-16}$ deliberately reaches this regime. Mark those samples as unresolved; do not interpret their apparent zero error as accuracy.
+
+## Complex step: first and second derivatives
+
+For a real-analytic $f$ whose computation preserves complex perturbations,
+
+$$\frac{\operatorname{Im}f(x+ih)}{h}=f'(x)-\frac{h^2}{6}f^{(3)}(x)+O(h^4).$$
+
+The first-derivative numerator has no subtraction of two nearly equal real values. This does not make every complex program analytic: `abs`, comparisons, real-only branches and discarded imaginary parts can invalidate the method. The real-part second derivative $-2[\operatorname{Re}f(x+ih)-f(x)]/h^2$ **does** subtract nearly equal real values.
+
+The assignment's 45° formula is correct for the exact analytic continuation. Set $\omega=(1+i)/\sqrt2$. Because $(\! -h\omega)^2=(h\omega)^2$ and $\omega^2=i$, $\omega^4=-1$, $\omega^6=-i$,
+
+$$\frac{\operatorname{Im}\{f(x+h\omega)+f(x-h\omega)\}}{h^2}=f''(x)-\frac{h^4}{360}f^{(6)}(x)+O(h^8).$$
+
+The earlier review of the PDF incorrectly replaced $(-\omega)^2$ by $\omega^{-2}$. The stated estimator has no missing factor of two. Its leading truncation error is $O(h^4)$ **when the evaluated function is the analytic $f$**. Summing opposite imaginary values can still lose precision at tiny $h$.
+
+The assignment instead approximates the complex normal CDF by $\Phi(a+ib)\approx\Phi(a)+ib\phi(a)$. For pure imaginary first steps this retains a first derivative with $O(h^2)$ error. For the 45° second derivative it omits the $-b^2\phi'(a)/2$ and higher terms of the analytic continuation. A simple counterexample is $f=\Phi$: applying the approximate CDF at $x\pm h\omega$ yields $\phi'(x)+h^2\phi'''(x)/12+O(h^4)$, so the $O(h^4)$ claim does not transfer to that approximation. A full complex `erfc`/Faddeeva implementation, or an explicitly analyzed higher-order continuation, is needed to test fourth-order behavior.
+
+## Stable elementary functions and normal tails
+
+The real normal CDF can use $\Phi(z)=\tfrac12\operatorname{erfc}(-z/\sqrt2)$. For large positive $z$, compute $\Phi(-z)$ directly rather than `1 - Phi(z)`: subtraction may erase the small tail. Cody's error-function approximations and NIST's definitions explain this representation.
+
+Near the forward ATM point, write $x=(F-K)/K$ and compute $\log(F/K)=\log(1+x)$ with `log1p(x)` if $x$ was formed accurately. A fixed $10^{-12}$ switch is an empirical choice. `log1p` cannot restore information already lost while computing $F/K$ or $F-K$. The logarithmic PDF expression $\log\phi(d)=-d^2/2-\log\sqrt{2\pi}$ avoids avoidable intermediate trouble; a sufficiently tiny true PDF still underflows on conversion back to `double`.
+
+## Practice with this repository
+
+1. Plot absolute and relative Gamma error against $h_{\rm rel}$ for both assignment scenarios. Add central Gamma for comparison and mark the first grid point where `S + h == S`.
+2. Derive the 45° Taylor series through $f^{(6)}$, then repeat the sweep using the assignment's approximate complex CDF. Estimate log-log error slopes where roundoff has not taken over.
+3. Sweep $x=(F-K)/K$ across powers of ten. Compare `log(F/K)` and `log1p(x)` against a higher-precision reference, then divide the log error by $\sigma\sqrt T$ to see its effect on $d_1$.
+
+## Reading, in order
+
+1. David Goldberg (1991), “What Every Computer Scientist Should Know About Floating-Point Arithmetic,” *ACM Computing Surveys* 23(1), 5–48, [DOI](https://doi.org/10.1145/103162.103163). Read rounding, relative error and cancellation; publisher access may be required.
+2. Nicholas J. Higham (2002), *Accuracy and Stability of Numerical Algorithms*, 2nd ed., SIAM, [publisher](https://epubs.siam.org/doi/10.1137/1.9780898718027). Use the sections on floating-point models, conditioning and stability; chapter numbering depends on edition. Paid/reference reading.
+3. William Squire and George Trapp (1998), “Using Complex Variables to Estimate Derivatives of Real Functions,” *SIAM Review* 40(1), 110–112, [DOI](https://doi.org/10.1137/S003614459631241X); Joaquim R. R. A. Martins, Peter Sturdza and Juan J. Alonso (2003), “The Complex-Step Derivative Approximation,” *ACM Transactions on Mathematical Software* 29(3), 245–262, [DOI](https://doi.org/10.1145/838250.838251). Read the derivation and implementation caveats. Publisher access may be required.
+4. NIST DLMF, [normal probabilities and `erfc`](https://dlmf.nist.gov/7.1); W. J. Cody (1969), “Rational Chebyshev Approximations for the Error Function,” *Mathematics of Computation* 23(107), 631–637, [AMS DOI](https://doi.org/10.1090/S0025-5718-1969-0247736-4). Free definitions; the Cody article is a deeper implementation reference.

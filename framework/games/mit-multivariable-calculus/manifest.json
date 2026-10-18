@@ -1,0 +1,3466 @@
+{
+  "course": "18-02sc-multivariable-calculus-fall-2010",
+  "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/",
+  "license": "CC BY-NC-SA 4.0",
+  "version": 1,
+  "games": [
+    {
+      "id": "MIT-MV-01",
+      "sequence": 1,
+      "unit": 1,
+      "session": "1",
+      "sessions": [
+        1
+      ],
+      "slug": "session-1-vectors",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Vectors",
+        "zh": "向量"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-a-vectors-determinants-and-planes/session-1-vectors/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 1: Vectors",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/38223d6ec70b12de9d01446438100b9d_MIT18_02SC_notes_0.pdf",
+          "filename": "38223d6ec70b12de9d01446438100b9d_MIT18_02SC_notes_0.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 1 Example: Vector Addition",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/917c7cf9f5de397a6e66bfe77f1ad5df_MIT18_02SC_we_1_comb.pdf",
+          "filename": "917c7cf9f5de397a6e66bfe77f1ad5df_MIT18_02SC_we_1_comb.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 1 Example: Vector Lengths",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/27c8bc9ad9580f7a4dc626cc08382db6_MIT18_02SC_we_2_comb.pdf",
+          "filename": "27c8bc9ad9580f7a4dc626cc08382db6_MIT18_02SC_we_2_comb.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 1 Example: Force is a Vector",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d4971e811683f61b5c9b0102131ab9e6_MIT18_02SC_we_3_comb.pdf",
+          "filename": "d4971e811683f61b5c9b0102131ab9e6_MIT18_02SC_we_3_comb.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 1 Example: Proofs Using Vectors",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8b8209990fd0248b6769e30af8589c7a_MIT18_02SC_we_4_comb.pdf",
+          "filename": "8b8209990fd0248b6769e30af8589c7a_MIT18_02SC_we_4_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 1 Problems: Vectors",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2bbf4f240864f1cc0f5348e4315fd550_MIT18_02SC_pb_1_quest.pdf",
+          "filename": "2bbf4f240864f1cc0f5348e4315fd550_MIT18_02SC_pb_1_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 1 Solutions: Vectors",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bc8ee5dc17d5d9e222e8bdcdedeb10dd_MIT18_02SC_pb_1_comb.pdf",
+          "filename": "bc8ee5dc17d5d9e222e8bdcdedeb10dd_MIT18_02SC_pb_1_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-02",
+      "sequence": 2,
+      "unit": 1,
+      "session": "2–3",
+      "sessions": [
+        2,
+        3
+      ],
+      "slug": "session-2-dot-products",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Dot Products, Lengths and Angles",
+        "zh": "点积、长度与夹角"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-a-vectors-determinants-and-planes/session-2-dot-products/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 2: Dot Product",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6082f2744b609da87e23f3d8feed0565_MIT18_02SC_notes_1.pdf",
+          "filename": "6082f2744b609da87e23f3d8feed0565_MIT18_02SC_notes_1.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 2 Problems: Dot Products",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/5e57c2a835c623ace0ac87f67e8a3158_MIT18_02SC_pb_2_quest.pdf",
+          "filename": "5e57c2a835c623ace0ac87f67e8a3158_MIT18_02SC_pb_2_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 2 Solutions: Dot Products",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/587fbea1a707a5deedadaa483e995d8a_MIT18_02SC_pb_2_comb.pdf",
+          "filename": "587fbea1a707a5deedadaa483e995d8a_MIT18_02SC_pb_2_comb.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 3 Example: Lengths and Angles",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/4e51fccb29b2ad412a713bcfe6a52b10_MIT18_02SC_we_5_comb.pdf",
+          "filename": "4e51fccb29b2ad412a713bcfe6a52b10_MIT18_02SC_we_5_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 3 Problems: Uses of the Dot Product",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3901b64bbe9fffc0c118278468c6d564_MIT18_02SC_pb_3_quest.pdf",
+          "filename": "3901b64bbe9fffc0c118278468c6d564_MIT18_02SC_pb_3_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 3 Solutions: Lengths and Angles",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3460c89177a28db4f7d676aa35c508b4_MIT18_02SC_pb_3_comb.pdf",
+          "filename": "3460c89177a28db4f7d676aa35c508b4_MIT18_02SC_pb_3_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-03",
+      "sequence": 3,
+      "unit": 1,
+      "session": "4",
+      "sessions": [
+        4
+      ],
+      "slug": "session-4-vector-components",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Vector Components and Projection",
+        "zh": "向量分量与投影"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-a-vectors-determinants-and-planes/session-4-vector-components/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 4 Example: Vector Components",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f1b2876cbb4207c972b90eb04ebc861d_MIT18_02SC_notes_2.pdf",
+          "filename": "f1b2876cbb4207c972b90eb04ebc861d_MIT18_02SC_notes_2.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 4 Problems: Components",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6d37211262443a5748b24696f1801841_MIT18_02SC_pb_4_quest.pdf",
+          "filename": "6d37211262443a5748b24696f1801841_MIT18_02SC_pb_4_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 4 Solutions: Vector Components",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2086208dc35486fe4037bede6ddad69c_MIT18_02SC_pb_4_comb.pdf",
+          "filename": "2086208dc35486fe4037bede6ddad69c_MIT18_02SC_pb_4_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-04",
+      "sequence": 4,
+      "unit": 1,
+      "session": "5–6",
+      "sessions": [
+        5,
+        6
+      ],
+      "slug": "session-5-area-and-determinants-in-2d",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Determinants: Area and Volume",
+        "zh": "行列式：面积与体积"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-a-vectors-determinants-and-planes/session-5-area-and-determinants-in-2d/",
+      "sources": [
+        {
+          "kind": "examples",
+          "title": "Session 5 Example: Area and Determinants in 2D",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/14957918d67d27e7833edd92452f1c92_MIT18_02SC_we_6_comb.pdf",
+          "filename": "14957918d67d27e7833edd92452f1c92_MIT18_02SC_we_6_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 5 Problems: Area and Determinants in 2D",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/57711a861227a87360f4e12f0eabc372_MIT18_02SC_pb_5_quest.pdf",
+          "filename": "57711a861227a87360f4e12f0eabc372_MIT18_02SC_pb_5_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 5 Solutions: Area and Determinants in 2D",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/860e3ac4bb8a3d42815486b9f00617c5_MIT18_02SC_pb_5_comb.pdf",
+          "filename": "860e3ac4bb8a3d42815486b9f00617c5_MIT18_02SC_pb_5_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 6 Example: Volumes and Determinants in Space",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f8f90e68ad5ec1db6be2a179b3f9bc7b_MIT18_02SC_MNotes_d1.pdf",
+          "filename": "f8f90e68ad5ec1db6be2a179b3f9bc7b_MIT18_02SC_MNotes_d1.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 6: Volumes and Determinants in Space",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/317eb93dbd9e833fbe51dfc6b2d3e034_MIT18_02SC_MNotes_d2.pdf",
+          "filename": "317eb93dbd9e833fbe51dfc6b2d3e034_MIT18_02SC_MNotes_d2.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 6 Problems: 3x3 Determinants",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c11d83dbe117bd6ab41be2e8bc923194_MIT18_02SC_pb_6_quest.pdf",
+          "filename": "c11d83dbe117bd6ab41be2e8bc923194_MIT18_02SC_pb_6_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 6 Solutions: 3x3 Determinants",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/efc7d9a535e851514b2c2f59e13ebbad_MIT18_02SC_pb_6_comb.pdf",
+          "filename": "efc7d9a535e851514b2c2f59e13ebbad_MIT18_02SC_pb_6_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 6 Problems: Volumes and Determinants in Space",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/77a7decd92b56b73f13e9a235b9ff1a5_MIT18_02SC_pb_7_quest.pdf",
+          "filename": "77a7decd92b56b73f13e9a235b9ff1a5_MIT18_02SC_pb_7_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 6 Solutions: Volumes and Determinants in Space",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/03e5884632cf227fa21d007f329b12a8_MIT18_02SC_pb_7_comb.pdf",
+          "filename": "03e5884632cf227fa21d007f329b12a8_MIT18_02SC_pb_7_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-05",
+      "sequence": 5,
+      "unit": 1,
+      "session": "7",
+      "sessions": [
+        7
+      ],
+      "slug": "session-7-cross-products",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Cross Products",
+        "zh": "叉积"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-a-vectors-determinants-and-planes/session-7-cross-products/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 7 Example: Cross Products",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/38b6892f5294ed562cf3dedaf5b99ba4_MIT18_02SC_notes_3.pdf",
+          "filename": "38b6892f5294ed562cf3dedaf5b99ba4_MIT18_02SC_notes_3.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 7 Problems: Cross Products",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a8a98ad00bcf87408c1971f9ba2b2a5e_MIT18_02SC_pb_8_quest.pdf",
+          "filename": "a8a98ad00bcf87408c1971f9ba2b2a5e_MIT18_02SC_pb_8_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 7 Solutions: Cross Products",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1edeed419b7e944cc7ae4a79100744fa_MIT18_02SC_pb_8_comb.pdf",
+          "filename": "1edeed419b7e944cc7ae4a79100744fa_MIT18_02SC_pb_8_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-06",
+      "sequence": 6,
+      "unit": 1,
+      "session": "8",
+      "sessions": [
+        8
+      ],
+      "slug": "session-8-equations-of-planes",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Equations of Planes",
+        "zh": "平面方程"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-a-vectors-determinants-and-planes/session-8-equations-of-planes/",
+      "sources": [
+        {
+          "kind": "examples",
+          "title": "Session 8 Example: Equations of Planes",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/42a8b344ffc58e1df8b56144d245fdf1_MIT18_02SC_we_7_comb.pdf",
+          "filename": "42a8b344ffc58e1df8b56144d245fdf1_MIT18_02SC_we_7_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 8 Problems: Equations of Planes",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f2884ea6b068fcf14d5a5fb94ff3ce74_MIT18_02SC_pb_9_quest.pdf",
+          "filename": "f2884ea6b068fcf14d5a5fb94ff3ce74_MIT18_02SC_pb_9_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 8 Solutions: Equations of Planes",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/06dadd5406f73af5a10c538ddab4bb80_MIT18_02SC_pb_9_comb.pdf",
+          "filename": "06dadd5406f73af5a10c538ddab4bb80_MIT18_02SC_pb_9_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-07",
+      "sequence": 7,
+      "unit": 1,
+      "session": "9–10",
+      "sessions": [
+        9,
+        10
+      ],
+      "slug": "session-9-matrix-multiplication",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Matrix Multiplication",
+        "zh": "矩阵乘法"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-b-matrices-and-systems-of-equations/session-9-matrix-multiplication/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 9 Example: Matrix Multiplication",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b50a14cc26e0e5ef6661e190ed2d5271_MIT18_02SC_MNotes_m1.pdf",
+          "filename": "b50a14cc26e0e5ef6661e190ed2d5271_MIT18_02SC_MNotes_m1.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 9 Problems: Matrix Multiplication",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/4092f473c2952ceda8dcf204ee096167_MIT18_02SC_pb_10_quest.pdf",
+          "filename": "4092f473c2952ceda8dcf204ee096167_MIT18_02SC_pb_10_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 9 Solutions: Matrix Multiplication",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e2a4fce62976e74e34767839aa7b3626_MIT18_02SC_pb_10_comb.pdf",
+          "filename": "e2a4fce62976e74e34767839aa7b3626_MIT18_02SC_pb_10_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 10 Example: Meaning of Matrix Multiplication",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e6f05e8dd95b31f2dc80fe3b5a6a955f_MIT18_02SC_notes_4.pdf",
+          "filename": "e6f05e8dd95b31f2dc80fe3b5a6a955f_MIT18_02SC_notes_4.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 10 Problems: Meaning of Matrix Multiplication",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f13cd9df6df538215a0af6826db6bb7d_MIT18_02SC_pb_11_quest.pdf",
+          "filename": "f13cd9df6df538215a0af6826db6bb7d_MIT18_02SC_pb_11_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 10 Solutions: Meaning of Matrix Multiplication",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e2ad7e48806b4a3e0540539f64f4212c_MIT18_02SC_pb_11_comb.pdf",
+          "filename": "e2ad7e48806b4a3e0540539f64f4212c_MIT18_02SC_pb_11_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-08",
+      "sequence": 8,
+      "unit": 1,
+      "session": "11",
+      "sessions": [
+        11
+      ],
+      "slug": "session-11-matrix-inverses",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Matrix Inverses",
+        "zh": "逆矩阵"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-b-matrices-and-systems-of-equations/session-11-matrix-inverses/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 11 Example: Matrix Inverses",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f1388eddd0f3047bcfd70cf5da379f78_MIT18_02SC_MNotes_m2.pdf",
+          "filename": "f1388eddd0f3047bcfd70cf5da379f78_MIT18_02SC_MNotes_m2.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 11 Problems: Matrix Inverses",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e3d204905da69b83ff39bda630812ca2_MIT18_02SC_pb_12_quest.pdf",
+          "filename": "e3d204905da69b83ff39bda630812ca2_MIT18_02SC_pb_12_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 11 Solutions: Matrix Inverses",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/06054059af5bc60cbae362924590e03e_MIT18_02SC_pb_12_comb.pdf",
+          "filename": "06054059af5bc60cbae362924590e03e_MIT18_02SC_pb_12_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-09",
+      "sequence": 9,
+      "unit": 1,
+      "session": "12–13",
+      "sessions": [
+        12,
+        13
+      ],
+      "slug": "session-12-equations-of-planes-ii",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Planes and Linear Systems",
+        "zh": "平面与线性方程组"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-b-matrices-and-systems-of-equations/session-12-equations-of-planes-ii/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 12 Example 1: Equations of Planes II",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/581296ab1100fe5615fccb7ff2511530_MIT18_02SC_notes_5.pdf",
+          "filename": "581296ab1100fe5615fccb7ff2511530_MIT18_02SC_notes_5.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 12 Problems: Equations of Planes II",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/37dddf9e578357d34bf2b39d2dac08d3_MIT18_02SC_pb_13_quest.pdf",
+          "filename": "37dddf9e578357d34bf2b39d2dac08d3_MIT18_02SC_pb_13_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 12 Solutions: Equations of Planes II",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e3dfe31f46c58d296d2aee73f4b3f7e6_MIT18_02SC_pb_13_comb.pdf",
+          "filename": "e3dfe31f46c58d296d2aee73f4b3f7e6_MIT18_02SC_pb_13_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 12 Example 2: Equations of Planes II",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/0768ecb704c18ede11fae15923c160f8_MIT18_02SC_notes_6.pdf",
+          "filename": "0768ecb704c18ede11fae15923c160f8_MIT18_02SC_notes_6.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 12 Problems: Equations of Planes II",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/658ee5c77b7d4d74ec8a4e803a9fadaf_MIT18_02SC_pb_14_quest.pdf",
+          "filename": "658ee5c77b7d4d74ec8a4e803a9fadaf_MIT18_02SC_pb_14_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 12 Solutions: Equations of Planes II",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f12146d5f7ba8ae061155d13d9076d13_MIT18_02SC_pb_14_comb.pdf",
+          "filename": "f12146d5f7ba8ae061155d13d9076d13_MIT18_02SC_pb_14_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 13: Linear Systems and Planes",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b75b75a77749292f4bb34d709e91379d_MIT18_02SC_notes_7.pdf",
+          "filename": "b75b75a77749292f4bb34d709e91379d_MIT18_02SC_notes_7.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 13 Problems: Linear Systems and Planes",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ddfe0f37c5a9019d63e4548de992d120_MIT18_02SC_pb_15_quest.pdf",
+          "filename": "ddfe0f37c5a9019d63e4548de992d120_MIT18_02SC_pb_15_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 13 Solutions: Linear Systems and Planes",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/988501af6a641704fdaadd8cb8c40960_MIT18_02SC_pb_15_comb.pdf",
+          "filename": "988501af6a641704fdaadd8cb8c40960_MIT18_02SC_pb_15_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-10",
+      "sequence": 10,
+      "unit": 1,
+      "session": "14",
+      "sessions": [
+        14
+      ],
+      "slug": "session-14-solutions-to-square-systems",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Solutions to Square Systems",
+        "zh": "方阵方程组的解"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-b-matrices-and-systems-of-equations/session-14-solutions-to-square-systems/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 14: Solutions to Square Systems",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ae721c48ce741018e1a3c2aefb6a8640_MIT18_02SC_MNotes_m3.pdf",
+          "filename": "ae721c48ce741018e1a3c2aefb6a8640_MIT18_02SC_MNotes_m3.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 14 Example: Solutions to Square Systems",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1d1fcad275ed0b19e92a87c455f08a42_MIT18_02SC_we_8_comb.pdf",
+          "filename": "1d1fcad275ed0b19e92a87c455f08a42_MIT18_02SC_we_8_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 14 Problems: Solutions to Square Systems",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/523f43e34125d1497df40270d865cc8a_MIT18_02SC_pb_16_quest.pdf",
+          "filename": "523f43e34125d1497df40270d865cc8a_MIT18_02SC_pb_16_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 14 Solutions: Solutions to Square Systems",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/19b79f0006b255c6e424850f9ea0a810_MIT18_02SC_pb_16_comb.pdf",
+          "filename": "19b79f0006b255c6e424850f9ea0a810_MIT18_02SC_pb_16_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-11",
+      "sequence": 11,
+      "unit": 1,
+      "session": "15–16",
+      "sessions": [
+        15,
+        16
+      ],
+      "slug": "session-15-equations-of-lines",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Lines, and a Line Meeting a Plane",
+        "zh": "直线，以及直线与平面的交点"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-c-parametric-equations-for-curves/session-15-equations-of-lines/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 15: Equations of Lines",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/cf83cf53826ae477eaeeb1caf05b1cab_MIT18_02SC_notes_8.pdf",
+          "filename": "cf83cf53826ae477eaeeb1caf05b1cab_MIT18_02SC_notes_8.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 15 Problems: Equations of Lines",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/afa106c9f2fe8b07cc5dbdbf9f81f7ef_MIT18_02SC_pb_17_quest.pdf",
+          "filename": "afa106c9f2fe8b07cc5dbdbf9f81f7ef_MIT18_02SC_pb_17_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 15 Solutions: Equations of Lines",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b823f1bb039eb5adddc36d9ad8d72d54_MIT18_02SC_pb_17_comb.pdf",
+          "filename": "b823f1bb039eb5adddc36d9ad8d72d54_MIT18_02SC_pb_17_comb.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 16 Example: Intersection of a Line and a Plane",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/29d176356f6f118762bf32dbf0758b55_MIT18_02SC_we_9_comb.pdf",
+          "filename": "29d176356f6f118762bf32dbf0758b55_MIT18_02SC_we_9_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 16 Problems: Intersection of a Line and a Plane",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f5124d952fe262f3bd8d0f102de7aaff_MIT18_02SC_pb_18_quest.pdf",
+          "filename": "f5124d952fe262f3bd8d0f102de7aaff_MIT18_02SC_pb_18_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 16 Solutions: Intersection of a Line and a Plane",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c045007c12c0914232c10423f37ddd95_MIT18_02SC_pb_18_comb.pdf",
+          "filename": "c045007c12c0914232c10423f37ddd95_MIT18_02SC_pb_18_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-12",
+      "sequence": 12,
+      "unit": 1,
+      "session": "17–18",
+      "sessions": [
+        17,
+        18
+      ],
+      "slug": "session-17-general-parametric-equations-the-cycloid",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Parametric Curves: the Cycloid and its Cusp",
+        "zh": "参数曲线：摆线与尖点"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-c-parametric-equations-for-curves/session-17-general-parametric-equations-the-cycloid/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 17 Example: General Parametric Equations; the Cycloid",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2e7855c398972f7d5da123cae42a8290_MIT18_02SC_notes_9.pdf",
+          "filename": "2e7855c398972f7d5da123cae42a8290_MIT18_02SC_notes_9.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 17 Problems: General Parametric Equations; the Cycloid",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/45bfa44b4183d8959432dd6456258ceb_MIT18_02SC_pb_19_quest.pdf",
+          "filename": "45bfa44b4183d8959432dd6456258ceb_MIT18_02SC_pb_19_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 17 Solutions: General Parametric Equations; the Cycloid",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/75129f4f72e0e349f26a10ff17c9fcb2_MIT18_02SC_pb_19_comb.pdf",
+          "filename": "75129f4f72e0e349f26a10ff17c9fcb2_MIT18_02SC_pb_19_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 18: Point (Cusp) on Cycloid",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bca8693ceb5b6b22e5aeadb272a9d9a6_MIT18_02SC_notes_10.pdf",
+          "filename": "bca8693ceb5b6b22e5aeadb272a9d9a6_MIT18_02SC_notes_10.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-13",
+      "sequence": 13,
+      "unit": 1,
+      "session": "19–20",
+      "sessions": [
+        19,
+        20
+      ],
+      "slug": "session-19-velocity-and-acceleration",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Velocity, Acceleration and Arc Length",
+        "zh": "速度、加速度与弧长"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-c-parametric-equations-for-curves/session-19-velocity-and-acceleration/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 19 Example: Velocity and Acceleration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f53b53c2dc7757c7445623020b135d4f_MIT18_02SC_notes_11.pdf",
+          "filename": "f53b53c2dc7757c7445623020b135d4f_MIT18_02SC_notes_11.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 19 Example: Velocity and Acceleration.pdf",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c529e257bc14aa65e365699bf9e3d787_MIT18_02SC_we_10_comb.pdf",
+          "filename": "c529e257bc14aa65e365699bf9e3d787_MIT18_02SC_we_10_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 19 Problems: Velocity and Acceleration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/72216820fcb729129ceab1cd4a79b291_MIT18_02SC_pb_20_quest.pdf",
+          "filename": "72216820fcb729129ceab1cd4a79b291_MIT18_02SC_pb_20_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 19 Solutions: Velocity and Acceleration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a8bae81352ba8beb11a67e8a13520893_MIT18_02SC_pb_20_comb.pdf",
+          "filename": "a8bae81352ba8beb11a67e8a13520893_MIT18_02SC_pb_20_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 20: Velocity and Arc Length",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ef470e8dbb5076a408d8af686bce3711_MIT18_02SC_notes_12.pdf",
+          "filename": "ef470e8dbb5076a408d8af686bce3711_MIT18_02SC_notes_12.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 20 Example : Velocity and Arc Length",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ace008d8cf89108aed83cdbc979159fd_MIT18_02SC_we_11_comb.pdf",
+          "filename": "ace008d8cf89108aed83cdbc979159fd_MIT18_02SC_we_11_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 20 Problems: Velocity and Arc Length",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/26c788675387b3565a473e3ba0915d26_MIT18_02SC_pb_21_quest.pdf",
+          "filename": "26c788675387b3565a473e3ba0915d26_MIT18_02SC_pb_21_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 20 Solutions: Velocity and Arc Length",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a1474709791ee9a8ef675196521acc38_MIT18_02SC_pb_21_comb.pdf",
+          "filename": "a1474709791ee9a8ef675196521acc38_MIT18_02SC_pb_21_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-14",
+      "sequence": 14,
+      "unit": 1,
+      "session": "21",
+      "sessions": [
+        21
+      ],
+      "slug": "session-21-keplers-second-law",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Kepler's Second Law",
+        "zh": "开普勒第二定律"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-c-parametric-equations-for-curves/session-21-keplers-second-law/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 21: Kepler's Second Law",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/040b72c08d4f0ef67faf085066e1cc71_MIT18_02SC_MNotes_k.pdf",
+          "filename": "040b72c08d4f0ef67faf085066e1cc71_MIT18_02SC_MNotes_k.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 21 Problems: Kepler's Second Law",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/fb00223c41260e607ce425e459e8b6d0_MIT18_02SC_pb_22_quest.pdf",
+          "filename": "fb00223c41260e607ce425e459e8b6d0_MIT18_02SC_pb_22_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 21 Solutions: Kepler's Second Law",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/be0f5c94987e9cda6ecd7a69c7f708b3_MIT18_02SC_pb_22_comb.pdf",
+          "filename": "be0f5c94987e9cda6ecd7a69c7f708b3_MIT18_02SC_pb_22_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-15",
+      "sequence": 15,
+      "unit": 1,
+      "session": "22–23",
+      "sessions": [
+        22,
+        23
+      ],
+      "slug": "session-22-review-of-topics",
+      "kind": "review",
+      "evidence": "thin",
+      "title": {
+        "en": "Unit 1 Review",
+        "zh": "第一单元复习"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/exam-1/session-22-review-of-topics/",
+      "sources": [
+        {
+          "kind": "practice",
+          "title": "Exam 1 Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/fab3055ba2c2f06834f14004c7d0047e_MIT18_02SC_prac1A.pdf",
+          "filename": "fab3055ba2c2f06834f14004c7d0047e_MIT18_02SC_prac1A.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Exam 1 Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/32defabf2f2d0b9c2064cd3f65f26a53_MIT18_02SC_prac1Asol.pdf",
+          "filename": "32defabf2f2d0b9c2064cd3f65f26a53_MIT18_02SC_prac1Asol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-16",
+      "sequence": 16,
+      "unit": 1,
+      "session": "1",
+      "sessions": [],
+      "slug": "exam",
+      "kind": "exam",
+      "evidence": "exam",
+      "title": {
+        "en": "Exam 1",
+        "zh": "第一次考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/exam-1/exam/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Exam 1",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b5f9a492d8df6830a816bba6c13aecef_MIT18_02SC_exam1.pdf",
+          "filename": "b5f9a492d8df6830a816bba6c13aecef_MIT18_02SC_exam1.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Exam 1 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c77745b9eb93ee503a5e7f914907804b_MIT18_02SC_exam1sol.pdf",
+          "filename": "c77745b9eb93ee503a5e7f914907804b_MIT18_02SC_exam1sol.pdf"
+        },
+        {
+          "kind": "practice",
+          "title": "Exam 1 Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/fab3055ba2c2f06834f14004c7d0047e_MIT18_02SC_prac1A.pdf",
+          "filename": "fab3055ba2c2f06834f14004c7d0047e_MIT18_02SC_prac1A.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Exam 1 Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/32defabf2f2d0b9c2064cd3f65f26a53_MIT18_02SC_prac1Asol.pdf",
+          "filename": "32defabf2f2d0b9c2064cd3f65f26a53_MIT18_02SC_prac1Asol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-17",
+      "sequence": 17,
+      "unit": 2,
+      "session": "24–25",
+      "sessions": [
+        24,
+        25
+      ],
+      "slug": "session-24-functions-of-two-variables-graphs",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Functions of Two Variables and Level Curves",
+        "zh": "二元函数与等高线"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-a-functions-of-two-variables-tangent-approximation-and-optimization/session-24-functions-of-two-variables-graphs/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 24: Functions of Two Variables: Graphs",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/68e54de412d9ab63d40838c414467472_MIT18_02SC_notes_13.pdf",
+          "filename": "68e54de412d9ab63d40838c414467472_MIT18_02SC_notes_13.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 24: Functions of Two Variables: Graphs",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/837e7b105450ed2a79f20ca45c524848_MIT18_02SC_notes_14.pdf",
+          "filename": "837e7b105450ed2a79f20ca45c524848_MIT18_02SC_notes_14.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 24 Problems: Functions of Two Variables: Graphs",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/05b7530bb43b715861694fe2ab9e210d_MIT18_02SC_pb_23_quest.pdf",
+          "filename": "05b7530bb43b715861694fe2ab9e210d_MIT18_02SC_pb_23_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 24 Solutions: Functions of Two Variables: Graphs",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9d3a3e718f5c4d077fa51cf307c92bef_MIT18_02SC_pb_23_comb.pdf",
+          "filename": "9d3a3e718f5c4d077fa51cf307c92bef_MIT18_02SC_pb_23_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 25 Example: Level Curves and Contour Plots",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d32be016df4d1bcf9c9e32cb109db15b_MIT18_02SC_notes_15.pdf",
+          "filename": "d32be016df4d1bcf9c9e32cb109db15b_MIT18_02SC_notes_15.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 25 Problems: Level Curves and Contour Plots",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1b2901c7999988358a6c913b0c6669f9_MIT18_02SC_pb_24_quest.pdf",
+          "filename": "1b2901c7999988358a6c913b0c6669f9_MIT18_02SC_pb_24_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 25 Solutions: Level Curves and Contour Plots",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/0badbad016b2b77a4d7581be8d110575_MIT18_02SC_pb_24_comb.pdf",
+          "filename": "0badbad016b2b77a4d7581be8d110575_MIT18_02SC_pb_24_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-18",
+      "sequence": 18,
+      "unit": 2,
+      "session": "26",
+      "sessions": [
+        26
+      ],
+      "slug": "session-26-partial-derivatives",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Partial Derivatives",
+        "zh": "偏导数"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-a-functions-of-two-variables-tangent-approximation-and-optimization/session-26-partial-derivatives/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 26: Partial Derivatives",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3299372c0b77500ada4ea558fea4db80_MIT18_02SC_MNotes_ta1.pdf",
+          "filename": "3299372c0b77500ada4ea558fea4db80_MIT18_02SC_MNotes_ta1.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 26 Problems: Partial Derivatives",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e6b035a2ad04ca78b89e0e3c22d306e2_MIT18_02SC_pb_25_quest.pdf",
+          "filename": "e6b035a2ad04ca78b89e0e3c22d306e2_MIT18_02SC_pb_25_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 26 Solutions: Partial Derivatives",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/66d48ec2069664661fd3da96a7333c76_MIT18_02SC_pb_25_comb.pdf",
+          "filename": "66d48ec2069664661fd3da96a7333c76_MIT18_02SC_pb_25_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-19",
+      "sequence": 19,
+      "unit": 2,
+      "session": "27",
+      "sessions": [
+        27
+      ],
+      "slug": "session-27-approximation-formula",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Tangent Plane Approximation",
+        "zh": "切平面与近似公式"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-a-functions-of-two-variables-tangent-approximation-and-optimization/session-27-approximation-formula/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 27 Example: Approximation Formula",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b6e262891bdea6798c2017711129ef9d_MIT18_02SC_MNotes_ta2_3.pdf",
+          "filename": "b6e262891bdea6798c2017711129ef9d_MIT18_02SC_MNotes_ta2_3.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 27 Example: Approximation Formula",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ff89ab81dc34627259fcf4dc45909f85_MIT18_02SC_MNotes_ta4.pdf",
+          "filename": "ff89ab81dc34627259fcf4dc45909f85_MIT18_02SC_MNotes_ta4.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 27 Example: Approximation Formula",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/0ea53ee5f57584e074bf15e632615930_MIT18_02SC_we_12_comb.pdf",
+          "filename": "0ea53ee5f57584e074bf15e632615930_MIT18_02SC_we_12_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 27 Problems: Approximation Formula",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/117a2585c4344fe5633dbcc669b94e92_MIT18_02SC_pb_26_quest.pdf",
+          "filename": "117a2585c4344fe5633dbcc669b94e92_MIT18_02SC_pb_26_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 27 Solutions: Approximation Formula",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bbcebe55923297376707b0401b8f9b40_MIT18_02SC_pb_26_comb.pdf",
+          "filename": "bbcebe55923297376707b0401b8f9b40_MIT18_02SC_pb_26_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-20",
+      "sequence": 20,
+      "unit": 2,
+      "session": "28",
+      "sessions": [
+        28
+      ],
+      "slug": "session-28-optimization-problems",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Optimization",
+        "zh": "最优化"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-a-functions-of-two-variables-tangent-approximation-and-optimization/session-28-optimization-problems/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 28 Example: Optimization Problems",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2df7f490fc5f1bd28d6e8fd391e9a964_MIT18_02SC_notes_16.pdf",
+          "filename": "2df7f490fc5f1bd28d6e8fd391e9a964_MIT18_02SC_notes_16.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 28 Problems: Optimization Problems",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ff30391fbc54043a2ca393a12b0a33a8_MIT18_02SC_pb_27_quest.pdf",
+          "filename": "ff30391fbc54043a2ca393a12b0a33a8_MIT18_02SC_pb_27_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 28 Solutions: Optimization Problems",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1f31f2e8eba1ad83251380e11f108971_MIT18_02SC_pb_27_comb.pdf",
+          "filename": "1f31f2e8eba1ad83251380e11f108971_MIT18_02SC_pb_27_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-21",
+      "sequence": 21,
+      "unit": 2,
+      "session": "29",
+      "sessions": [
+        29
+      ],
+      "slug": "session-29-least-squares",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Least Squares",
+        "zh": "最小二乘"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-a-functions-of-two-variables-tangent-approximation-and-optimization/session-29-least-squares/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 29: Least Squares",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/788bdb0fcf07fedd1ffe484820d0226a_MIT18_02SC_MNotes_ls.pdf",
+          "filename": "788bdb0fcf07fedd1ffe484820d0226a_MIT18_02SC_MNotes_ls.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 29 Example: Least Squares",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/af07112aca18cb84b977de34011c0077_MIT18_02SC_we_13_comb.pdf",
+          "filename": "af07112aca18cb84b977de34011c0077_MIT18_02SC_we_13_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 29 Problems: Least Squares",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/fd127c938827eab01ab5d0aff1b20f72_MIT18_02SC_pb_28_quest.pdf",
+          "filename": "fd127c938827eab01ab5d0aff1b20f72_MIT18_02SC_pb_28_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 29 Solutions: Least Squares",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ddcf62098a0c15fad1585957a6434b97_MIT18_02SC_pb_28_comb.pdf",
+          "filename": "ddcf62098a0c15fad1585957a6434b97_MIT18_02SC_pb_28_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-22",
+      "sequence": 22,
+      "unit": 2,
+      "session": "30–31",
+      "sessions": [
+        30,
+        31
+      ],
+      "slug": "session-30-second-derivative-test",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "The Second Derivative Test",
+        "zh": "二阶导数判别法"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-a-functions-of-two-variables-tangent-approximation-and-optimization/session-30-second-derivative-test/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 30: Second Derivative Test",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a4685876e286873102a9937e1998a098_MIT18_02SC_MNotes_sd.pdf",
+          "filename": "a4685876e286873102a9937e1998a098_MIT18_02SC_MNotes_sd.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 30 Example: Second Derivative Test",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9c26765a95f72e9d2b317f6687b7e629_MIT18_02SC_we_14_comb.pdf",
+          "filename": "9c26765a95f72e9d2b317f6687b7e629_MIT18_02SC_we_14_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 30 Problems: Second Derivative Test",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/11309a01a4084b35a3f2e5f375f76887_MIT18_02SC_pb_29_quest.pdf",
+          "filename": "11309a01a4084b35a3f2e5f375f76887_MIT18_02SC_pb_29_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 30 Solutions: Second Derivative Test",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/cc70f310f39366a68d48123db73e3432_MIT18_02SC_pb_29_comb.pdf",
+          "filename": "cc70f310f39366a68d48123db73e3432_MIT18_02SC_pb_29_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-23",
+      "sequence": 23,
+      "unit": 2,
+      "session": "32–33",
+      "sessions": [
+        32,
+        33
+      ],
+      "slug": "session-32-total-differentials-and-the-chain-rule",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Total Differentials and the Chain Rule",
+        "zh": "全微分与链式法则"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-b-chain-rule-gradient-and-directional-derivatives/session-32-total-differentials-and-the-chain-rule/",
+      "sources": [
+        {
+          "kind": "examples",
+          "title": "Session 32 Example: Total Differentials and the Chain Rule",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/48c905ccf42b4e0d9284da8fc4897212_MIT18_02SC_we_15_comb.pdf",
+          "filename": "48c905ccf42b4e0d9284da8fc4897212_MIT18_02SC_we_15_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 32 Problems: Total Differentials and the Chain Rule",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/94a0b57dd7830bfd856c7fa7f38794bd_MIT18_02SC_pb_30_quest.pdf",
+          "filename": "94a0b57dd7830bfd856c7fa7f38794bd_MIT18_02SC_pb_30_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 32 Solutions: Total Differentials and the Chain Rule",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/12e7b2010d85b6b5cb2ad12211254f3f_MIT18_02SC_pb_30_comb.pdf",
+          "filename": "12e7b2010d85b6b5cb2ad12211254f3f_MIT18_02SC_pb_30_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 33 Problems: Examples",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/24db3519e1a5f51cafdb5e57ae809948_MIT18_02SC_pb_31_quest.pdf",
+          "filename": "24db3519e1a5f51cafdb5e57ae809948_MIT18_02SC_pb_31_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 33 Solutions: Examples",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c0a1d039ea87b19b3c97353b5524aa4f_MIT18_02SC_pb_31_comb.pdf",
+          "filename": "c0a1d039ea87b19b3c97353b5524aa4f_MIT18_02SC_pb_31_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-24",
+      "sequence": 24,
+      "unit": 2,
+      "session": "34",
+      "sessions": [
+        34
+      ],
+      "slug": "session-34-the-chain-rule-with-more-variables",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "The Chain Rule with More Variables",
+        "zh": "多变量链式法则"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-b-chain-rule-gradient-and-directional-derivatives/session-34-the-chain-rule-with-more-variables/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 34 Example: The Chain Rule with More Variables",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/95e0a67b5970599a87a98dd4b47200b3_MIT18_02SC_notes_17.pdf",
+          "filename": "95e0a67b5970599a87a98dd4b47200b3_MIT18_02SC_notes_17.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 34 Example: The Chain Rule with More Variables",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/182a2e56a954224138f69e294748812b_MIT18_02SC_we_16_comb.pdf",
+          "filename": "182a2e56a954224138f69e294748812b_MIT18_02SC_we_16_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 34 Problems: Chain Rule Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/534e4132c0234c2ac9517f5feb0b84dd_MIT18_02SC_pb_40_quest.pdf",
+          "filename": "534e4132c0234c2ac9517f5feb0b84dd_MIT18_02SC_pb_40_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 34 Solutions: Chain Rule Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d9c0d13bbd583e2e3ea926966abb47f0_MIT18_02SC_pb_40_comb.pdf",
+          "filename": "d9c0d13bbd583e2e3ea926966abb47f0_MIT18_02SC_pb_40_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-25",
+      "sequence": 25,
+      "unit": 2,
+      "session": "35–37",
+      "sessions": [
+        35,
+        36,
+        37
+      ],
+      "slug": "session-35-gradient-definition-perpendicular-to-level-curves",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "The Gradient and Level Curves",
+        "zh": "梯度与等高线"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-b-chain-rule-gradient-and-directional-derivatives/session-35-gradient-definition-perpendicular-to-level-curves/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 35 Example: Gradient: Definition, Perpendicular to Level Curves",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6d4f46e89733b7291f86a22882aa2311_MIT18_02SC_notes_18.pdf",
+          "filename": "6d4f46e89733b7291f86a22882aa2311_MIT18_02SC_notes_18.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 35 Problems: Elliptic Paraboloid",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/fe168079318988d439420b1204a09ce4_MIT18_02SC_pb_41_quest.pdf",
+          "filename": "fe168079318988d439420b1204a09ce4_MIT18_02SC_pb_41_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 35 Solutions: Elliptic Paraboloid",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9f291190e5de3c69354c5152448fc73b_MIT18_02SC_pb_41_comb.pdf",
+          "filename": "9f291190e5de3c69354c5152448fc73b_MIT18_02SC_pb_41_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 36: Proof",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/85c1d85363d9808505351b571d2750aa_MIT18_02SC_notes_19.pdf",
+          "filename": "85c1d85363d9808505351b571d2750aa_MIT18_02SC_notes_19.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 36 Problems: Proof",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/4fcfe6b7f2d054c0656cf2078402c335_MIT18_02SC_pb_32_quest.pdf",
+          "filename": "4fcfe6b7f2d054c0656cf2078402c335_MIT18_02SC_pb_32_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 36 Solutions: Proof",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/7a59a42cf0411e769aac046b33f10f19_MIT18_02SC_pb_32_comb.pdf",
+          "filename": "7a59a42cf0411e769aac046b33f10f19_MIT18_02SC_pb_32_comb.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 37: Example",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/5ac021982a142a1524d3200d2659fe57_MIT18_02SC_we_17_comb.pdf",
+          "filename": "5ac021982a142a1524d3200d2659fe57_MIT18_02SC_we_17_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 37 Problems: Equation of a Tangent Plane",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/16b8c2599dca5e772a5884977e6f2d02_MIT18_02SC_pb_44_quest.pdf",
+          "filename": "16b8c2599dca5e772a5884977e6f2d02_MIT18_02SC_pb_44_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 37 Solutions: Equation of a Tangent Plane",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/593089011952ba62a2ce28593e7f949c_MIT18_02SC_pb_44_comb.pdf",
+          "filename": "593089011952ba62a2ce28593e7f949c_MIT18_02SC_pb_44_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-26",
+      "sequence": 26,
+      "unit": 2,
+      "session": "38",
+      "sessions": [
+        38
+      ],
+      "slug": "session-38-directional-derivatives",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Directional Derivatives",
+        "zh": "方向导数"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-b-chain-rule-gradient-and-directional-derivatives/session-38-directional-derivatives/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 38 Example: Directional Derivatives",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/94a05e4b48d9481a4b9dbdef0d5d86d7_MIT18_02SC_notes_20.pdf",
+          "filename": "94a05e4b48d9481a4b9dbdef0d5d86d7_MIT18_02SC_notes_20.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 38 Problems: Directional Derivatives",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ece6a179f86a1e9891cb0db2f8a786ec_MIT18_02SC_pb_45_quest.pdf",
+          "filename": "ece6a179f86a1e9891cb0db2f8a786ec_MIT18_02SC_pb_45_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 38 Solutions: Directional Derivatives",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9791e249fa91ebd833b29064a9aca99f_MIT18_02SC_pb_45_comb.pdf",
+          "filename": "9791e249fa91ebd833b29064a9aca99f_MIT18_02SC_pb_45_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-27",
+      "sequence": 27,
+      "unit": 2,
+      "session": "39–40",
+      "sessions": [
+        39,
+        40
+      ],
+      "slug": "session-39-statement-of-lagrange-multipliers-and-example",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Lagrange Multipliers: Statement and Proof",
+        "zh": "Lagrange 乘数法：命题与证明"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-c-lagrange-multipliers-and-constrained-differentials/session-39-statement-of-lagrange-multipliers-and-example/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 39: Statement of Lagrange Multipliers and Example",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d97c53ed0a6734b4bc266478fe6423c1_MIT18_02SC_notes_21.pdf",
+          "filename": "d97c53ed0a6734b4bc266478fe6423c1_MIT18_02SC_notes_21.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 39 Problems: Lagrange Multipliers",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a2af1e8a10df37abb9aaa31871c6ea87_MIT18_02SC_pb_46_quest.pdf",
+          "filename": "a2af1e8a10df37abb9aaa31871c6ea87_MIT18_02SC_pb_46_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 39 Solutions: Lagrange Multipliers",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/693d40c750e1db7d97c2849986f04029_MIT18_02SC_pb_46_comb.pdf",
+          "filename": "693d40c750e1db7d97c2849986f04029_MIT18_02SC_pb_46_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 40: Proof of Lagrange Multipliers",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ebbeb8e61827a8058d2c45b674d003b3_MIT18_02SC_notes_22.pdf",
+          "filename": "ebbeb8e61827a8058d2c45b674d003b3_MIT18_02SC_notes_22.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-28",
+      "sequence": 28,
+      "unit": 2,
+      "session": "41",
+      "sessions": [
+        41
+      ],
+      "slug": "session-41-advanced-example",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Lagrange Multipliers: An Advanced Example",
+        "zh": "Lagrange 乘数法：进阶例子"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-c-lagrange-multipliers-and-constrained-differentials/session-41-advanced-example/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Session 41 Problems: Advanced Example Lagrange's Multipliers",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/879d99a98c2fd20e16d4fcb9f7310616_MIT18_02SC_pb_33_quest.pdf",
+          "filename": "879d99a98c2fd20e16d4fcb9f7310616_MIT18_02SC_pb_33_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 41 Solutions: Advanced Example for Lagrange's Multipliers",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/61c080dc07f874057d7d612fc2cb3d13_MIT18_02SC_pb_33_comb.pdf",
+          "filename": "61c080dc07f874057d7d612fc2cb3d13_MIT18_02SC_pb_33_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-29",
+      "sequence": 29,
+      "unit": 2,
+      "session": "42–44",
+      "sessions": [
+        42,
+        43,
+        44
+      ],
+      "slug": "session-42-constrained-differentials",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Constrained Differentials",
+        "zh": "约束微分"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-c-lagrange-multipliers-and-constrained-differentials/session-42-constrained-differentials/",
+      "sources": [
+        {
+          "kind": "examples",
+          "title": "Session 42 Example: Constrained Differentials",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/182461fdd6c5687262a711810904db32_MIT18_02SC_we_18_comb.pdf",
+          "filename": "182461fdd6c5687262a711810904db32_MIT18_02SC_we_18_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 42 Problems: Non-independent Variables",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3bf21abca6ad229e34a437530e8854f0_MIT18_02SC_pb_42_quest.pdf",
+          "filename": "3bf21abca6ad229e34a437530e8854f0_MIT18_02SC_pb_42_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 42 Solutions: Non-independent Variables",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/eae43e99915ca70c4545b1e4d694dbbd_MIT18_02SC_pb_42_comb.pdf",
+          "filename": "eae43e99915ca70c4545b1e4d694dbbd_MIT18_02SC_pb_42_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 43: Clearer Notation",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e8bfec88100214ac350534e295633ca5_MIT18_02SC_MNotes_n1_2.pdf",
+          "filename": "e8bfec88100214ac350534e295633ca5_MIT18_02SC_MNotes_n1_2.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 43 Example: Clearer Notation",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ab0c0ef91fd30539282a3fd2477abdf0_MIT18_02SC_MNotes_n3.pdf",
+          "filename": "ab0c0ef91fd30539282a3fd2477abdf0_MIT18_02SC_MNotes_n3.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 43 Problems: The Chain Rule with Constraints",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/0444bfd9fe2c14fe00c3b6e39401e160_MIT18_02SC_pb_43_quest.pdf",
+          "filename": "0444bfd9fe2c14fe00c3b6e39401e160_MIT18_02SC_pb_43_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 43 Solutions: The Chain Rule with Constraints",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1f3eb6a2d5a082739e4bdecdce5f62a1_MIT18_02SC_pb_43_comb.pdf",
+          "filename": "1f3eb6a2d5a082739e4bdecdce5f62a1_MIT18_02SC_pb_43_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 44 Problems: Example",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/81e4cccaff4179b3afa0c3b238d40a3c_MIT18_02SC_pb_34_quest.pdf",
+          "filename": "81e4cccaff4179b3afa0c3b238d40a3c_MIT18_02SC_pb_34_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 44 Solutions: Example",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/43eaedda87972dcb36183e369c33b7be_MIT18_02SC_pb_34_comb.pdf",
+          "filename": "43eaedda87972dcb36183e369c33b7be_MIT18_02SC_pb_34_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-30",
+      "sequence": 30,
+      "unit": 2,
+      "session": "45–46",
+      "sessions": [
+        45,
+        46
+      ],
+      "slug": "session-45-review-of-topics",
+      "kind": "review",
+      "evidence": "full",
+      "title": {
+        "en": "Unit 2 Review",
+        "zh": "第二单元复习"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/exam-2/session-45-review-of-topics/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 45: Review of Topics",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ff44c3d5eeca06ceb075cdfc2b466f4b_MIT18_02SC_MNotes_p.pdf",
+          "filename": "52f2d984bbc8d9c8fa3ba43731182883_MIT18_02SC_MNotes_p.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-31",
+      "sequence": 31,
+      "unit": 2,
+      "session": "2",
+      "sessions": [],
+      "slug": "exam-materials",
+      "kind": "exam",
+      "evidence": "exam",
+      "title": {
+        "en": "Exam 2",
+        "zh": "第二次考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/exam-2/exam-materials/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Exam 2",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/82e746297259b200cb983347a8e8b737_MIT18_02SC_exam2.pdf",
+          "filename": "82e746297259b200cb983347a8e8b737_MIT18_02SC_exam2.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Exam 2 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b00fab66cbce372b0b0adf416e8737a8_MIT18_02SC_exam2sol.pdf",
+          "filename": "b00fab66cbce372b0b0adf416e8737a8_MIT18_02SC_exam2sol.pdf"
+        },
+        {
+          "kind": "practice",
+          "title": "Exam 2A Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8d46e0b6446f4a0e3a8b8dfb868a90b5_MIT18_02SC_prac2A.pdf",
+          "filename": "8d46e0b6446f4a0e3a8b8dfb868a90b5_MIT18_02SC_prac2A.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Exam 2A Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/28e92bddfd9d2affcbda6a982c2d2a75_MIT18_02SC_prac2Asol.pdf",
+          "filename": "28e92bddfd9d2affcbda6a982c2d2a75_MIT18_02SC_prac2Asol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-32",
+      "sequence": 32,
+      "unit": 3,
+      "session": "47",
+      "sessions": [
+        47
+      ],
+      "slug": "session-47-definition-of-double-integration",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Definition of Double Integrals",
+        "zh": "二重积分的定义"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-a-double-integrals/session-47-definition-of-double-integration/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 47 Example: Definition of Double Integration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6e4a3ff68be72d26d3c70d8ea7347331_MIT18_02SC_notes_23.pdf",
+          "filename": "6e4a3ff68be72d26d3c70d8ea7347331_MIT18_02SC_notes_23.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 47 Problems: Definition of Double Integration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a1179f6a43514c7dc7f8cf02b833950e_MIT18_02SC_pb_35_quest.pdf",
+          "filename": "a1179f6a43514c7dc7f8cf02b833950e_MIT18_02SC_pb_35_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 47 Solutions: Definition of Double Integration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b3f2a0a1498b3b8554ea7ecbc517201f_MIT18_02SC_pb_35_comb.pdf",
+          "filename": "b3f2a0a1498b3b8554ea7ecbc517201f_MIT18_02SC_pb_35_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-33",
+      "sequence": 33,
+      "unit": 3,
+      "session": "48",
+      "sessions": [
+        48
+      ],
+      "slug": "session-48-examples-of-double-integration",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Examples of Double Integration",
+        "zh": "二重积分的例子"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-a-double-integrals/session-48-examples-of-double-integration/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 48: Limits in Rectangular Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/00ca45ccb749ea1c0a42b733eb8eb9bf_MIT18_02SC_MNotes_i1.pdf",
+          "filename": "00ca45ccb749ea1c0a42b733eb8eb9bf_MIT18_02SC_MNotes_i1.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 48 Examples: Limits for Double Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/864f1462d06a5bde74c2fac6d93dabbd_MIT18_02SC_we_19_comb.pdf",
+          "filename": "864f1462d06a5bde74c2fac6d93dabbd_MIT18_02SC_we_19_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 48 Problems: Regions of Integration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e4cacbe981ed9c084b3f6e47075c0880_MIT18_02SC_pb_48_quest.pdf",
+          "filename": "e4cacbe981ed9c084b3f6e47075c0880_MIT18_02SC_pb_48_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 48 Solutions: Regions of Integration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/5dc8551962fec09ae8a45c774a506d47_MIT18_02SC_pb_48_comb.pdf",
+          "filename": "5dc8551962fec09ae8a45c774a506d47_MIT18_02SC_pb_48_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-34",
+      "sequence": 34,
+      "unit": 3,
+      "session": "49",
+      "sessions": [
+        49
+      ],
+      "slug": "session-49-exchanging-the-order-of-integration",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Exchanging the Order of Integration",
+        "zh": "交换积分次序"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-a-double-integrals/session-49-exchanging-the-order-of-integration/",
+      "sources": [
+        {
+          "kind": "examples",
+          "title": "Session 49 Example: Exchanging the Order of Integration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/66d49509fdfe1afe1bb0fbc41dda93c7_MIT18_02SC_we_20_comb.pdf",
+          "filename": "66d49509fdfe1afe1bb0fbc41dda93c7_MIT18_02SC_we_20_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 49 Problems: Exchanging the Order of Integration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/180217ef8dc6a7658621dc90a7d922db_MIT18_02SC_pb_49_quest.pdf",
+          "filename": "180217ef8dc6a7658621dc90a7d922db_MIT18_02SC_pb_49_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 49 Solutions: Exchanging the Order of Integration",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b56c4f0c997a865de64d4405aa76304a_MIT18_02SC_pb_49_comb.pdf",
+          "filename": "b56c4f0c997a865de64d4405aa76304a_MIT18_02SC_pb_49_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-35",
+      "sequence": 35,
+      "unit": 3,
+      "session": "50",
+      "sessions": [
+        50
+      ],
+      "slug": "session-50-double-integrals-in-polar-coordinates",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Double Integrals in Polar Coordinates",
+        "zh": "极坐标二重积分"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-a-double-integrals/session-50-double-integrals-in-polar-coordinates/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 50 Example: Double Integrals in Polar Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ccaae11972cfc4c1987bcceffa660728_MIT18_02SC_notes_24.pdf",
+          "filename": "ccaae11972cfc4c1987bcceffa660728_MIT18_02SC_notes_24.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 50 Problems: Double Integrals in Polar Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9b592e559908d74e4ddbe967325add52_MIT18_02SC_pb_36_quest.pdf",
+          "filename": "9b592e559908d74e4ddbe967325add52_MIT18_02SC_pb_36_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 50 Solutions: Double Integrals in Polar Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/06f13867c21c1e94e825a0d0a95ff846_MIT18_02SC_pb_36_comb.pdf",
+          "filename": "06f13867c21c1e94e825a0d0a95ff846_MIT18_02SC_pb_36_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-36",
+      "sequence": 36,
+      "unit": 3,
+      "session": "51–52",
+      "sessions": [
+        51,
+        52
+      ],
+      "slug": "session-51-applications-mass-and-average-value",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Mass, Average Value and Moment of Inertia",
+        "zh": "质量、平均值与转动惯量"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-a-double-integrals/session-51-applications-mass-and-average-value/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 51 Example: Applications: Mass and Average Value",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e152e02449626d11188cbb6f42e37d5f_MIT18_02SC_notes_25.pdf",
+          "filename": "e152e02449626d11188cbb6f42e37d5f_MIT18_02SC_notes_25.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 51 Problems: Mass and Average Value",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/645e1056889ad1b26c7a1e0fbbd8dfe3_MIT18_02SC_pb_51_quest.pdf",
+          "filename": "645e1056889ad1b26c7a1e0fbbd8dfe3_MIT18_02SC_pb_51_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 51 Solutions: Mass and Average Value",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a3624e55552a4466762328f8af153133_MIT18_02SC_pb_51_comb.pdf",
+          "filename": "a3624e55552a4466762328f8af153133_MIT18_02SC_pb_51_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 52: Applications: Moment of Inertia",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a007cb2572c17b9bcfdcfae148902da4_MIT18_02SC_notes_26.pdf",
+          "filename": "a007cb2572c17b9bcfdcfae148902da4_MIT18_02SC_notes_26.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 52 Problems: Applications: Moment of Inertia",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/aa19eb97ed091f9954395208d73c1a65_MIT18_02SC_pb_37_quest.pdf",
+          "filename": "aa19eb97ed091f9954395208d73c1a65_MIT18_02SC_pb_37_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 52 Solutions: Applications: Moment of Inertia",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/aa165f9aae6feb69ee35572906a8e620_MIT18_02SC_pb_37_comb.pdf",
+          "filename": "aa165f9aae6feb69ee35572906a8e620_MIT18_02SC_pb_37_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-37",
+      "sequence": 37,
+      "unit": 3,
+      "session": "53–55",
+      "sessions": [
+        53,
+        54,
+        55
+      ],
+      "slug": "session-53-change-of-variables",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Change of Variables and the Jacobian",
+        "zh": "换元与 Jacobian"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-a-double-integrals/session-53-change-of-variables/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 53 Example: Change of Variables",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/53cab862607d9ad1abdab1a10013be9e_MIT18_02SC_MNotes_cv1.pdf",
+          "filename": "53cab862607d9ad1abdab1a10013be9e_MIT18_02SC_MNotes_cv1.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 53 Problems: Change of Variables",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/fcf683571b94e31e9bcfde0765a944be_MIT18_02SC_pb_53_quest.pdf",
+          "filename": "fcf683571b94e31e9bcfde0765a944be_MIT18_02SC_pb_53_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 53 Solutions: Change of Variables",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/7bca49e65056112275c93fa45d417f46_MIT18_02SC_pb_53_comb.pdf",
+          "filename": "7bca49e65056112275c93fa45d417f46_MIT18_02SC_pb_53_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 54: Example: Polar Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/78a094df09c1690c6751d789acb0432a_MIT18_02SC_MNotes_cv2.pdf",
+          "filename": "78a094df09c1690c6751d789acb0432a_MIT18_02SC_MNotes_cv2.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 54 Problems: Coordinates and the Jacobian",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/406c26cdf850ffc6d243e8be69abdf02_MIT18_02SC_pb_54_quest.pdf",
+          "filename": "406c26cdf850ffc6d243e8be69abdf02_MIT18_02SC_pb_54_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 54 Solutions: Polar Coordinates and the Jacobian",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/24f64a5e3d2082cbaa9b9397f6424606_MIT18_02SC_pb_54_comb.pdf",
+          "filename": "24f64a5e3d2082cbaa9b9397f6424606_MIT18_02SC_pb_54_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 55: Example",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/19b2302794abe47e60c51e6a7537eef9_MIT18_02SC_MNotes_cv3.pdf",
+          "filename": "19b2302794abe47e60c51e6a7537eef9_MIT18_02SC_MNotes_cv3.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 55 Problems: Change of Variables Example",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/25beabd2f70ee3a7eb66aba7b545f6df_MIT18_02SC_pb_55_quest.pdf",
+          "filename": "25beabd2f70ee3a7eb66aba7b545f6df_MIT18_02SC_pb_55_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 55 Solutions: Change of Variables Example",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bacba6e11e68d1f1bf5739abe23f8aef_MIT18_02SC_pb_55_comb.pdf",
+          "filename": "bacba6e11e68d1f1bf5739abe23f8aef_MIT18_02SC_pb_55_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-38",
+      "sequence": 38,
+      "unit": 3,
+      "session": "56",
+      "sessions": [
+        56
+      ],
+      "slug": "session-56-vector-fields",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Vector Fields",
+        "zh": "向量场"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-b-vector-fields-and-line-integrals/session-56-vector-fields/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 56 Example: Vector Fields",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1a6e16c878eb5aa8b580fe021dfa7f3d_MIT18_02SC_MNotes_v1.pdf",
+          "filename": "1a6e16c878eb5aa8b580fe021dfa7f3d_MIT18_02SC_MNotes_v1.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 56: Problems: Vector Fields",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/19221c7b2cfd9bf5ed04c2cbe936abf8_MIT18_02SC_pb_56_quest.pdf",
+          "filename": "19221c7b2cfd9bf5ed04c2cbe936abf8_MIT18_02SC_pb_56_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 56 Solutions: Vector Fields",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9510c8d013f07eefa90ba94a4d9a096d_MIT18_02SC_pb_56_comb.pdf",
+          "filename": "9510c8d013f07eefa90ba94a4d9a096d_MIT18_02SC_pb_56_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-39",
+      "sequence": 39,
+      "unit": 3,
+      "session": "57–59",
+      "sessions": [
+        57,
+        58,
+        59
+      ],
+      "slug": "session-57-work-and-line-integrals",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Work and Line Integrals",
+        "zh": "功与线积分"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-b-vector-fields-and-line-integrals/session-57-work-and-line-integrals/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 57 Example: Work and Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6facab84c409b0acb65aaea786f31652_MIT18_02SC_notes_27.pdf",
+          "filename": "6facab84c409b0acb65aaea786f31652_MIT18_02SC_notes_27.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 57: Problems: Work and Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/07b11c92c4a8c464f824776ab88b953b_MIT18_02SC_pb_57_quest.pdf",
+          "filename": "07b11c92c4a8c464f824776ab88b953b_MIT18_02SC_pb_57_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 57 Solutions: Work and Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/4fd0224e89b48c9cc51c3acfd3a77aad_MIT18_02SC_pb_57_comb.pdf",
+          "filename": "4fd0224e89b48c9cc51c3acfd3a77aad_MIT18_02SC_pb_57_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 58: Geometric Approach",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/54d807cf0965f7399fdd93f732e0c109_MIT18_02SC_notes_28.pdf",
+          "filename": "54d807cf0965f7399fdd93f732e0c109_MIT18_02SC_notes_28.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 58 Problems: Geometric Approach to Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/5146472c592aba62ea76dadd9f4de250_MIT18_02SC_pb_58_quest.pdf",
+          "filename": "5146472c592aba62ea76dadd9f4de250_MIT18_02SC_pb_58_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 58 Solutions: Geometric Approach to Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/de63abcc40a80811d37573bc43f27398_MIT18_02SC_pb_58_comb.pdf",
+          "filename": "de63abcc40a80811d37573bc43f27398_MIT18_02SC_pb_58_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 59 Problems: Example: Line Integrals for Work",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/083f2f434a2ea4b09cf826f54402f104_MIT18_02SC_pb_38_quest.pdf",
+          "filename": "083f2f434a2ea4b09cf826f54402f104_MIT18_02SC_pb_38_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 59 Solutions: Line Integrals for Work",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9130c47c485030c068cf2323d6fe984c_MIT18_02SC_pb_38_comb.pdf",
+          "filename": "9130c47c485030c068cf2323d6fe984c_MIT18_02SC_pb_38_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-40",
+      "sequence": 40,
+      "unit": 3,
+      "session": "60",
+      "sessions": [
+        60
+      ],
+      "slug": "session-60-fundamental-theorem-for-line-integrals",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "The Fundamental Theorem for Line Integrals",
+        "zh": "线积分基本定理"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-b-vector-fields-and-line-integrals/session-60-fundamental-theorem-for-line-integrals/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 60 Example: Fundamental Theorem for Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/878cd7a9630352d5d7deb651ee3504c7_MIT18_02SC_notes_29.pdf",
+          "filename": "878cd7a9630352d5d7deb651ee3504c7_MIT18_02SC_notes_29.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 60 Problems: Fundamental Theorem for Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/0e5255d3c80f8330cdf0de8baac68c83_MIT18_02SC_pb_39_quest.pdf",
+          "filename": "0e5255d3c80f8330cdf0de8baac68c83_MIT18_02SC_pb_39_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 60 Solutions: Fundamental Theorem for Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/aec53e9a2f4ed52f64feb0f0988f8767_MIT18_02SC_pb_39_comb.pdf",
+          "filename": "aec53e9a2f4ed52f64feb0f0988f8767_MIT18_02SC_pb_39_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 60 Problems : Line Integrals of Vector Fields",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e40833e2684e9fa3510a1514e10ff918_MIT18_02SC_pb_60_quest.pdf",
+          "filename": "e40833e2684e9fa3510a1514e10ff918_MIT18_02SC_pb_60_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 60 Solutions: Line Integrals of Vector Fields",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/0f83439c5b9a1f12a3407ce6a544f5c6_MIT18_02SC_pb_60_comb.pdf",
+          "filename": "0f83439c5b9a1f12a3407ce6a544f5c6_MIT18_02SC_pb_60_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-41",
+      "sequence": 41,
+      "unit": 3,
+      "session": "61–63",
+      "sessions": [
+        61,
+        62,
+        63
+      ],
+      "slug": "session-61-conservative-fields-path-independence-exact-differentials",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Conservative Fields and Potential Functions",
+        "zh": "保守场与势函数"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-b-vector-fields-and-line-integrals/session-61-conservative-fields-path-independence-exact-differentials/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 62 Example: Gradient Fields",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3a1b52c21f342f3dcbea16e8cb2f2824_MIT18_02SC_MNotes_v2.1.pdf",
+          "filename": "3a1b52c21f342f3dcbea16e8cb2f2824_MIT18_02SC_MNotes_v2.1.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 62 Problems : Identifying Gradient Fields and Exact Differentials",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/968fbb6e885ca4ee891263f0a87ae050_MIT18_02SC_pb_62_quest.pdf",
+          "filename": "968fbb6e885ca4ee891263f0a87ae050_MIT18_02SC_pb_62_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 62 Solutions: Identifying Gradient Fields and Exact Differentials",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a952246038770b74ad08968540c2448a_MIT18_02SC_pb_62_comb.pdf",
+          "filename": "a952246038770b74ad08968540c2448a_MIT18_02SC_pb_62_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 63 Example: Potential Functions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/70f8f44ba6127dec10b5763fbbddd7f2_MIT18_02SC_MNotes_v2.2to3.pdf",
+          "filename": "70f8f44ba6127dec10b5763fbbddd7f2_MIT18_02SC_MNotes_v2.2to3.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 63 Problems : Identifying Potential Functions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2d231c82a1183ce0f529824e1858b7bc_MIT18_02SC_pb_63_quest.pdf",
+          "filename": "2d231c82a1183ce0f529824e1858b7bc_MIT18_02SC_pb_63_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 63 Solutions: Identifying Potential Functions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8e019eba79cde65787e5b6ead9f87419_MIT18_02SC_pb_63_comb.pdf",
+          "filename": "8e019eba79cde65787e5b6ead9f87419_MIT18_02SC_pb_63_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-42",
+      "sequence": 42,
+      "unit": 3,
+      "session": "64",
+      "sessions": [
+        64
+      ],
+      "slug": "session-64-curl",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Curl",
+        "zh": "旋度"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-b-vector-fields-and-line-integrals/session-64-curl/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 64: Curl",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/03ff53bca18dc4b2ea725a9be4215517_MIT18_02SC_notes_33.pdf",
+          "filename": "03ff53bca18dc4b2ea725a9be4215517_MIT18_02SC_notes_33.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 64 Problems: Two Dimensional Curl",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/4c198066f23c4ec6b9e3b706da72edb1_MIT18_02SC_pb_64_quest.pdf",
+          "filename": "4c198066f23c4ec6b9e3b706da72edb1_MIT18_02SC_pb_64_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 64 Solutions:  Two Dimensional Curl",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b175b6dbf0ec4d452a6f821b56dc1b8d_MIT18_02SC_pb_64_comb.pdf",
+          "filename": "b175b6dbf0ec4d452a6f821b56dc1b8d_MIT18_02SC_pb_64_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-43",
+      "sequence": 43,
+      "unit": 3,
+      "session": "65",
+      "sessions": [
+        65
+      ],
+      "slug": "session-65-greens-theorem",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Green's Theorem",
+        "zh": "Green 定理"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-c-greens-theorem/session-65-greens-theorem/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 65: Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f6f3d244fdb08732ea8e49ef3dce6e0c_MIT18_02SC_notes_30.pdf",
+          "filename": "f6f3d244fdb08732ea8e49ef3dce6e0c_MIT18_02SC_notes_30.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 65 Example: Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8f10304f6994358da7a246128030bf41_MIT18_02SC_we_65_comb.pdf",
+          "filename": "8f10304f6994358da7a246128030bf41_MIT18_02SC_we_65_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 65: Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/59fb2f923d69af75de31049ce5e98dad_MIT18_02SC_pb_65_quest.pdf",
+          "filename": "59fb2f923d69af75de31049ce5e98dad_MIT18_02SC_pb_65_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 65 Solutions: Using Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/99c0fdc48184236765ea1507917f5d15_MIT18_02SC_pb_65_comb.pdf",
+          "filename": "99c0fdc48184236765ea1507917f5d15_MIT18_02SC_pb_65_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-44",
+      "sequence": 44,
+      "unit": 3,
+      "session": "66, 72",
+      "sessions": [
+        66,
+        72
+      ],
+      "slug": "session-66-curl-f-equals-0-implies-conservative",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Curl F = 0 and Simply Connected Regions",
+        "zh": "curl F = 0 与单连通区域"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-c-greens-theorem/session-66-curl-f-equals-0-implies-conservative/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 66: Curl(F) = 0 Implies Conservative",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b952917b2edd0382f7dd14fe3e0c32fb_MIT18_02SC_notes_31.pdf",
+          "filename": "b952917b2edd0382f7dd14fe3e0c32fb_MIT18_02SC_notes_31.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 66 Problems : Identifying Gradient Fields and Exact Differentials",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3a2014996354172050c550c670825f63_MIT18_02SC_pb_66_quest.pdf",
+          "filename": "3a2014996354172050c550c670825f63_MIT18_02SC_pb_66_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 66 Solutions: Identifying Gradient Fields and Exact Differentials",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/4967c4adab8b6f26e3f0952d460d4e80_MIT18_02SC_pb_66_comb.pdf",
+          "filename": "4967c4adab8b6f26e3f0952d460d4e80_MIT18_02SC_pb_66_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 72: Simply Connected Regions and Conservative Fields",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1bc33736db05b99f564ba15fe7174311_MIT18_02SC_MNotes_v5.pdf",
+          "filename": "1bc33736db05b99f564ba15fe7174311_MIT18_02SC_MNotes_v5.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 72 Problems: Simply Connected Regions and Conservative Fields",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c75a4c31bba8aac9f546bb6ca0bc7add_MIT18_02SC_pb_72_quest.pdf",
+          "filename": "c75a4c31bba8aac9f546bb6ca0bc7add_MIT18_02SC_pb_72_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 72 Solutions: Simply Connected Regions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6e3d71c404ea1cdee1803c80e845ce5c_MIT18_02SC_pb_72_comb.pdf",
+          "filename": "6e3d71c404ea1cdee1803c80e845ce5c_MIT18_02SC_pb_72_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-45",
+      "sequence": 45,
+      "unit": 3,
+      "session": "67–68",
+      "sessions": [
+        67,
+        68
+      ],
+      "slug": "session-67-proof-of-greens-theorem",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Proof of Green's Theorem; the Planimeter",
+        "zh": "Green 定理的证明与测面积仪"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-c-greens-theorem/session-67-proof-of-greens-theorem/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 67: Green's Theorem: Sketch of Proof",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/fc757ef1e527abe8ac1154d78b084637_MIT18_02SC_notes_67.pdf",
+          "filename": "fc757ef1e527abe8ac1154d78b084637_MIT18_02SC_notes_67.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 68 Example: Finding Area Using Line Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/655c095c066cee478027d815328d38a9_MIT18_02SC_we_68_comb.pdf",
+          "filename": "655c095c066cee478027d815328d38a9_MIT18_02SC_we_68_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 68 Problems: Green's Theorem and Area",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/7d8ad07f69bda4fd4899e0227295ee16_MIT18_02SC_pb_68_quest.pdf",
+          "filename": "7d8ad07f69bda4fd4899e0227295ee16_MIT18_02SC_pb_68_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 68 Solutions: Green's Theorem and Area",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d5409ec6b0bf7f207833a545d7442c9b_MIT18_02SC_pb_68_comb.pdf",
+          "filename": "d5409ec6b0bf7f207833a545d7442c9b_MIT18_02SC_pb_68_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-46",
+      "sequence": 46,
+      "unit": 3,
+      "session": "69–70",
+      "sessions": [
+        69,
+        70
+      ],
+      "slug": "session-69-flux-in-2d",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Flux in 2D and the Normal Form",
+        "zh": "二维通量与法向形式"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-c-greens-theorem/session-69-flux-in-2d/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 69 Example: Flux in 2D",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d4d8e457e8dd0c8c92f24234b52e87ae_MIT18_02SC_MNotes_v3.pdf",
+          "filename": "d4d8e457e8dd0c8c92f24234b52e87ae_MIT18_02SC_MNotes_v3.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 69 Problems : Flux Across Curves",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/0ed4c48346edcb7411275f407db84754_MIT18_02SC_pb_69_quest.pdf",
+          "filename": "0ed4c48346edcb7411275f407db84754_MIT18_02SC_pb_69_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 69 Solutions: Flux Across Curves",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a1d510a3e90ff1f96d555151ca4ed827_MIT18_02SC_pb_69_comb.pdf",
+          "filename": "a1d510a3e90ff1f96d555151ca4ed827_MIT18_02SC_pb_69_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 70 Example: Normal Form of Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ea8e087bdf4408dda425f48d85f02ada_MIT18_02SC_MNotes_v4.1to2.pdf",
+          "filename": "ea8e087bdf4408dda425f48d85f02ada_MIT18_02SC_MNotes_v4.1to2.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 70 Example: Verify Green's Theorem in Normal Form",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c97542e5cf23fa96ce8f8cb93b576aa6_MIT18_02SC_we_70_comb.pdf",
+          "filename": "c97542e5cf23fa96ce8f8cb93b576aa6_MIT18_02SC_we_70_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 70 Problems: Normal Form of Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/aba13555e576d7bbe4ce573bc5f3b1f4_MIT18_02SC_pb_70_quest.pdf",
+          "filename": "aba13555e576d7bbe4ce573bc5f3b1f4_MIT18_02SC_pb_70_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 70 Solutions: Normal Form of Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ff340959884f97b78d3169ea24b4bbd3_MIT18_02SC_pb_70_comb.pdf",
+          "filename": "ff340959884f97b78d3169ea24b4bbd3_MIT18_02SC_pb_70_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-47",
+      "sequence": 47,
+      "unit": 3,
+      "session": "71",
+      "sessions": [
+        71
+      ],
+      "slug": "session-71-extended-greens-theorem-boundaries-with-multiple-pieces",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Extended Green's Theorem",
+        "zh": "扩展的 Green 定理"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-c-greens-theorem/session-71-extended-greens-theorem-boundaries-with-multiple-pieces/",
+      "sources": [
+        {
+          "kind": "examples",
+          "title": "Session 71 Example: Extended Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a241cf9e8bc16a36763e9326ace52f4d_MIT18_02SC_we_71_comb.pdf",
+          "filename": "a241cf9e8bc16a36763e9326ace52f4d_MIT18_02SC_we_71_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 71 Problems: Extended Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/de4f8d0f30590339968c9a78eafb6729_MIT18_02SC_pb_71_quest.pdf",
+          "filename": "de4f8d0f30590339968c9a78eafb6729_MIT18_02SC_pb_71_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 71 Solutions: Extended Green's Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/7f95d781c281a1aa5606a72ec079673e_MIT18_02SC_pb_71_comb.pdf",
+          "filename": "7f95d781c281a1aa5606a72ec079673e_MIT18_02SC_pb_71_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-48",
+      "sequence": 48,
+      "unit": 3,
+      "session": "73",
+      "sessions": [
+        73
+      ],
+      "slug": "session-73-exam-review",
+      "kind": "review",
+      "evidence": "thin",
+      "title": {
+        "en": "Unit 3 Review",
+        "zh": "第三单元复习"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/exam-3/session-73-exam-review/",
+      "sources": [
+        {
+          "kind": "practice",
+          "title": "Exam 3 Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8cac15f06a6cd6e2ad6885241b70c5f7_MIT18_02SC_prac3A.pdf",
+          "filename": "8cac15f06a6cd6e2ad6885241b70c5f7_MIT18_02SC_prac3A.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Exam 3 Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f665f6dab145aac534b703b1160cb58c_MIT18_02SC_prac3Asol.pdf",
+          "filename": "f665f6dab145aac534b703b1160cb58c_MIT18_02SC_prac3Asol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-49",
+      "sequence": 49,
+      "unit": 3,
+      "session": "3",
+      "sessions": [],
+      "slug": "exam",
+      "kind": "exam",
+      "evidence": "exam",
+      "title": {
+        "en": "Exam 3",
+        "zh": "第三次考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/exam-3/exam/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Exam 3",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d888514d0c2dcfec354fd56b8f51dd89_MIT18_02SC_exam3.pdf",
+          "filename": "d888514d0c2dcfec354fd56b8f51dd89_MIT18_02SC_exam3.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Exam 3 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/5028c6e086e53bc7ec534ff874b45cd2_MIT18_02SC_exam3sol.pdf",
+          "filename": "5028c6e086e53bc7ec534ff874b45cd2_MIT18_02SC_exam3sol.pdf"
+        },
+        {
+          "kind": "practice",
+          "title": "Exam 3 Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8cac15f06a6cd6e2ad6885241b70c5f7_MIT18_02SC_prac3A.pdf",
+          "filename": "8cac15f06a6cd6e2ad6885241b70c5f7_MIT18_02SC_prac3A.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Exam 3 Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f665f6dab145aac534b703b1160cb58c_MIT18_02SC_prac3Asol.pdf",
+          "filename": "f665f6dab145aac534b703b1160cb58c_MIT18_02SC_prac3Asol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-50",
+      "sequence": 50,
+      "unit": 4,
+      "session": "74",
+      "sessions": [
+        74
+      ],
+      "slug": "session-74-triple-integrals-rectangular-and-cylindrical-coordinates",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Triple Integrals: Rectangular and Cylindrical Coordinates",
+        "zh": "三重积分：直角与柱坐标"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-a-triple-integrals/session-74-triple-integrals-rectangular-and-cylindrical-coordinates/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 74: Triple Integrals: Rectangular and Cylindrical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1779863f7034386ad02b5f65be3c8b08_MIT18_02SC_MNotes_i3.pdf",
+          "filename": "1779863f7034386ad02b5f65be3c8b08_MIT18_02SC_MNotes_i3.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 74 Example: Triple Integrals: Rectangular and Cylindrical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d534aed46d7a83771952c51bf39d6a76_MIT18_02SC_we_74_comb.pdf",
+          "filename": "d534aed46d7a83771952c51bf39d6a76_MIT18_02SC_we_74_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 74 Problems: Triple Integrals: Rectangular and Cylindrical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1367558c4b0804282727bb49edae600f_MIT18_02SC_pb_74_quest.pdf",
+          "filename": "1367558c4b0804282727bb49edae600f_MIT18_02SC_pb_74_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 74 Solutions: Triple Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a251431a9b4151107e8d1ce286bac61f_MIT18_02SC_pb_74_comb.pdf",
+          "filename": "a251431a9b4151107e8d1ce286bac61f_MIT18_02SC_pb_74_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-51",
+      "sequence": 51,
+      "unit": 4,
+      "session": "75",
+      "sessions": [
+        75
+      ],
+      "slug": "session-75-applications-and-examples",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Triple Integrals: Applications and Examples",
+        "zh": "三重积分的应用与例子"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-a-triple-integrals/session-75-applications-and-examples/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Session 75 Problems: Practice with Triple Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/dd43a5b1ff2a99961d94d9cd5d613bbe_MIT18_02SC_pb_75_quest.pdf",
+          "filename": "dd43a5b1ff2a99961d94d9cd5d613bbe_MIT18_02SC_pb_75_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 75 Solutions: Practice with Triple Integrals",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a072b81bc9c1832dba0bd357e99c56e7_MIT18_02SC_pb_75_comb.pdf",
+          "filename": "a072b81bc9c1832dba0bd357e99c56e7_MIT18_02SC_pb_75_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-52",
+      "sequence": 52,
+      "unit": 4,
+      "session": "76–77",
+      "sessions": [
+        76,
+        77
+      ],
+      "slug": "session-76-spherical-coordinates",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Spherical Coordinates",
+        "zh": "球坐标"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-a-triple-integrals/session-76-spherical-coordinates/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 76: Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/531bea2b84351ea2732b4815a104cd37_MIT18_02SC_notes_32.pdf",
+          "filename": "531bea2b84351ea2732b4815a104cd37_MIT18_02SC_notes_32.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 76 Problems: Limits in Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3268489cdeb4f65f821515dec2748344_MIT18_02SC_pb_76_quest.pdf",
+          "filename": "3268489cdeb4f65f821515dec2748344_MIT18_02SC_pb_76_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 76 Solutions: Limits in Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/af12848253f4896a90771e073c650f26_MIT18_02SC_pb_76_comb.pdf",
+          "filename": "af12848253f4896a90771e073c650f26_MIT18_02SC_pb_76_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 77: Triple Integrals in Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ab771b912c2e6220337c3e4ee7243a33_MIT18_02SC_MNotes_cv4.pdf",
+          "filename": "ab771b912c2e6220337c3e4ee7243a33_MIT18_02SC_MNotes_cv4.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 77 Example: Integrals in Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e5abac263b02c6e666c05a49cc3ee8b2_MIT18_02SC_we_77_comb.pdf",
+          "filename": "e5abac263b02c6e666c05a49cc3ee8b2_MIT18_02SC_we_77_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 77 Problems: Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ab07485398f4c4a15f26706bf3a51488_MIT18_02SC_pb_47_quest.pdf",
+          "filename": "ab07485398f4c4a15f26706bf3a51488_MIT18_02SC_pb_47_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 77 Solutions: Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/41955983603b4b7d2f98323493903430_MIT18_02SC_pb_47_comb.pdf",
+          "filename": "41955983603b4b7d2f98323493903430_MIT18_02SC_pb_47_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 77 Problems: Jacobian for Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/841ff38b2011ac2f0200eceefe6048c6_MIT18_02SC_pb_77_quest.pdf",
+          "filename": "841ff38b2011ac2f0200eceefe6048c6_MIT18_02SC_pb_77_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 77 Solutions: Jacobian for Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8ccccd43d1edc57e0895a2167f6da49f_MIT18_02SC_pb_77_comb.pdf",
+          "filename": "8ccccd43d1edc57e0895a2167f6da49f_MIT18_02SC_pb_77_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-53",
+      "sequence": 53,
+      "unit": 4,
+      "session": "78",
+      "sessions": [
+        78
+      ],
+      "slug": "session-78-applications-gravitational-attraction",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Gravitational Attraction",
+        "zh": "引力"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-a-triple-integrals/session-78-applications-gravitational-attraction/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 78 Example: Applications: Gravitational Attraction",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/cf87cdd1410bb969d0fd86a598dbe0bb_MIT18_02SC_MNotes_g.pdf",
+          "filename": "cf87cdd1410bb969d0fd86a598dbe0bb_MIT18_02SC_MNotes_g.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 78 Problems: Applications of Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3b9f550981dec339f62fe9a7491be07a_MIT18_02SC_pb_78_quest.pdf",
+          "filename": "3b9f550981dec339f62fe9a7491be07a_MIT18_02SC_pb_78_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 78 Solutions: Applications of Spherical Coordinates",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a9db1509eac4d651c71d7e3bedc54607_MIT18_02SC_pb_78_comb.pdf",
+          "filename": "a9db1509eac4d651c71d7e3bedc54607_MIT18_02SC_pb_78_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-54",
+      "sequence": 54,
+      "unit": 4,
+      "session": "79–80",
+      "sessions": [
+        79,
+        80
+      ],
+      "slug": "session-79-vector-fields-in-space",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Vector Fields in Space and Flux",
+        "zh": "空间向量场与通量"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-b-flux-and-the-divergence-theorem/session-79-vector-fields-in-space/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 79 Example: Vector Fields in Space",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/1ef7e2edb520f01cab5bf31d4053c8c4_MIT18_02SC_MNotes_v8.pdf",
+          "filename": "1ef7e2edb520f01cab5bf31d4053c8c4_MIT18_02SC_MNotes_v8.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 79 Problems: Vector Fields in Space",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8611e7557da0e611c37867896cd405ad_MIT18_02SC_pb_79_quest.pdf",
+          "filename": "8611e7557da0e611c37867896cd405ad_MIT18_02SC_pb_79_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 79 Solutions: Vector Fields in Space",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/957c453bc01d676ea31cf0b98afcf1f6_MIT18_02SC_pb_79_comb.pdf",
+          "filename": "957c453bc01d676ea31cf0b98afcf1f6_MIT18_02SC_pb_79_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 80: Flux Through a Surface",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2c1720a794622fa3dbec65e82e1f2503_MIT18_02SC_MNotes_v9.1.pdf",
+          "filename": "2c1720a794622fa3dbec65e82e1f2503_MIT18_02SC_MNotes_v9.1.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 80 Problems: Calculating Flux",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b4e14f647a3adf7c59d752ec7e5a5474_MIT18_02SC_pb_80_quest.pdf",
+          "filename": "b4e14f647a3adf7c59d752ec7e5a5474_MIT18_02SC_pb_80_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 80 Solutions: Calculating Flux",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2c0ac47b2621249ff258d12c43f4e9a4_MIT18_02SC_pb_80_comb.pdf",
+          "filename": "2c0ac47b2621249ff258d12c43f4e9a4_MIT18_02SC_pb_80_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-55",
+      "sequence": 55,
+      "unit": 4,
+      "session": "81–83",
+      "sessions": [
+        81,
+        82,
+        83
+      ],
+      "slug": "session-81-calculating-flux-finding-nds",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Calculating Flux: Finding ndS",
+        "zh": "求通量：ndS"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-b-flux-and-the-divergence-theorem/session-81-calculating-flux-finding-nds/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 81 Example: Calculating Flux; Finding ndS",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/be1349a499cdcb2d7be2e99ddee7359c_MIT18_02SC_MNotes_v9.2.pdf",
+          "filename": "be1349a499cdcb2d7be2e99ddee7359c_MIT18_02SC_MNotes_v9.2.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 81 Problems: Flux Through Surfaces",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b93d0e83490e3ae7f6c6c668cf3abe0b_MIT18_02SC_pb_81_quest.pdf",
+          "filename": "b93d0e83490e3ae7f6c6c668cf3abe0b_MIT18_02SC_pb_81_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 81 Solutions: Flux Through Surfaces",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/34d74134191ad6af7781a1be40f72727_MIT18_02SC_pb_81_comb.pdf",
+          "filename": "34d74134191ad6af7781a1be40f72727_MIT18_02SC_pb_81_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 82: ndS for a Surface z = f(x, y)",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b9ba75cb22dfa18f5976d78bb016ddc7_MIT18_02SC_MNotes_v9.3to4.pdf",
+          "filename": "b9ba75cb22dfa18f5976d78bb016ddc7_MIT18_02SC_MNotes_v9.3to4.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 82 Problems: Flux Through General Surfaces",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/957b1c66cf1fb2e465c73195972130bc_MIT18_02SC_pb_82_quest.pdf",
+          "filename": "957b1c66cf1fb2e465c73195972130bc_MIT18_02SC_pb_82_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 82 Solutions: Flux Through General Surfaces",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/60dd6ff21b8eda75214d328a5ae5710f_MIT18_02SC_pb_82_comb.pdf",
+          "filename": "60dd6ff21b8eda75214d328a5ae5710f_MIT18_02SC_pb_82_comb.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 83 Example: General Formula for ndS",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b00361f92e5f01a9cf6362a1f38c44ed_MIT18_02SC_we_83_comb.pdf",
+          "filename": "b00361f92e5f01a9cf6362a1f38c44ed_MIT18_02SC_we_83_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 83 Problems: Flux Through a Paraboloid",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bab1baf129226891079d2662ec0c2a8a_MIT18_02SC_pb_83_quest.pdf",
+          "filename": "bab1baf129226891079d2662ec0c2a8a_MIT18_02SC_pb_83_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 83 Solutions: Flux Through a Paraboloid",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ffecf665b0dfa653099ccc8fbdd4d099_MIT18_02SC_pb_83_comb.pdf",
+          "filename": "ffecf665b0dfa653099ccc8fbdd4d099_MIT18_02SC_pb_83_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-56",
+      "sequence": 56,
+      "unit": 4,
+      "session": "84–85",
+      "sessions": [
+        84,
+        85
+      ],
+      "slug": "session-84-divergence-theorem",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "The Divergence Theorem",
+        "zh": "散度定理"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-b-flux-and-the-divergence-theorem/session-84-divergence-theorem/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 84 Example: Divergence Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9c15c202ca57e69f25a98a0c76b2fb8b_MIT18_02SC_MNotes_v10.1.pdf",
+          "filename": "9c15c202ca57e69f25a98a0c76b2fb8b_MIT18_02SC_MNotes_v10.1.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 84: Divergence Theorem Problems",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e4e9c2e99c5e5319b0e2a37f5e152218_MIT18_02SC_pb_84_quest.pdf",
+          "filename": "e4e9c2e99c5e5319b0e2a37f5e152218_MIT18_02SC_pb_84_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 84 Solutions: Divergence Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/cd0a3c9302ffa25d0dc2767e0065a756_MIT18_02SC_pb_84_comb.pdf",
+          "filename": "cd0a3c9302ffa25d0dc2767e0065a756_MIT18_02SC_pb_84_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 85 Problems: Del Notation; Flux",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/41fa432bf31cbaf0825b2cf37986b763_MIT18_02SC_pb_85_quest.pdf",
+          "filename": "41fa432bf31cbaf0825b2cf37986b763_MIT18_02SC_pb_85_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 85 Solutions: Problems: Del Notation; Flux",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/de221d87a3023e518362f4d3cd8150e8_MIT18_02SC_pb_85_comb.pdf",
+          "filename": "de221d87a3023e518362f4d3cd8150e8_MIT18_02SC_pb_85_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-57",
+      "sequence": 57,
+      "unit": 4,
+      "session": "86–87",
+      "sessions": [
+        86,
+        87
+      ],
+      "slug": "session-86-proof-of-the-divergence-theorem",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Proof of the Divergence Theorem; the Diffusion Equation",
+        "zh": "散度定理的证明与扩散方程"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-b-flux-and-the-divergence-theorem/session-86-proof-of-the-divergence-theorem/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 86: Proof of the Divergence Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/33885c2a159aacc124716eb082db7263_MIT18_02SC_MNotes_v10.2.pdf",
+          "filename": "33885c2a159aacc124716eb082db7263_MIT18_02SC_MNotes_v10.2.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 87: Diffusion Equation",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ff44c3d5eeca06ceb075cdfc2b466f4b_MIT18_02SC_MNotes_p.pdf",
+          "filename": "ff44c3d5eeca06ceb075cdfc2b466f4b_MIT18_02SC_MNotes_p.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 87 Problems: Harmonic Functions and Averages",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d3b45f9b49abd97fa10d20fcf99cc886_MIT18_02SC_pb_87_quest.pdf",
+          "filename": "d3b45f9b49abd97fa10d20fcf99cc886_MIT18_02SC_pb_87_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 87 Solutions: Harmonic Functions and Averages",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ce9a5e77be429010ae34c7355f9a0c54_MIT18_02SC_pb_87_comb.pdf",
+          "filename": "ce9a5e77be429010ae34c7355f9a0c54_MIT18_02SC_pb_87_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-58",
+      "sequence": 58,
+      "unit": 4,
+      "session": "88–89",
+      "sessions": [
+        88,
+        89
+      ],
+      "slug": "session-88-line-integrals-in-space",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Line Integrals in Space and Potential Functions",
+        "zh": "空间线积分与势函数"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-c-line-integrals-and-stokes-theorem/session-88-line-integrals-in-space/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 88: Line Integrals in Space",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6fff06c9bb0a38f76f9cd2015798f8ed_MIT18_02SC_MNotes_v11.pdf",
+          "filename": "6fff06c9bb0a38f76f9cd2015798f8ed_MIT18_02SC_MNotes_v11.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 88 Problems: Work Along a Space Curve",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bffe62a10b5d9eeaaf5df931d4acd476_MIT18_02SC_pb_88_quest.pdf",
+          "filename": "bffe62a10b5d9eeaaf5df931d4acd476_MIT18_02SC_pb_88_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 88 Solutions: Work Along a Space Curve",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/4b8942e6d445e97b36173420bbdc4039_MIT18_02SC_pb_88_comb.pdf",
+          "filename": "4b8942e6d445e97b36173420bbdc4039_MIT18_02SC_pb_88_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 89: Gradient Fields and Potential Functions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b30cc37bba576d91d0c9c60dd7368b16_MIT18_02SC_MNotes_v12.pdf",
+          "filename": "b30cc37bba576d91d0c9c60dd7368b16_MIT18_02SC_MNotes_v12.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 89 Problems: Gradient Fields and Potential Functions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/38770d105df1b43233eae45992b31d18_MIT18_02SC_pb_89_quest.pdf",
+          "filename": "38770d105df1b43233eae45992b31d18_MIT18_02SC_pb_89_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 89 Solutions: Gradient Fields and Potential Functions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/60326597ed2ec64640dccfc7a8bd2480_MIT18_02SC_pb_89_comb.pdf",
+          "filename": "60326597ed2ec64640dccfc7a8bd2480_MIT18_02SC_pb_89_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-59",
+      "sequence": 59,
+      "unit": 4,
+      "session": "90",
+      "sessions": [
+        90
+      ],
+      "slug": "session-90-curl-in-3d",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Curl in 3D",
+        "zh": "空间中的旋度"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-c-line-integrals-and-stokes-theorem/session-90-curl-in-3d/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 90: Curl in 3D",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a5910abd3b1b31bdb0c26ff1e0185ef2_MIT18_02SC_MNotes_v15.1.pdf",
+          "filename": "a5910abd3b1b31bdb0c26ff1e0185ef2_MIT18_02SC_MNotes_v15.1.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 90: Curl in 3D",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d18774dd8a3f24001bf3d502fef7f854_MIT18_02SC_MNotes_v4.3.pdf",
+          "filename": "d18774dd8a3f24001bf3d502fef7f854_MIT18_02SC_MNotes_v4.3.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 90 Example: Testing for a Conservative Field",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9af9200acf4862e5548d81ef8333888e_MIT18_02SC_we_90_comb.pdf",
+          "filename": "9af9200acf4862e5548d81ef8333888e_MIT18_02SC_we_90_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 90 Problems: Curl in 3D",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/7912f543e2b52465f7698a21b6caee24_MIT18_02SC_pb_90_quest.pdf",
+          "filename": "7912f543e2b52465f7698a21b6caee24_MIT18_02SC_pb_90_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 90 Solutions: Curl in 3D",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/72d6db9371540cbe2e76ab1139716c40_MIT18_02SC_pb_90_comb.pdf",
+          "filename": "72d6db9371540cbe2e76ab1139716c40_MIT18_02SC_pb_90_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-60",
+      "sequence": 60,
+      "unit": 4,
+      "session": "91–93",
+      "sessions": [
+        91,
+        92,
+        93
+      ],
+      "slug": "session-91-stokes-theorem",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Stokes' Theorem",
+        "zh": "Stokes 定理"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-c-line-integrals-and-stokes-theorem/session-91-stokes-theorem/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 91: Stokes' Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9b8d5f9febf584d850891f631393a87c_MIT18_02SC_MNotes_v13.1to2.pdf",
+          "filename": "9b8d5f9febf584d850891f631393a87c_MIT18_02SC_MNotes_v13.1to2.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 91 Problems: Stokes' Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/da9cae6a48cfe5140a919b3756305d76_MIT18_02SC_pb_91_quest.pdf",
+          "filename": "da9cae6a48cfe5140a919b3756305d76_MIT18_02SC_pb_91_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 91 Solutions: Stokes' Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ba97af37b3092b1a5089876291ea3e44_MIT18_02SC_pb_91_comb.pdf",
+          "filename": "ba97af37b3092b1a5089876291ea3e44_MIT18_02SC_pb_91_comb.pdf"
+        },
+        {
+          "kind": "notes",
+          "title": "Session 92: Proof of Stokes' Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/41527923bc920dd4aace150f72a87f96_MIT18_02SC_MNotes_v13.3.pdf",
+          "filename": "41527923bc920dd4aace150f72a87f96_MIT18_02SC_MNotes_v13.3.pdf"
+        },
+        {
+          "kind": "examples",
+          "title": "Session 93 Examples: Extended Stokes' Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/42094c74b7c37bdb4a6e42c79997f0ba_MIT18_02SC_we_93_comb.pdf",
+          "filename": "42094c74b7c37bdb4a6e42c79997f0ba_MIT18_02SC_we_93_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 93 Problems: Extended Stokes' Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c11c063fd29702e8fe3d154bf1b19bc3_MIT18_02SC_pb_93_quest.pdf",
+          "filename": "c11c063fd29702e8fe3d154bf1b19bc3_MIT18_02SC_pb_93_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 93 Solutions: Extended Stokes' Theorem",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6cd629fbc29ecea483e1a74b2c65bebe_MIT18_02SC_pb_93_comb.pdf",
+          "filename": "6cd629fbc29ecea483e1a74b2c65bebe_MIT18_02SC_pb_93_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-61",
+      "sequence": 61,
+      "unit": 4,
+      "session": "94–95",
+      "sessions": [
+        94,
+        95
+      ],
+      "slug": "session-94-simply-connected-regions-topology",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Simply Connected Regions and Surface Independence",
+        "zh": "单连通区域与曲面无关性"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-c-line-integrals-and-stokes-theorem/session-94-simply-connected-regions-topology/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 94: Simply Connected Regions; Topology",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/f790233ae3e54f463beec68b9f8827ff_MIT18_02SC_MNotes_v14.pdf",
+          "filename": "f790233ae3e54f463beec68b9f8827ff_MIT18_02SC_MNotes_v14.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 94 Problems: Simply Connected Regions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/044a786f6b25d0a16387906e2555b31c_MIT18_02SC_pb_94_quest.pdf",
+          "filename": "044a786f6b25d0a16387906e2555b31c_MIT18_02SC_pb_94_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 94: Simply Connected Regions; Topology",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3b4d452b5066bfcd3729fbce4195e68a_MIT18_02SC_pb_94_comb.pdf",
+          "filename": "3b4d452b5066bfcd3729fbce4195e68a_MIT18_02SC_pb_94_comb.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Session 95 Problems: Surface Independence",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e61f04f1956293a7c16cbc61df907e41_MIT18_02SC_pb_95_quest.pdf",
+          "filename": "e61f04f1956293a7c16cbc61df907e41_MIT18_02SC_pb_95_quest.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Session 95 Solutions: Surface Independence",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/c135480a190b0214277598fe20bd1f21_MIT18_02SC_pb_95_comb.pdf",
+          "filename": "c135480a190b0214277598fe20bd1f21_MIT18_02SC_pb_95_comb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-62",
+      "sequence": 62,
+      "unit": 4,
+      "session": "96",
+      "sessions": [
+        96
+      ],
+      "slug": "session-96-summary-of-multiple-integration",
+      "kind": "topic",
+      "evidence": "thin",
+      "title": {
+        "en": "Summary of Multiple Integration",
+        "zh": "多重积分总结"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-c-line-integrals-and-stokes-theorem/session-96-summary-of-multiple-integration/",
+      "sources": []
+    },
+    {
+      "id": "MIT-MV-63",
+      "sequence": 63,
+      "unit": 4,
+      "session": "97–98",
+      "sessions": [
+        97,
+        98
+      ],
+      "slug": "session-97-curl-and-physics",
+      "kind": "topic",
+      "evidence": "full",
+      "title": {
+        "en": "Curl and Physics; Maxwell's Equations",
+        "zh": "旋度与物理；Maxwell 方程"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/physics-applications/session-97-curl-and-physics/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "Session 98: Maxwell's Equations",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3f371db51e1ee3540e6f0ff50e46d07b_MIT18_02SC_MNotes_v15.2to3.pdf",
+          "filename": "3f371db51e1ee3540e6f0ff50e46d07b_MIT18_02SC_MNotes_v15.2to3.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-64",
+      "sequence": 64,
+      "unit": 4,
+      "session": "4",
+      "sessions": [],
+      "slug": "exam",
+      "kind": "exam",
+      "evidence": "exam",
+      "title": {
+        "en": "Exam 4",
+        "zh": "第四次考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/exam-4/exam/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Exam 4",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e6deb5160e19e5483e975cdae3004956_MIT18_02SC_exam4.pdf",
+          "filename": "e6deb5160e19e5483e975cdae3004956_MIT18_02SC_exam4.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Exam 4 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/40f8e2ee50d708a3f0459c8eca5fb512_MIT18_02SC_exam4sol.pdf",
+          "filename": "40f8e2ee50d708a3f0459c8eca5fb512_MIT18_02SC_exam4sol.pdf"
+        },
+        {
+          "kind": "practice",
+          "title": "Exam 4 Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/6223b043b82390b3419c572580dde1fc_MIT18_02SC_prac4A.pdf",
+          "filename": "6223b043b82390b3419c572580dde1fc_MIT18_02SC_prac4A.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Exam 4 Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3286570023a551d06088b1f4ce317382_MIT18_02SC_prac4Asol.pdf",
+          "filename": "3286570023a551d06088b1f4ce317382_MIT18_02SC_prac4Asol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-65",
+      "sequence": 65,
+      "unit": 5,
+      "session": "99",
+      "sessions": [
+        99
+      ],
+      "slug": "session-99-unit-1-review",
+      "kind": "review",
+      "evidence": "thin",
+      "title": {
+        "en": "Final Review: Unit 1",
+        "zh": "期末复习：第一单元"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/final-exam-1/review/session-99-unit-1-review/",
+      "sources": [
+        {
+          "kind": "practice",
+          "title": "Final Exam Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf",
+          "filename": "904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Final Exam Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf",
+          "filename": "a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-66",
+      "sequence": 66,
+      "unit": 5,
+      "session": "100",
+      "sessions": [
+        100
+      ],
+      "slug": "session-100-unit-2-review",
+      "kind": "review",
+      "evidence": "thin",
+      "title": {
+        "en": "Final Review: Unit 2",
+        "zh": "期末复习：第二单元"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/final-exam-1/review/session-100-unit-2-review/",
+      "sources": [
+        {
+          "kind": "practice",
+          "title": "Final Exam Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf",
+          "filename": "904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Final Exam Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf",
+          "filename": "a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-67",
+      "sequence": 67,
+      "unit": 5,
+      "session": "101",
+      "sessions": [
+        101
+      ],
+      "slug": "session-101-unit-3-review",
+      "kind": "review",
+      "evidence": "thin",
+      "title": {
+        "en": "Final Review: Unit 3",
+        "zh": "期末复习：第三单元"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/final-exam-1/review/session-101-unit-3-review/",
+      "sources": [
+        {
+          "kind": "practice",
+          "title": "Final Exam Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf",
+          "filename": "904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Final Exam Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf",
+          "filename": "a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-68",
+      "sequence": 68,
+      "unit": 5,
+      "session": "102",
+      "sessions": [
+        102
+      ],
+      "slug": "session-102-unit-4-review",
+      "kind": "review",
+      "evidence": "thin",
+      "title": {
+        "en": "Final Review: Unit 4",
+        "zh": "期末复习：第四单元"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/final-exam-1/review/session-102-unit-4-review/",
+      "sources": [
+        {
+          "kind": "practice",
+          "title": "Final Exam Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf",
+          "filename": "904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Final Exam Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf",
+          "filename": "a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-MV-69",
+      "sequence": 69,
+      "unit": 5,
+      "session": "Final",
+      "sessions": [],
+      "slug": "final-exam",
+      "kind": "exam",
+      "evidence": "exam",
+      "title": {
+        "en": "Final Exam",
+        "zh": "期末考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/final-exam-1/final-exam/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Final Exam",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/8048c12b339cefb160f8540aa3507fc7_MIT18_02SC_finalexam.pdf",
+          "filename": "8048c12b339cefb160f8540aa3507fc7_MIT18_02SC_finalexam.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Final Exam Solution",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/02b7e64d338b9c8561d01377ddfd8c7d_MIT18_02SC_finalexamsol.pdf",
+          "filename": "02b7e64d338b9c8561d01377ddfd8c7d_MIT18_02SC_finalexamsol.pdf"
+        },
+        {
+          "kind": "practice",
+          "title": "Final Exam Practice",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf",
+          "filename": "904c6ca3318bd35307bb65ba3dd0f50e_MIT18_02SC_pracfinal.pdf"
+        },
+        {
+          "kind": "practiceSolutions",
+          "title": "Final Exam Practice Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf",
+          "filename": "a0d43da5e56f31dd1e41e874fe5415d2_MIT18_02SC_pracfinalsol.pdf"
+        }
+      ]
+    }
+  ],
+  "problemSets": [
+    {
+      "problemSet": 1,
+      "unit": 1,
+      "title": "Problem Set 1",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-a-vectors-determinants-and-planes/problem-set-1/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 1 Part A: Problem Set 1",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2ea35c7ab33c5c143ae8f60f949588f2_MIT18_02SC_pset1.pdf",
+          "filename": "2ea35c7ab33c5c143ae8f60f949588f2_MIT18_02SC_pset1.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 1 Part A: Problem Set 1 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e54088826b5647514efc06071bf46ca5_MIT18_02SC_pset1sol.pdf",
+          "filename": "e54088826b5647514efc06071bf46ca5_MIT18_02SC_pset1sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 2,
+      "unit": 1,
+      "title": "Problem Set 2",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-b-matrices-and-systems-of-equations/problem-set-2/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 1 Part B: Problem Set 2",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/378ff61797746177a933b67e50f1f074_MIT18_02SC_pset2.pdf",
+          "filename": "378ff61797746177a933b67e50f1f074_MIT18_02SC_pset2.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 1 Part B: Problem Set 2 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/be756e6ef4a4351c90bde6f6d85a608f_MIT18_02SC_pset2sol.pdf",
+          "filename": "be756e6ef4a4351c90bde6f6d85a608f_MIT18_02SC_pset2sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 3,
+      "unit": 1,
+      "title": "Problem Set 3",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/1.-vectors-and-matrices/part-c-parametric-equations-for-curves/problem-set-3/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 1 Part C: Problem Set 3",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/04e1365ae9ea9e0263c9465669db310d_MIT18_02SC_pset3.pdf",
+          "filename": "04e1365ae9ea9e0263c9465669db310d_MIT18_02SC_pset3.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 1 Part C: Problem Set 3 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bc8ae5aa4f1dbabde49a6ee7f9be19ee_MIT18_02SC_pset3sol.pdf",
+          "filename": "bc8ae5aa4f1dbabde49a6ee7f9be19ee_MIT18_02SC_pset3sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 4,
+      "unit": 2,
+      "title": "Problem Set 4",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-a-functions-of-two-variables-tangent-approximation-and-optimization/problem-set-4/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 2 Part A: Problem Set 4",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/794cfed250a856ff859098682bd0b844_MIT18_02SC_pset4.pdf",
+          "filename": "794cfed250a856ff859098682bd0b844_MIT18_02SC_pset4.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 2 Part A: Problem Set 4 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bd96042c0631d84384f59280c7592665_MIT18_02SC_pset4sol.pdf",
+          "filename": "bd96042c0631d84384f59280c7592665_MIT18_02SC_pset4sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 5,
+      "unit": 2,
+      "title": "Problem Set 5",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-b-chain-rule-gradient-and-directional-derivatives/problem-set-5/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 2 Part B: Problem Set 5",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/870f3d3f4063d3ac8513be605c29da14_MIT18_02SC_pset5.pdf",
+          "filename": "870f3d3f4063d3ac8513be605c29da14_MIT18_02SC_pset5.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 2 Part B: Problem Set 5 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/d0b03519d3263f0a90f98553dcf7d9f4_MIT18_02SC_pset5sol.pdf",
+          "filename": "d0b03519d3263f0a90f98553dcf7d9f4_MIT18_02SC_pset5sol.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "Solutions to Supplemental Problems referenced in this problem set",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/mit18_02sc_f10_pset5_supp_sol.pdf",
+          "filename": "mit18_02sc_f10_pset5_supp_sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 6,
+      "unit": 2,
+      "title": "Problem Set 6",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/2.-partial-derivatives/part-c-lagrange-multipliers-and-constrained-differentials/problem-set-6/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 2 Part C: Problem Set 6",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b5a808163f48282784ec75ca5ebaa582_MIT18_02SC_pset6.pdf",
+          "filename": "b5a808163f48282784ec75ca5ebaa582_MIT18_02SC_pset6.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 2 Part C: Problem Set 6 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/e17d1ae13c8fbbe66bccbc3a55b556fb_MIT18_02SC_pset6sol.pdf",
+          "filename": "e17d1ae13c8fbbe66bccbc3a55b556fb_MIT18_02SC_pset6sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 7,
+      "unit": 3,
+      "title": "Problem Set 7",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-a-double-integrals/problem-set-7/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 3 Part A: Problem Set 7",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/ccf6356378d47a90511b5105cbd7b824_MIT18_02SC_pset7.pdf",
+          "filename": "ccf6356378d47a90511b5105cbd7b824_MIT18_02SC_pset7.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 3 Part A: Problem Set 7 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b4c07dc90604cec18e0a7c1e1b31490e_MIT18_02SC_pset7sol.pdf",
+          "filename": "b4c07dc90604cec18e0a7c1e1b31490e_MIT18_02SC_pset7sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 8,
+      "unit": 3,
+      "title": "Problem Set 8",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-b-vector-fields-and-line-integrals/problem-set-8/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 3 Part B: Problem Set 8",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2815cfe2c21de819fe5c0fa11165308c_MIT18_02SC_pset8.pdf",
+          "filename": "2815cfe2c21de819fe5c0fa11165308c_MIT18_02SC_pset8.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 3 Part B: Problem Set 8 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/bf5496992ab96752e11aa20b3482ef5a_MIT18_02SC_pset8sol.pdf",
+          "filename": "bf5496992ab96752e11aa20b3482ef5a_MIT18_02SC_pset8sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 9,
+      "unit": 3,
+      "title": "Problem Set 9",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/3.-double-integrals-and-line-integrals-in-the-plane/part-c-greens-theorem/problem-set-9/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 3 Part C: Problem Set 9",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/fa18a2da43d105c7b8c633df974652e6_MIT18_02SC_pset9.pdf",
+          "filename": "fa18a2da43d105c7b8c633df974652e6_MIT18_02SC_pset9.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 3 Part C: Problem Set 9 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/eebfea1c1dab8376092e0edd86828e58_MIT18_02SC_pset9sol.pdf",
+          "filename": "eebfea1c1dab8376092e0edd86828e58_MIT18_02SC_pset9sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 10,
+      "unit": 4,
+      "title": "Problem Set 10",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-a-triple-integrals/problem-set-10/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 4 Part A: Problem Set 10",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/9bfbf5bc05f40ab889390d19d58932af_MIT18_02SC_pset10.pdf",
+          "filename": "9bfbf5bc05f40ab889390d19d58932af_MIT18_02SC_pset10.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 4 Part A: Problem Set 10 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/2863a0661d59629365e2c84b2a1d37ba_MIT18_02SC_pset10sol.pdf",
+          "filename": "2863a0661d59629365e2c84b2a1d37ba_MIT18_02SC_pset10sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 11,
+      "unit": 4,
+      "title": "Problem Set 11",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-b-flux-and-the-divergence-theorem/problem-set-11/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 4 Part B: Problem Set 11",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/3ab56b603e45206b3b455dfe15791e44_MIT18_02SC_pset11.pdf",
+          "filename": "3ab56b603e45206b3b455dfe15791e44_MIT18_02SC_pset11.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 4 Part B: Problem Set 11 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/dd2261f1b307ae4b6cf2de90cfe3d8f4_MIT18_02SC_pset11sol.pdf",
+          "filename": "dd2261f1b307ae4b6cf2de90cfe3d8f4_MIT18_02SC_pset11sol.pdf"
+        }
+      ]
+    },
+    {
+      "problemSet": 12,
+      "unit": 4,
+      "title": "Problem Set 12",
+      "officialUrl": "https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/pages/4.-triple-integrals-and-surface-integrals-in-3-space/part-c-line-integrals-and-stokes-theorem/problem-set-12/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "Section 4 Part C: Problem Set 12",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/61987db4530a0894030cbfbf3373a018_MIT18_02SC_pset12.pdf",
+          "filename": "61987db4530a0894030cbfbf3373a018_MIT18_02SC_pset12.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "Section 4 Part C: Problem Set 12 Solutions",
+          "asset": "18-02sc-multivariable-calculus-fall-2010/materials/b2b48283719323b2d053890855d83616_MIT18_02SC_pset12sol.pdf",
+          "filename": "b2b48283719323b2d053890855d83616_MIT18_02SC_pset12sol.pdf"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "QUANT-BS0",
+  "subject": "quant",
+  "module": "BS paper · course map",
+  "title": {
+    "en": "BS and Greeks: paper course",
+    "zh": "BS 与 Greeks：纸笔推导课程"
+  },
+  "prereqs": [
+    "QUANT-P1",
+    "QUANT-P2"
+  ],
+  "estimatedHours": 12,
+  "navigation": {
+    "next": {
+      "id": "QUANT-BS1",
+      "title": {
+        "en": "P/Q measures, diffusion and BS pricing",
+        "zh": "P/Q 测度、扩散与 BS 定价"
+      },
+      "devHref": "/subjects/quant/19-bs-model-price/index.html",
+      "buildHref": "/quant-19-bs-model-price.html"
+    }
+  },
+  "references": [
+    "NIST DLMF",
+    "Utah financial mathematics notes",
+    "Lean Language Reference"
+  ]
+}

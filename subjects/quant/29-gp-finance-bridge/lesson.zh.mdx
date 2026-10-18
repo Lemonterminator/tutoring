@@ -1,0 +1,21 @@
+import { GpFinanceCourse } from '../../../framework/games/gp-finance/GpFinanceCourse';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## 高斯过程与投资组合
+
+<a href={quantLessonHref('QUANT-2')}>← 返回回归评估与量化风险</a> · <a href={quantLessonHref('QUANT-BS0')}>BS 与 Greeks 纸笔课程</a> · <a href={quantLessonHref('GAME-AALTO-GP')}>Aalto 高斯过程全课程</a>
+
+投资组合理论里的协方差矩阵 Σ 和高斯过程里的核矩阵 K 是同一种对象：都是一个高斯随机向量的二阶结构。把资产看成输入点、收益看成随机函数的取值，组合收益 wᵀr 就是 GP 的一个线性泛函，组合方差 wᵀΣw 就是这个泛函的方差。沿着这条线，很多公式可以直接互相翻译：
+
+- 因子模型 XFXᵀ + D 是线性核加对角噪声；
+- 最小方差组合的权重由精度矩阵 Σ⁻¹ 决定，而 1/[Σ⁻¹]ᵢᵢ 正是 GP 的留一法预测方差；
+- 向单位阵收缩相当于给核加噪声项，也相当于对权重加 L2 惩罚（凸组合形式与加法形式之间要做 δ = ρμ/(1 − ρ) 的换算）；
+- Black–Litterman 的后验均值，就是带线性观测算子 P 的 GP 后验条件化。
+
+下面三个小游戏把这几条对应关系拆成可以心算的小步骤。它们是本站补充的扩展内容，不属于 Aalto 课程；所需的金融定义都写在题面里。
+
+<GpFinanceCourse lang="zh" />
+
+## 这些游戏不考查什么
+
+它们不考查协方差的估计（样本量、非平稳性、厚尾），不考查带约束的组合优化，也不构成投资建议。完成一局后，可以用真实收益数据把样本协方差、Ledoit–Wolf 收缩和核构造的协方差放在一起，比较样本外最小方差组合的实现波动率。

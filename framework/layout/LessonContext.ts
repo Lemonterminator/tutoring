@@ -1,8 +1,9 @@
 import { createContext } from 'preact';
 import type { TermDict } from '../i18n/terms';
 import type { Bi } from '../i18n/ui';
+import type { LessonNavigationMeta } from './LessonNavigation';
 
-export type LessonMeta = { id: string; subject: 'math' | 'physics' | 'chemistry'; title: Bi };
+export type LessonMeta = { id: string; subject: 'math' | 'physics' | 'chemistry'; title: Bi; navigation?: LessonNavigationMeta };
 
 export const LessonContext = createContext<{ meta: LessonMeta; terms: TermDict }>({
   meta: { id: 'unknown', subject: 'math', title: { en: '', fi: '' } },

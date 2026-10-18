@@ -1,0 +1,327 @@
+## 1. Motivation
+
+Transformer blocks are not only attention matrices. They repeatedly add attention and feed-forward writes to a residual stream, and they place normalization either around each residual block (Post-LN) or inside it (Pre-LN). These choices affect both the representation that a sublayer reads and the scale of gradients at initialization.
+
+This lesson does three things. It derives the LayerNorm and RMSNorm Jacobians without hiding the centering or RMS differential, scopes the Pre-LN/Post-LN theorem to the exact parameter and assumptions analyzed by Xiong et al., and rewrites a block as QK read circuits plus OV write circuits on the residual stream.
+
+## 2. Forward definition
+
+For one position, let $x\in\mathbb{R}^{d}$ and let $\mathbf{1}\in\mathbb{R}^{d}$ be the all-ones vector. LayerNorm is
+
+$$
+\mu=\frac{1}{d}\mathbf{1}^\top x,\qquad
+c=x-\mu\mathbf{1},\qquad
+\sigma=\sqrt{\frac{1}{d}c^\top c+\varepsilon},
+\qquad
+\widehat x=\frac{c}{\sigma},
+$$
+
+$$
+\operatorname{LN}_{\gamma,\beta}(x)=\gamma\odot\widehat x+\beta.
+$$
+
+RMSNorm drops the centering step:
+
+$$
+r=\sqrt{\frac{1}{d}x^\top x+\varepsilon},
+\qquad
+\operatorname{RMSN}_{\gamma}(x)=\gamma\odot\frac{x}{r}.
+$$
+
+For a sequence matrix $X\in\mathbb{R}^{n\times d}$, a head reads through
+
+$$
+Q_h=XW_Q^h,\qquad K_h=XW_K^h,\qquad
+A_h=\operatorname{softmax}_{\mathrm{rows}}\left(\frac{Q_hK_h^\top}{\sqrt{d_h}}\right)
+\in\mathbb{R}^{n\times n},
+$$
+
+and writes
+
+$$
+Y_h=A_hXW_V^hW_O^h\in\mathbb{R}^{n\times d}.
+$$
+
+The simplified residual decomposition used later is
+
+$$
+X_{\mathrm{out}}
+=X+\sum_{h=1}^{H}A_hXW_V^hW_O^h+\operatorname{FFN}(\cdot).
+$$
+
+Post-LN and Pre-LN differ in where the normalization sits. A simplified Post-LN block is
+
+$$
+x_{\ell+1}=\operatorname{LN}\left(x_\ell+F_\ell(x_\ell)\right),
+$$
+
+whereas a simplified Pre-LN block is
+
+$$
+x_{\ell+1}=x_\ell+F_\ell(\operatorname{LN}(x_\ell)),
+\qquad
+x_{\mathrm{final}}=\operatorname{LN}(x_{L+1}).
+$$
+
+The extra final LayerNorm is part of the Pre-LN definition used in the Xiong-style comparison here.
+
+**Sources.** The Pre-LN/Post-LN theorem and its warmup experiments are from Xiong et al., “On Layer Normalization in the Transformer Architecture” (https://arxiv.org/abs/2002.04745). RMSNorm is from Zhang and Sennrich (https://arxiv.org/abs/1910.07467). The residual-stream and QK/OV circuit vocabulary follows Elhage et al. (https://transformer-circuits.pub/2021/framework/index.html).
+
+## 3. Derivations
+
+### D-M3.3-01 · LayerNorm and RMSNorm Jacobians
+
+**Theorem.** With $\varepsilon>0$, the Jacobian of the un-affined LayerNorm output $\widehat x=c/\sigma$ is
+
+$$
+J_{\mathrm{LN}}(x)
+=\frac{1}{\sigma}
+\left(
+I-\frac{\mathbf{1}\mathbf{1}^\top}{d}
+-\frac{\widehat x\widehat x^\top}{d}
+\right)
+\in\mathbb{R}^{d\times d}.
+$$
+
+The affine LayerNorm output has
+
+$$
+J_{\operatorname{LN}_{\gamma,\beta}}(x)
+=\operatorname{diag}(\gamma)J_{\mathrm{LN}}(x).
+$$
+
+The RMSNorm Jacobian is
+
+$$
+J_{\mathrm{RMSN}}(x)
+=\frac{1}{r}
+\left(
+I-\frac{xx^\top}{d r^2}
+\right)
+=\frac{1}{r}
+\left(
+I-\frac{yy^\top}{d}
+\right),
+\qquad y=\frac{x}{r}.
+$$
+
+**Steps for LayerNorm.**
+
+1. The mean differential is
+   $$
+   d\mu=\frac{1}{d}\mathbf{1}^\top dx.
+   $$
+   Hence the centered-vector differential is
+   $$
+   dc=dx-\mathbf{1}\,d\mu
+   =\left(I-\frac{\mathbf{1}\mathbf{1}^\top}{d}\right)dx.
+   $$
+2. Differentiate the variance term:
+   $$
+   d\left(\frac{1}{d}c^\top c\right)
+   =\frac{2}{d}c^\top dc.
+   $$
+   Since $c^\top\mathbf{1}=0$, substitute the expression for $dc$:
+   $$
+   c^\top dc
+   =c^\top\left(I-\frac{\mathbf{1}\mathbf{1}^\top}{d}\right)dx
+   =c^\top dx.
+   $$
+3. Differentiate $\sigma=\sqrt{c^\top c/d+\varepsilon}$:
+   $$
+   d\sigma
+   =\frac{1}{2\sigma}\frac{2}{d}c^\top dx
+   =\frac{c^\top dx}{d\sigma}.
+   $$
+4. Apply the quotient rule to $\widehat x=c/\sigma$:
+   $$
+   d\widehat x
+   =\frac{1}{\sigma}dc-\frac{c}{\sigma^2}d\sigma.
+   $$
+   Substitute steps 1 and 3:
+   $$
+   d\widehat x
+   =\frac{1}{\sigma}\left(I-\frac{\mathbf{1}\mathbf{1}^\top}{d}\right)dx
+   -\frac{c c^\top}{d\sigma^3}dx.
+   $$
+5. Since $c/\sigma=\widehat x$, factor $1/\sigma$:
+   $$
+   d\widehat x
+   =\frac{1}{\sigma}
+   \left(
+   I-\frac{\mathbf{1}\mathbf{1}^\top}{d}
+   -\frac{\widehat x\widehat x^\top}{d}
+   \right)dx.
+   $$
+   Reading the coefficient of $dx$ gives the displayed Jacobian. The affine map then multiplies each output row by $\gamma$, which is left multiplication by $\operatorname{diag}(\gamma)$.
+
+**Steps for RMSNorm.**
+
+1. Let $y=x/r$. The RMS differential is
+   $$
+   dr=\frac{1}{2r}\frac{2}{d}x^\top dx
+   =\frac{x^\top dx}{d r}.
+   $$
+2. Differentiate $y=x/r$:
+   $$
+   dy=\frac{1}{r}dx-\frac{x}{r^2}dr
+   =\frac{1}{r}dx-\frac{xx^\top}{d r^3}dx.
+   $$
+3. Factor $1/r$ and use $y=x/r$:
+   $$
+   dy=\frac{1}{r}\left(I-\frac{yy^\top}{d}\right)dx.
+   $$
+   There is no $\mathbf{1}\mathbf{1}^\top/d$ term because RMSNorm does not compute or subtract a mean.
+4. LayerNorm is invariant to a common shift: $\operatorname{LN}(x+a\mathbf{1})=\operatorname{LN}(x)$ for any scalar $a$. RMSNorm is not: a common shift changes both the numerator and the RMS denominator. The check measures LayerNorm shift error $6.661338147750939\times10^{-16}$ and RMSNorm shift change $1.9019511363263102$.
+
+**Check.** checks/M3/D-M3.3-01.py compares both analytic Jacobians to float64 finite differences. The maximum absolute errors are $1.4464665402946775\times10^{-10}$ for LayerNorm and $1.569945284884966\times10^{-10}$ for RMSNorm; it also checks the shift distinction and prints passed = True.
+
+**Intuition.** LayerNorm removes the direction $\mathbf{1}$ before scaling, while RMSNorm only controls total squared magnitude. RMSNorm therefore saves the mean-subtraction pathway but does not erase a mean component.
+
+### D-M3.3-02 · Pre-LN versus Post-LN at initialization
+
+**Theorem, scoped exactly.** Under the simplified model and assumptions below, Xiong et al. bound the gradient of one specific matrix, the second linear matrix of the last FFN sublayer:
+
+$$
+\nabla_{W^{2,L}}L,
+$$
+
+not the parameters of “the last layer” generically. With probability at least
+
+$$
+0.99-\delta-\frac{\varepsilon}{0.9+\varepsilon},
+$$
+
+their high-probability upper bounds have the form
+
+$$
+\left\|\nabla_{W^{2,L}}L\right\|_F
+=O\left(d\sqrt{\ln d}\right)
+\quad\text{(Post-LN)},
+$$
+
+and
+
+$$
+\left\|\nabla_{W^{2,L}}L\right\|_F
+=O\left(d\sqrt{\frac{\ln d}{L}}\right)
+\quad\text{(Pre-LN)}.
+$$
+
+These are upper bounds, not $\Theta$ statements; the paper does not prove a matching lower bound.
+
+**Assumptions.** The theorem's simplified setting uses single-head attention with $W^Q=W^K=0$ at initialization, square $d\times d$ weight matrices with Xavier/Gaussian entries $\mathcal{N}(0,1/d)$, a ReLU FFN, LayerNorm with $\gamma=1,\beta=0$, Gaussian inputs, and a concentration assumption that each position's hidden-state squared norm is $(\varepsilon,\delta)$-bounded around its expectation. The Pre-LN side ends with the extra final LayerNorm $x_{\mathrm{final}}=\operatorname{LN}(x_{L+1})$.
+
+**Steps.**
+
+1. From D-M3.3-01, the LayerNorm Jacobian is a bounded projection-like matrix times $1/\sigma$. Under the concentration assumption, $\sigma$ is proportional to $\|x\|/\sqrt d$, so
+   $$
+   \left\|J_{\mathrm{LN}}(x)\right\|
+   =O\left(\frac{\sqrt d}{\|x\|}\right).
+   $$
+   This is the normalization estimate used in both placements.
+2. In Post-LN, every block output is renormalized to norm approximately $\sqrt d$, regardless of how many previous blocks have run. For the last FFN matrix, the backward route is
+   $$
+   W^{2,L}\longrightarrow \text{last residual add}\longrightarrow \operatorname{LN}\longrightarrow L.
+   $$
+   There is no depth-dependent product on this route, and the norm estimate therefore yields a depth-free $O(d\sqrt{\ln d})$ upper bound under the theorem's concentration calculation.
+3. In Pre-LN, the residual stream is not renormalized after each addition:
+   $$
+   x_{\ell+1}=x_\ell+F_\ell(\operatorname{LN}(x_\ell)).
+   $$
+   The simplified initialization calculation gives
+   $$
+   \mathbb{E}\|x_\ell\|^2=\Theta(\ell d),
+   $$
+   so $\|x_\ell\|$ grows like $\sqrt{Ld}$ at depth $L$. The extra final LayerNorm contributes the factor
+   $$
+   O\left(\frac{\sqrt d}{\sqrt{Ld}}\right)=O(L^{-1/2})
+   $$
+   relative to a depth-independent width factor, yielding the stated $O(d\sqrt{\ln d/L})$ upper bound.
+4. The source of the depth factor is the accumulated unnormalized residual stream followed by the final normalization. It is not that Pre-LN “averages its residual branches.”
+5. Keep a separate result separate: gradients for an earlier layer $l<L$ include products of per-layer Jacobians along the residual path. Xiong et al. discuss an approximate extension with roughly $(2/3)^{(L-l)/2}$ attenuation for Post-LN; this is not Theorem 1 and is not interchangeable with the last-matrix bound.
+6. Warmup is a separate empirical hypothesis, not a corollary of the theorem. Xiong et al. report that Post-LN needs warmup with both Adam and SGD on IWSLT14, while Pre-LN was trained without warmup on IWSLT14, WMT14, and BERT pretraining. The theorem bounds initialization gradient magnitude; it does not by itself prove a complete optimizer schedule.
+7. The repository's simplified float64 experiment measures the last $W^{2,L}$ gradient norm for $L\in\{2,4,8,16,32\}$, includes the final LayerNorm on the Pre-LN side, and fits log-log slopes. It obtains Post-LN slope $-0.023142879376785604$ and Pre-LN slope $-0.3437517783090803$; this is an empirical toy trend, not a replacement for the paper's high-probability theorem.
+
+**Check.** checks/M3/D-M3.3-02.py checks the last-$W^{2,L}$ analytic gradient with the common float64 harness, reports the depth experiment, and records torch_autograd = unavailable because the current minimal environment has no PyTorch. It prints passed = True. The authoritative theorem scope and assumptions are the Xiong et al. report (https://arxiv.org/abs/2002.04745).
+
+**Claim, correctly scoped.** Pre-LN's initialization gradient for the specific last FFN second matrix has a $1/\sqrt L$ upper-bound scaling in this simplified analysis. “Pre-LN always has better gradients” or “the theorem proves warmup is unnecessary” are stronger claims and are not established here.
+
+**Intuition.** Post-LN resets the scale after every block, whereas Pre-LN lets the residual stream accumulate and normalizes it at the end. The final normalization then exposes the square-root depth scale in the last-matrix gradient.
+
+### D-M3.3-03 · QK reads, OV writes, and the residual stream
+
+**Claim.** For head $h$, the QK part decides the read matrix
+
+$$
+A_h=\operatorname{softmax}_{\mathrm{rows}}\left(
+\frac{XW_Q^h(XW_K^h)^\top}{\sqrt{d_h}}
+\right)
+\in\mathbb{R}^{n\times n},
+$$
+
+and the OV part writes the selected values back into the model width:
+
+$$
+Y_h=A_hXW_V^hW_O^h\in\mathbb{R}^{n\times d}.
+$$
+
+With a residual connection and an FFN output, the layer is
+
+$$
+\boxed{
+X_{\mathrm{out}}
+=X+\sum_{h=1}^{H}A_hXW_V^hW_O^h+\operatorname{FFN}(\cdot)
+}.
+$$
+
+**Steps.**
+
+1. The query and key projections are $XW_Q^h,XW_K^h\in\mathbb{R}^{n\times d_h}$. Their scaled product has shape $n\times n$:
+   $$
+   \frac{XW_Q^h(XW_K^h)^\top}{\sqrt{d_h}}\in\mathbb{R}^{n\times n}.
+   $$
+   Row softmax turns it into $A_h$, so $W_Q^h,W_K^h$ control which source rows are read.
+2. The value projection has shape $XW_V^h\in\mathbb{R}^{n\times d_h}$. Multiplying on the left by $A_h$ mixes source values for every query row:
+   $$
+   A_hXW_V^h\in\mathbb{R}^{n\times d_h}.
+   $$
+3. The output projection maps the head write back to model width:
+   $$
+   A_hXW_V^hW_O^h\in\mathbb{R}^{n\times d}.
+   $$
+4. Sum the writes from $h=1,\ldots,H$, add the incoming residual stream $X$, and add the FFN contribution. The result is exactly the boxed decomposition.
+5. The numerical check constructs random $X$, QK weights, value/output weights, and an FFN output. It verifies the decomposition to maximum error $3.552713678800501\times10^{-15}$ and verifies that every QK row sums to one.
+6. “QK circuit” and “OV circuit” are interpretability vocabulary for these two parameter paths. The algebraic statement is the matrix decomposition above; it does not claim that a trained head has one human-interpretable function.
+
+**Check.** checks/M3/D-M3.3-03.py verifies the QK row normalization and the residual/OV decomposition; it prints passed = True.
+
+**Analogy, labeled.** A head can be pictured as reading addresses with QK and writing content with OV. This is an interpretability analogy; the exact object is $A_hXW_V^hW_O^h$.
+
+## 4. Numerical verification
+
+The checks use deterministic float64 calculations. The current outputs are:
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M3.3-01 | LayerNorm Jacobian max absolute error $1.4464665402946775\times10^{-10}$; RMSNorm $1.569945284884966\times10^{-10}$ | pass |
+| D-M3.3-02 | Post slope $-0.023142879376785604$; Pre slope $-0.3437517783090803$; last-$W^{2,L}$ harness check passed | pass |
+| D-M3.3-03 | residual decomposition max error $3.552713678800501\times10^{-15}$; row sums one | pass |
+
+The torch.float64 comparison is optional in this environment and is recorded as unavailable rather than fabricated. Run python -m pytest course/tests from the repository parent to execute the lesson contract and all earlier checks.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M3-d" />
+
+**V-M3-d — Pre-LN/Post-LN gradient norms.** The specification is viz/specs/V-M3-d.yaml and the pure compute module is viz/compute/pre_post_ln.ts. Choose depth, width, placement, and seed. The widget plots a toy initialization preview of the last $W^{2,L}$ gradient norm and overlays a normalized $1/\sqrt L$ reference.
+
+The widget is deliberately labeled as a synthetic preview: the authoritative numerical experiment is D-M3.3-02, and the Xiong theorem applies only to the stated simplified setting and the stated last FFN matrix. The existing frontend can render both curves with Canvas2D and expose the scope text beside the plot.
+
+## 6. Closing
+
+**Counterintuitive question.** Why can moving the same LayerNorm from after a residual block to inside it change initialization behavior so much? **Worked answer:** D-M3.3-02 identifies the scale source. Post-LN renormalizes each block, so the route from the last FFN's second matrix to the loss has no accumulated residual norm; Pre-LN leaves the stream unnormalized, so its expected squared norm grows like $Ld$ and the final LayerNorm contributes an extra $1/\sqrt L$ factor. This is a scoped initialization-gradient result, not a universal claim about every parameter or optimizer.
+
+**Assignment A-M3.** In code/minilm/, add configurable Pre-LN/Post-LN blocks and QK/OV logging to the nanoGPT baseline. Compare the same tiny corpus with the same seed, record the last-$W^{2,L}$ initialization norms, and export the residual/QK/OV summaries used by V-M3-a and V-M3-d.
+
+**Spine check.** Architecturally, normalization sets the coordinate scale and residual decomposition makes each attention head a read/write operator on a shared stream. Probabilistically, these choices alter the parameterization and gradient scale of each prefix-conditioned computation while preserving the causal conditional factorization.

@@ -1,0 +1,264 @@
+## 1. Motivation
+
+Later lessons multiply Jacobians across time or position. A transpose, shape, or finite-difference mistake in this first module would therefore contaminate every later conclusion about vanishing gradients, additive memory, attention, or state-space recurrence. This lesson fixes the notation and builds the float64 harness that turns each derivative into a runnable numerical claim.
+
+## 2. Forward definition
+
+Vectors are columns. A vector $x\in\mathbb{R}^{d}$ has shape $(d,)$, a matrix $W\in\mathbb{R}^{o\times i}$ has shape $(o,i)$, and a scalar loss $L\in\mathbb{R}$ has shape $()$. For $y=f(x)$, the Jacobian is
+
+$$
+J=\frac{\partial y}{\partial x}\in\mathbb{R}^{|y|\times |x|},
+\qquad
+\nabla_x L=J^\top\nabla_y L.
+$$
+
+The shared harness evaluates a scalar function $f(\mathrm{params})\in\mathbb{R}$ and compares an analytic gradient with the central difference
+
+$$
+\frac{\partial f}{\partial p_r}
+\approx
+\frac{f(p+\varepsilon e_r)-f(p-\varepsilon e_r)}{2\varepsilon},
+\qquad \varepsilon=10^{-6}.
+$$
+
+All check inputs and perturbations use float64. The harness reports maximum absolute error, maximum relative error, the worst index, a per-parameter table, and a Boolean pass result.
+
+## 3. Derivations
+
+### D-M0.1-01 · Softmax Jacobian
+
+**Claim.** For $z\in\mathbb{R}^{d}$ and $p=\operatorname{softmax}(z)\in\mathbb{R}^{d}$, the Jacobian $J\in\mathbb{R}^{d\times d}$ is
+
+$$
+J=\operatorname{diag}(p)-pp^\top.
+$$
+
+**Steps.**
+
+1. Define $a_i=\exp(z_i)$ and $Z=\sum_{k=1}^{d}a_k$, so $p_i=a_i/Z$. (This names the numerator and shared denominator before applying the quotient rule.)
+2. Differentiate the numerator: $\partial a_i/\partial z_j=\delta_{ij}a_i$. (The Kronecker delta records whether the perturbed coordinate is the numerator coordinate.)
+3. Differentiate the denominator: $\partial Z/\partial z_j=a_j$. (Only the $j$th exponential changes with $z_j$.)
+4. Apply the quotient rule:
+   $$
+   \frac{\partial p_i}{\partial z_j}
+   =\frac{\delta_{ij}a_iZ-a_i a_j}{Z^2}.
+   $$
+   (The first term differentiates the numerator and the second differentiates the denominator.)
+5. Substitute $a_i/Z=p_i$ and $a_j/Z=p_j$:
+   $$
+   \frac{\partial p_i}{\partial z_j}=\delta_{ij}p_i-p_i p_j.
+   $$
+   (This expresses every entry using the output probabilities.)
+6. Collect the entries into a matrix: $J=\operatorname{diag}(p)-pp^\top$. (The diagonal term contains $\delta_{ij}p_i$ and the outer product contains $p_i p_j$.)
+7. $J$ is symmetric because both $\operatorname{diag}(p)$ and $pp^\top$ are symmetric. (Symmetry is visible term by term.)
+8. $J\mathbf{1}=p-p(p^\top\mathbf{1})=p-p=0$. (The probabilities sum to one, so the all-ones direction is in the null space and every row sums to zero.)
+
+**Check.** `checks/M0/D-M0.1-01.py` — `max_abs_err = 6.399e-10`, `max_rel_err = 1.939e-08`, `passed = True`.
+
+**Intuition.** Increasing one logit raises its probability and removes probability from the other entries. The outer-product term is the normalization feedback that couples all coordinates.
+
+### D-M0.1-02 · Softmax plus cross-entropy gradient
+
+**Claim.** For target index $y\in\{1,\ldots,d\}$ and $L=-\log p_y$, the logit gradient is
+
+$$
+\nabla_z L=p-e_y\in\mathbb{R}^{d}.
+$$
+
+**Derivation through D-M0.1-01.**
+
+1. The probability gradient has entries $\partial L/\partial p_i=-\delta_{iy}/p_y$. (Only the target probability appears in $-\log p_y$.)
+2. Apply the transposed-Jacobian chain rule:
+   $$
+   \nabla_zL=J^\top\nabla_pL.
+   $$
+   (The Jacobian maps logit perturbations to probability perturbations, so reverse mode uses its transpose.)
+3. Substitute $J_{ij}=\delta_{ij}p_i-p_i p_j$ and sum over $i$:
+   $$
+   \frac{\partial L}{\partial z_j}
+   =\sum_i\left(-\frac{\delta_{iy}}{p_y}\right)(\delta_{ij}p_i-p_i p_j).
+   $$
+   (This writes the full reverse-mode contraction.)
+4. Only $i=y$ survives the delta factor, so
+   $$
+   \frac{\partial L}{\partial z_j}
+   =-\frac{1}{p_y}(\delta_{yj}p_y-p_y p_j)=p_j-\delta_{yj}.
+   $$
+   (The target probability cancels from both terms.)
+5. Therefore $\nabla_zL=p-e_y$. (The vector form collects the coordinate result.)
+
+**Direct derivation.**
+
+1. Rewrite the loss using the softmax quotient:
+   $$
+   L=-\log\frac{\exp(z_y)}{\sum_k\exp(z_k)}
+   =\log\sum_k\exp(z_k)-z_y.
+   $$
+   (Taking the logarithm turns the quotient into a difference.)
+2. Differentiate the log-sum-exp term:
+   $$
+   \frac{\partial}{\partial z_j}\log\sum_k\exp(z_k)
+   =\frac{\exp(z_j)}{\sum_k\exp(z_k)}=p_j.
+   $$
+   (The quotient is exactly the softmax coordinate.)
+3. Differentiate $-z_y$: $\partial(-z_y)/\partial z_j=-\delta_{yj}$. (The target coordinate contributes one direct term.)
+4. Add the two terms to obtain $\partial L/\partial z_j=p_j-\delta_{yj}$. (Both derivations produce the same vector.)
+
+**Check.** `checks/M0/D-M0.1-02.py` — `max_abs_err = 1.561e-10`, `max_rel_err = 8.760e-10`, `passed = True`.
+
+**Intuition.** The gradient asks the model to move probability mass toward the target: every non-target coordinate receives its current probability, while the target receives that probability minus one.
+
+### D-M0.1-03 · LayerNorm Jacobian
+
+**Claim.** For $x\in\mathbb{R}^{d}$, $\varepsilon>0$, $\mu=\frac1d\mathbf{1}^\top x$, $\sigma=\sqrt{\frac1d\|x-\mu\mathbf{1}\|^2+\varepsilon}$, and $\hat{x}=(x-\mu\mathbf{1})/\sigma$,
+
+$$
+\frac{\partial\hat{x}}{\partial x}
+=\frac1\sigma\left(I-\frac1d\mathbf{1}\mathbf{1}^\top-\frac1d\hat{x}\hat{x}^\top\right)\in\mathbb{R}^{d\times d}.
+$$
+
+For $y=\gamma\odot\hat{x}+\beta$ with $\gamma,\beta,y\in\mathbb{R}^{d}$,
+
+$$
+\frac{\partial y}{\partial x}=\operatorname{diag}(\gamma)\frac{\partial\hat{x}}{\partial x},
+\quad
+\frac{\partial y}{\partial\gamma}=\operatorname{diag}(\hat{x}),
+\quad
+\frac{\partial y}{\partial\beta}=I.
+$$
+
+**Steps.**
+
+1. Let $u=x-\mu\mathbf{1}$ and $P=I-\frac1d\mathbf{1}\mathbf{1}^\top$. Then $u=Px$. (Subtracting the mean is a linear projection.)
+2. Differentiate $u$: $du=P\,dx$. (The matrix $P$ is constant with respect to $x$.)
+3. Write $\sigma=(u^\top u/d+\varepsilon)^{1/2}$. (This is the given standard deviation with stabilizing epsilon.)
+4. Differentiate the square root:
+   $$
+   d\sigma=\frac{1}{2\sigma}\frac{2u^\top du}{d}=\frac{u^\top P\,dx}{d\sigma}.
+   $$
+   (The chain rule differentiates the quadratic and then the square root.)
+5. Since $P$ is symmetric and $Pu=u$, $u^\top P=u^\top$. (The centered vector already lies in the mean-zero subspace.)
+6. Differentiate $\hat{x}=u/\sigma$:
+   $$
+   d\hat{x}=\frac{du}{\sigma}-\frac{u}{\sigma^2}d\sigma
+   =\left(\frac{P}{\sigma}-\frac{uu^\top}{d\sigma^3}\right)dx.
+   $$
+   (The first term differentiates the numerator and the second differentiates the reciprocal scale.)
+7. Because $\hat{x}=u/\sigma$, $uu^\top/\sigma^2=\hat{x}\hat{x}^\top$. Therefore
+   $$
+   \frac{\partial\hat{x}}{\partial x}
+   =\frac1\sigma\left(I-\frac1d\mathbf{1}\mathbf{1}^\top-\frac1d\hat{x}\hat{x}^\top\right).
+   $$
+   (Substitution converts the centered-vector term into the normalized-vector term.)
+8. Differentiate $y=\gamma\odot\hat{x}+\beta$ coordinatewise to obtain the three displayed Jacobians. (Elementwise multiplication is a diagonal linear map when one factor is fixed.)
+
+**Check.** `checks/M0/D-M0.1-03.py` — normalized-vector Jacobian `max_abs_err = 1.446e-10`, full affine loss gradient `max_abs_err = 2.450e-10`, both `passed = True`.
+
+**Intuition.** LayerNorm removes the mean direction and rescales the centered direction. The affine parameters then restore a learned coordinatewise scale and offset.
+
+### D-M0.1-04 · RMSNorm Jacobian
+
+**Claim.** For $x\in\mathbb{R}^{d}$, $r=\sqrt{\frac1d x^\top x+\varepsilon}$, and $y=x/r\in\mathbb{R}^{d}$,
+
+$$
+\frac{\partial y}{\partial x}
+=\frac1r\left(I-\frac1d yy^\top\right)\in\mathbb{R}^{d\times d}.
+$$
+
+**Steps.**
+
+1. Write $r=(x^\top x/d+\varepsilon)^{1/2}$. (This exposes the scalar whose derivative controls the normalization.)
+2. Differentiate $r$:
+   $$
+     dr=\frac{1}{2r}\frac{2x^\top dx}{d}=\frac{x^\top dx}{d\,r}.
+   $$
+   (The quadratic differential is $2x^\top dx$.)
+3. Differentiate $y=x/r$:
+   $$
+     dy=\frac{dx}{r}-\frac{x}{r^2}dr
+     =\left(\frac{I}{r}-\frac{xx^\top}{d\,r^3}\right)dx.
+   $$
+   (The quotient rule separates the direct vector path from the scale path.)
+4. Since $y=x/r$, $xx^\top/r^2=yy^\top$. Thus
+   $$
+   \frac{\partial y}{\partial x}=\frac1r\left(I-\frac1d yy^\top\right).
+   $$
+   (The substitution expresses the Jacobian using the normalized output.)
+
+**Check.** `checks/M0/D-M0.1-04.py` — normalized-vector Jacobian `max_abs_err = 1.396e-10`, scalar-loss gradient `max_abs_err = 3.356e-10`, both `passed = True`.
+
+**Intuition.** RMSNorm removes the radial scale but keeps the mean component. This makes it a different projection from LayerNorm even when both use the same epsilon convention.
+
+### D-M0.1-05 · Reverse-mode chain rule on a four-node graph
+
+**Claim.** For a scalar loss and graph nodes $c$ with children $v$, reverse mode accumulates
+
+$$
+\nabla_v L=\sum_{c\in\operatorname{children}(v)}
+\left(\frac{\partial c}{\partial v}\right)^\top\nabla_c L.
+$$
+
+Use the scalar graph
+
+$$
+u=ab,\qquad v=\tanh(u+c),\qquad w=v^2,\qquad L=w+\sin(v),
+$$
+
+where $a,b,c,u,v,w,L\in\mathbb{R}$.
+
+**Steps.**
+
+1. The loss has two children paths from $v$: $w=v^2$ and $\sin(v)$. (The graph must sum both downstream contributions.)
+2. The reverse seed is $\bar{L}=\partial L/\partial L=1$. (A scalar loss receives unit upstream sensitivity.)
+3. Since $L=w+\sin(v)$, $\bar{w}=\partial L/\partial w=1$. (The coefficient of $w$ is one.)
+4. Accumulate at $v$:
+   $$
+   \bar{v}=\left(\frac{\partial w}{\partial v}\right)^\top\bar{w}
+   +\frac{\partial\sin(v)}{\partial v}\bar{L}
+   =2v+\cos(v).
+   $$
+   (The sum is the reverse-mode rule at a merging node.)
+5. Differentiate $v=\tanh(u+c)$: $\partial v/\partial u=1-v^2$ and $\partial v/\partial c=1-v^2$. (The derivative of tanh at its pre-activation is $1-\tanh^2$.)
+6. Propagate to $u$ and $c$:
+   $$
+   \bar{u}=\bar{v}(1-v^2),\qquad \bar{c}=\bar{v}(1-v^2).
+   $$
+   (Both edges leave $v$ with the same local derivative.)
+7. Differentiate $u=ab$: $\partial u/\partial a=b$ and $\partial u/\partial b=a$. (The product rule gives the two local edge Jacobians.)
+8. Propagate to the leaves:
+   $$
+   \bar{a}=\bar{u}b,\qquad \bar{b}=\bar{u}a.
+   $$
+   (Each leaf receives the upstream adjoint multiplied by its local derivative.)
+
+**Check.** `checks/M0/D-M0.1-05.py` — all three leaf gradients pass; `max_abs_err = 2.848e-11`, `passed = True`.
+
+**Intuition.** Reverse mode does not choose one path through a graph. It sends an adjoint backward along every edge and adds the contributions when paths merge.
+
+## 4. Numerical verification
+
+The five executable checks use fixed float64 inputs and central differences. Their current reports are:
+
+| Derivation | Maximum absolute error | Maximum relative error | Result |
+| --- | ---: | ---: | --- |
+| D-M0.1-01 | $6.399\times10^{-10}$ | $1.939\times10^{-8}$ | pass |
+| D-M0.1-02 | $1.561\times10^{-10}$ | $8.760\times10^{-10}$ | pass |
+| D-M0.1-03 | $2.450\times10^{-10}$ | $1.672\times10^{-8}$ | pass |
+| D-M0.1-04 | $3.356\times10^{-10}$ | $3.741\times10^{-9}$ | pass |
+| D-M0.1-05 | $2.848\times10^{-11}$ | $2.394\times10^{-10}$ | pass |
+
+Run all setup and lesson checks with `python -m pytest course/tests` from the repository parent. The browser does not execute these Python checks; this lesson displays their static output.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M0-a" />
+
+**V-M0-a — Computation-graph gradient viewer.** The reader chooses `rnn_cell`, `lstm_cell`, or `attention_head`, selects a node, and supplies or resets a deterministic upstream gradient. The widget state contains `seed: 0`, the selected graph, and the selected node. It outputs the local Jacobian, incoming upstream gradient, outgoing gradient, and magnitude color scales. Its single insight is that local Jacobians compose by transposed multiplication and that a merge adds gradient contributions. The pure computation contract is in `viz/specs/V-M0-a.yaml` and `viz/compute/gradient_viewer.ts`; rendering belongs in the existing Preact `Figure` integration.
+
+## 6. Closing
+
+**Counterintuitive question.** If a Jacobian is symmetric, can reverse mode skip the transpose? **Worked answer:** the transpose remains part of the chain-rule statement even when symmetry makes its numerical matrix equal to the original. D-M0.1-01 happens to have a symmetric softmax Jacobian, but D-M0.1-05 contains general local Jacobians and requires the transpose to match the declared $(|y|,|x|)$ convention. The safe rule is to write the transpose every time and simplify only after proving symmetry.
+
+**Assignment A-M0.** Extend `code/common/gradcheck.py` only through tested, framework-neutral APIs; add one executable check per derivation; keep all checks deterministic, float64, and non-mutating; and make `python -m pytest course/tests` pass. The assignment contract is in `code/common/README.md`.
+
+**Spine check.** Architecture-wise, this lesson fixes the Jacobian orientation and reverse-mode accumulation that later determine how information and gradients travel through time or position. Probability-wise, it fixes the scalar-loss convention used when autoregressive conditionals are trained and checked.

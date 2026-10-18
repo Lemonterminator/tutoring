@@ -1,0 +1,132 @@
+## 1. Motivation
+
+M0.5.4 showed that a likelihood depends on the chosen output family. The next defect is reading perplexity as though it were an intrinsic property of text. Perplexity is an exponentiated average surprise per token, so changing the tokenizer changes the unit being averaged. This lesson derives the effective branching-factor interpretation and converts the score to bits per byte.
+
+## 2. Forward definition
+
+For a token distribution $p\in\Delta^{K-1}$ with $K\in\mathbb{N}$, entropy in nats and perplexity are
+
+$$
+H(p)=-\sum_{i=1}^{K}p_i\log p_i\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{ppl}(p)=\exp(H(p))\in[1,K].
+$$
+
+For a dataset with total negative log-likelihood $\mathrm{NLL}\in\mathbb{R}_{\ge0}$, $N_{\mathrm{tok}}\in\mathbb{N}$ tokens, and $N_{\mathrm{byte}}\in\mathbb{N}$ bytes,
+
+$$
+H_{\mathrm{tok}}=\frac{\mathrm{NLL}}{N_{\mathrm{tok}}}\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{ppl}_{\mathrm{tok}}=\exp(H_{\mathrm{tok}})\in[1,\infty),
+\qquad
+\mathrm{bpb}=\frac{\mathrm{NLL}}{\log 2\;N_{\mathrm{byte}}}\in\mathbb{R}_{\ge0}.
+$$
+
+The bits-per-character or bits-per-byte quantity changes its denominator with the physical text unit rather than with the tokenizer's token count.
+
+## 3. Derivations
+
+### D-M0.5.5-01 · Perplexity is an effective branching factor
+
+**Claim.** If $k\in\mathbb{N}$ symbols are equiprobable, then $\mathrm{ppl}=k$. If the mean information is $b$ bits per character and a token contains $c$ characters on average, then the token perplexity is $2^{bc}$.
+
+**Steps.**
+
+1. Set the equiprobable distribution $p_i=1/k\in\mathbb{R}$ for $i=1,\ldots,k$. (Equal probability assigns the same surprise to every symbol.)
+2. Substitute into entropy:
+   $$
+   H(p)=-\sum_{i=1}^{k}\frac1k\log\frac1k
+   =-k\frac1k(-\log k)=\log k\in\mathbb{R}_{\ge0}.
+   $$
+   (There are $k$ identical terms and $-\log(1/k)=\log k$.)
+3. Exponentiate the entropy:
+   $$
+   \mathrm{ppl}=\exp(H)=\exp(\log k)=k\in\mathbb{N}.
+   $$
+   (The exponential reverses the natural logarithm.)
+4. Convert a mean of $b\in\mathbb{R}_{\ge0}$ bits per character into nats per token. One bit is $\log 2$ nats, so
+   $$
+   H_{\mathrm{tok}}=bc\log 2\in\mathbb{R}_{\ge0}.
+   $$
+   (A token containing $c$ characters accumulates $bc$ bits of information.)
+5. Exponentiate the token entropy:
+   $$
+   \mathrm{ppl}_{\mathrm{tok}}=\exp(bc\log 2)=2^{bc}\in[1,\infty).
+   $$
+   (The identity $\exp(a\log2)=2^a$ changes units from nats to bits.)
+6. For the checked fixture $b=1.25\in\mathbb{R}$ and $c=3.2\in\mathbb{R}$, $bc=4\in\mathbb{R}$ and $\mathrm{ppl}=2^4=16$. (The numerical example makes the unit conversion explicit.)
+
+**Check.** `checks/M0.5/D-M0.5.5-01.py` — equiprobable perplexity `7.999999999999998` for $k=8$, token bits `4.0`, converted perplexity `16.0`, `passed = True`.
+
+**Intuition.** Perplexity answers “how many equally likely choices would create this average surprise?” The answer is meaningful only after the unit—token, character, or byte—is named.
+
+### D-M0.5.5-02 · Perplexity depends on the tokenizer; bits per byte does not
+
+**Claim.** Two tokenizers can assign different token-level perplexities to the same total NLL because they use different token counts. Dividing the same NLL by the number of bytes produces the comparable bits-per-byte quantity.
+
+**Steps.**
+
+1. Let the same text and model evaluation produce total $\mathrm{NLL}=A\in\mathbb{R}_{\ge0}$ and total bytes $B\in\mathbb{N}$. (The physical text fixes the byte denominator.)
+2. Tokenizer A uses $N_A\in\mathbb{N}$ tokens, so
+   $$
+   H_A=\frac{A}{N_A}\in\mathbb{R}_{\ge0},
+   \qquad
+   \mathrm{ppl}_A=\exp\left(\frac{A}{N_A}\right)\in[1,\infty).
+   $$
+   (Per-token averaging divides the same total by tokenizer A's token count.)
+3. Tokenizer B uses $N_B\in\mathbb{N}$ tokens, so
+   $$
+   H_B=\frac{A}{N_B}\in\mathbb{R}_{\ge0},
+   \qquad
+   \mathrm{ppl}_B=\exp\left(\frac{A}{N_B}\right)\in[1,\infty).
+   $$
+   (A different segmentation changes the average even when the evaluated text is the same.)
+4. If $N_A\ne N_B$ and $A>0$, then generally $\mathrm{ppl}_A\ne\mathrm{ppl}_B$. (The exponential is strictly increasing, so unequal per-token NLLs remain unequal after exponentiation.)
+5. Convert the same total NLL to bits:
+   $$
+   \mathrm{NLL}_{\mathrm{bits}}=\frac{A}{\log2}\in\mathbb{R}_{\ge0}.
+   $$
+   (Division by $\log2$ converts nats into bits.)
+6. Divide by physical bytes:
+   $$
+   \mathrm{bpb}=\frac{A}{\log2\;B}\in\mathbb{R}_{\ge0}.
+   $$
+   (Neither tokenizer's token count appears in the denominator.)
+7. For the fixture $A=120\in\mathbb{R}$, $B=80\in\mathbb{N}$, $N_A=100\in\mathbb{N}$, and $N_B=60\in\mathbb{N}$,
+   $$
+   \mathrm{ppl}_A=\exp(120/100)=3.3201169\ldots,
+   \quad
+   \mathrm{ppl}_B=\exp(120/60)=7.3890561\ldots,
+   \quad
+   \mathrm{bpb}=\frac{120}{80\log2}=2.16404256\ldots.
+   $$
+   (The token-level scores differ while the byte-level score is identical.)
+
+**Check.** `checks/M0.5/D-M0.5.5-02.py` — tokenizer A perplexity `3.3201169227365472`, tokenizer B perplexity `7.38905609893065`, both bits-per-byte `2.164042561333445`, `passed = True`.
+
+**Intuition.** Tokenizer-dependent perplexity is a rate per learned symbol, not a universal ruler. Bits per byte asks how much information the model assigns to the same physical text.
+
+**Information note, not a derivation.** Entropy rate is the asymptotic average uncertainty per source symbol. Shannon's classic estimate of English entropy supplies a historical lower-bound context for language-model loss, but it is not a finite-dataset theorem about a modern tokenizer. See [Shannon (1951)](https://doi.org/10.1002/j.1538-7305.1951.tb01338.x).
+
+## 4. Numerical verification
+
+The two checks use deterministic float64 values. They verify the equiprobable branching-factor identity, bits-per-character conversion, tokenizer-dependent perplexity, and tokenizer-independent bits per byte.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M0.5.5-01 | $k=8$ gives perplexity `7.999999999999998`; conversion gives `16.0` | pass |
+| D-M0.5.5-02 | token perplexities `3.3201169227365472` and `7.38905609893065`; both bpb `2.164042561333445` | pass |
+
+Run `python -m pytest course/tests` from the repository parent. This lesson has no independent widget; V-M0.5-d visualizes temperature and truncation in M0.5.8.
+
+## 5. Interactive visualizations
+
+This lesson has no independent widget. Its numerical content is a unit-conversion and reporting contract used by the later distribution-shaper widget **V-M0.5-d**. That widget belongs with D-M0.5.8-02 because it shows how decoding temperature changes entropy.
+
+## 6. Closing
+
+**Counterintuitive question.** Can a tokenizer with higher token perplexity be better for the same text? **Worked answer:** yes, because D-M0.5.5-02 compares different denominators. A tokenizer that uses fewer, larger tokens can have a larger per-token perplexity even when the total NLL per byte is identical or lower. Compare bits per byte before interpreting the token-level number.
+
+**Assignment A-M0.5.** Report both held-out token perplexity and bits per byte for the smoothed bigram model, making the tokenizer and denominator explicit. The assignment contract is in `code/common/A-M0.5-README.md`.
+
+**Spine check.** Architecture-wise, tokenization changes the unit and sequence length seen by every later architecture. Probability-wise, perplexity is exponentiated cross-entropy in the chosen unit, while bits per byte provides a comparable physical-text rate.

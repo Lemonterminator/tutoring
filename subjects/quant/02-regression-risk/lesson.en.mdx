@@ -1,0 +1,32 @@
+import { MetricsReader } from '../../../framework/quant/MetricsReader';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## Place in the learning path
+
+Read this after probability distributions, regression and hypothesis testing. Your original material connects regression evaluation to financial risk through the same statistical objects: errors, distributions, quantiles, likelihoods and dependence.
+
+Part I (§0–§7) derives point-error metrics, coverage, CRPS, PIT/ECE, heteroscedastic NLL and the evaluation protocol. Part II (§7.5–§13) applies these ideas to Sharpe uncertainty, multiple testing, VaR backtests, density forecasts, VaR/ES scoring, joint calibration, GARCH/QLIKE and conformal prediction.
+
+## Reading and transfer
+
+Begin with RMSE versus MAE, then coverage, CRPS/PIT and NLL. Continue with the finance introduction and backtest statistics before VaR or GARCH. Sections 11.5–11.6 explain the boundary between marginal and joint calibration.
+
+The original evaluation population comes from spray experiments. Keep that context separate when transferring results to returns: temporal dependence, leakage, changing distributions and tail behavior require explicit assumptions.
+
+## Derivations and experiments
+
+| Chapters | Question to answer | Reading and exercise |
+| --- | --- | --- |
+| §1–§2 Point errors and coverage | What do bias, outliers and interval width each change? | Move the error-distribution controls and compare RMSE, MAE and coverage. |
+| §3–§5 Probabilistic scores and calibration | How do calibration and predictive accuracy differ? | Compare the CRPS, PIT and NLL derivations while varying predictive location and scale. |
+| §8–§10 Financial backtests | How do serial dependence and multiple testing affect conclusions? | Examine the assumptions behind Sharpe uncertainty, VaR exception tests and density tests. |
+| §11–§11.6 Quantiles and joint risk | Is individual-variable calibration enough for a portfolio? | Start from pinball loss, then read the joint-calibration counterexample and Rosenblatt transform. |
+| §12–§13 Volatility and conformal prediction | Why can different losses or coverage guarantees lead to different judgments? | Operate the QLIKE experiment and state the conditions required for conformal coverage. |
+
+## Extension: Gaussian processes and portfolios
+
+Portfolio variance wᵀΣw, factor models, minimum-variance weights, covariance shrinkage and Black–Litterman can all be read as computations on a Gaussian-process kernel matrix. <a href={quantLessonHref('GAME-GP-FINANCE')}>Gaussian processes and portfolios: bridge games</a> breaks these correspondences into steps you can do in your head.
+
+<h2 id="reader">Original bilingual reading</h2>
+
+<MetricsReader lang="en" />

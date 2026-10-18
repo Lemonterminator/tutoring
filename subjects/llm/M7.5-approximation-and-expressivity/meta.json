@@ -1,0 +1,35 @@
+{
+  "subject": "llm",
+  "id": "M7.5",
+  "module": "M7",
+  "title": {
+    "en": "Approximation and expressivity — what the theorems do and do not say",
+    "zh": "逼近与表达能力——定理说了什么，又没说什么"
+  },
+  "prereqs": [
+    "M3.5",
+    "M7.1",
+    "M7.4"
+  ],
+  "estimatedHours": 3,
+  "spine": {
+    "en": {
+      "a": "Approximation, stability, circuit complexity, and infinite-width limits answer different questions; none alone predicts a trained LLM's behavior.",
+      "b": "The final appendix lesson is a scope map. It records conditions on universal approximation, Lipschitzness, TC0/chain-of-thought, NNGP/NTK, and μP rather than turning them into slogans."
+    },
+    "zh": {
+      "a": "逼近、稳定性、电路复杂度和无限宽度极限回答的是不同的问题；没有任何一个能单独预测训练好的大语言模型的行为。",
+      "b": "最后的附录课程是一张范围图。它记录了关于通用逼近、Lipschitz 连续性、TC0/思维链、NNGP/NTK 以及 μP 的条件，而不是将它们变成口号。"
+    }
+  },
+  "derivations": [],
+  "visualizations": [],
+  "assignment": "A-M7",
+  "references": [
+    "yun2020",
+    "kim2021",
+    "merrill2023",
+    "hron2020",
+    "yang2022"
+  ]
+}

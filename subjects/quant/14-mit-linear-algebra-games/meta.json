@@ -1,0 +1,14 @@
+{
+  "id": "GAME-MIT-LA",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "mit-linear-algebra",
+  "module": "MIT 18.06SC · Complete course practice",
+  "title": { "en": "MIT 18.06SC linear algebra: all 41 games", "zh": "MIT 18.06SC 线性代数：全课程 41 个小游戏" },
+  "prereqs": [],
+  "spine": {
+    "en": { "a": "Follow all 40 teaching, review and exam sessions in the 2011 course package.", "b": "Practice with source notes, problems and solutions available in every game; explore the 2023 supplement." },
+    "zh": { "a": "按课程顺序练习 2011 课程包全部 40 个教学、复习与考试环节。", "b": "每个小游戏均可查看对应的原讲义、习题与答案，另有 2023 补充讲座练习。" }
+  },
+  "references": ["MIT OpenCourseWare, 18.06SC Linear Algebra, Fall 2011", "Gilbert Strang, Final 18.06 Lecture 2023 (supplement)"]
+}

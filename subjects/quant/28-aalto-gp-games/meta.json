@@ -1,0 +1,28 @@
+{
+  "id": "GAME-AALTO-GP",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "aalto-gp",
+  "module": "Aalto CS-E4895 · Complete course practice",
+  "title": {
+    "en": "Aalto CS-E4895 Gaussian processes: course games",
+    "zh": "Aalto CS-E4895 高斯过程：全课程小游戏"
+  },
+  "prereqs": [
+    "GAME-MIT-LA"
+  ],
+  "spine": {
+    "en": {
+      "a": "All 33 games cover the 12 lectures and 6 assignments of CS-E4895 (2023) and two topics from the earlier CS-E4075 special course.",
+      "b": "Each game links the exact lecture pages, the GPML section and the assignment task it practises."
+    },
+    "zh": {
+      "a": "全部 33 个游戏覆盖 CS-E4895（2023）的 12 讲和 6 份作业，以及早期 CS-E4075 专题课的两个主题。",
+      "b": "每个游戏都链接到对应的讲义页码、GPML 章节和作业任务。"
+    }
+  },
+  "references": [
+    "Aalto University CS-E4895 Gaussian Processes (2023); slides © their lecturers; mirror github.com/SpringNuance/Gaussian-Processes",
+    "C. E. Rasmussen and C. K. I. Williams, Gaussian Processes for Machine Learning, MIT Press 2006"
+  ]
+}

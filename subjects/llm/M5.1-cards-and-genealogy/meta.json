@@ -1,0 +1,41 @@
+{
+  "subject": "llm",
+  "id": "M5.1",
+  "module": "M5",
+  "title": {
+    "en": "Architecture cards and genealogy",
+    "zh": "架构卡片与谱系"
+  },
+  "prereqs": [
+    "M4.1",
+    "M4.2",
+    "M4.3",
+    "M4.4",
+    "M4.5",
+    "M4.6"
+  ],
+  "estimatedHours": 5,
+  "spine": {
+    "en": {
+      "a": "M4 supplied six design axes; M5 turns them into a comparable card without confusing active parameters, cache state, or sequence throughput.",
+      "b": "Every card still describes a prefix-conditioned next-token predictor. The card records how the prefix is represented, mixed, routed, and carried into the next step."
+    },
+    "zh": {
+      "a": "M4 提供了六个设计轴；M5 将其转化为可比较的卡片，同时避免混淆活动参数、缓存状态或序列吞吐量。",
+      "b": "每张卡片仍然描述一个基于前缀条件的下一个 token 预测器。该卡片记录了前缀如何被表示、混合、路由并带入下一步骤。"
+    }
+  },
+  "derivations": [],
+  "visualizations": [
+    "V-M5-a"
+  ],
+  "assignment": "A-M5",
+  "references": [
+    "vaswani2017",
+    "deepseekv2",
+    "deepseekv3",
+    "qwen3",
+    "gu2023",
+    "gptoss"
+  ]
+}

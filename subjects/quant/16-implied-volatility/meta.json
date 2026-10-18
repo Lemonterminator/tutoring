@@ -1,0 +1,13 @@
+{
+  "id": "QUANT-P3", "subject": "quant", "module": "Quant pricing · implied volatility (3/4)",
+  "title": { "en": "Implied volatility and safe root finding", "zh": "隐含波动率与安全求根" },
+  "prereqs": ["QUANT-P1", "QUANT-P2", "One-variable calculus"],
+  "estimatedHours": 8,
+  "spine": {
+    "en": { "a": "Derive bounds, uniqueness and inverse conditioning before coding a solver.", "b": "Maintain a bracket and report precision limits explicitly." },
+    "zh": { "a": "先推导价格界、唯一性与逆问题条件数，再写求解器。", "b": "维持 bracket，并明确报告精度极限。" }
+  },
+  "derivations": ["No-arbitrage price bounds", "Vega monotonicity", "Vomma", "Inverse condition number"],
+  "assignment": "Price-to-IV-to-price grid and Newton failure case",
+  "references": ["Brent 1973", "Jäckel 2015", "QuantLib impliedvolatility.cpp"]
+}

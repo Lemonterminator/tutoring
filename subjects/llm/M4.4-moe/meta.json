@@ -1,0 +1,38 @@
+{
+  "subject": "llm",
+  "id": "M4.4",
+  "module": "M4",
+  "title": {
+    "en": "Mixture of experts: sparse computation and balancing",
+    "zh": "专家混合：稀疏计算与平衡"
+  },
+  "prereqs": [
+    "M4.3"
+  ],
+  "estimatedHours": 8,
+  "spine": {
+    "en": {
+      "a": "A dense FFN spends parameters on every token; MoE keeps many expert parameters but routes each token through only a few, creating a routing and communication defect.",
+      "b": "The next-token distribution is still a mixture of expert transformations conditioned on the prefix. The router changes which transformations are active; balancing changes the training signal or the external selection bias."
+    },
+    "zh": {
+      "a": "稠密前馈网络为每个 token 分配参数；MoE 保留大量专家参数，但仅将每个 token 路由到少数几个专家，从而产生路由和通信缺陷。",
+      "b": "下一个 token 的分布仍然是基于前缀条件的专家变换混合体。路由器改变哪些变换处于激活状态；平衡则改变训练信号或外部选择偏差。"
+    }
+  },
+  "derivations": [
+    "D-M4.4-01",
+    "D-M4.4-02",
+    "D-M4.4-03",
+    "D-M4.4-04"
+  ],
+  "visualizations": [
+    "V-M4-d"
+  ],
+  "assignment": "A-M4",
+  "references": [
+    "fedus2021",
+    "deepseekmoe2024",
+    "deepseekv3"
+  ]
+}

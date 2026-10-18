@@ -1,0 +1,224 @@
+## 1. Motivation
+
+Attention moves information between positions; the feed-forward network transforms the information at each position. Its activation is therefore not a decorative detail: it controls which local directions receive a smooth gradient, and gated variants spend parameters on a learned product of two branches.
+
+This lesson derives the exact GELU derivative, the derivative of Swish used by SwiGLU, the complete scalar-loss gradients for a SwiGLU block, and the hidden-width calculation that matches a standard $d\to4d\to d$ FFN's parameter count.
+
+## 2. Forward definition
+
+For a scalar $x\in\mathbb{R}$, let $\Phi$ and $\phi$ be the standard normal CDF and PDF:
+
+$$
+\Phi(x)=\frac{1}{2}\left(1+\operatorname{erf}\left(\frac{x}{\sqrt2}\right)\right),
+\qquad
+\phi(x)=\frac{1}{\sqrt{2\pi}}e^{-x^2/2}.
+$$
+
+GELU is
+
+$$
+\operatorname{GELU}(x)=x\Phi(x).
+$$
+
+For a model vector $x\in\mathbb{R}^{d}$ and hidden width $m$, a standard two-matrix FFN uses
+
+$$
+\operatorname{FFN}(x)=\operatorname{GELU}(xW_1)W_2,
+\qquad
+W_1\in\mathbb{R}^{d\times 4d},\quad
+W_2\in\mathbb{R}^{4d\times d}.
+$$
+
+The GLU family uses two input branches. Define
+
+$$
+\operatorname{Swish}(u)=u\sigma(u),
+\qquad
+\sigma(u)=\frac{1}{1+e^{-u}},
+$$
+
+and the SwiGLU block
+
+$$
+\operatorname{SwiGLU}(x)
+=\left(\operatorname{Swish}(xW_1)\odot xW_3\right)W_2,
+$$
+
+with
+
+$$
+W_1,W_3\in\mathbb{R}^{d\times m},
+\qquad
+W_2\in\mathbb{R}^{m\times d},
+\qquad
+\operatorname{SwiGLU}(x)\in\mathbb{R}^{d}.
+$$
+
+All vectors here are row-vector code conventions for $xW$; the mathematical parameter shapes are displayed explicitly.
+
+**Sources.** GELU is introduced by Hendrycks and Gimpel (https://arxiv.org/abs/1606.08415). The GLU variants and the SwiGLU parameterization follow Shazeer (https://arxiv.org/abs/2002.05202).
+
+## 3. Derivations
+
+### D-M3.4-01 · GELU, Swish, SwiGLU gradients, and the $8d/3$ width
+
+**Theorem.** The exact GELU derivative is
+
+$$
+\boxed{
+\frac{d}{dx}\operatorname{GELU}(x)
+=\Phi(x)+x\phi(x)
+}.
+$$
+
+Swish has derivative
+
+$$
+\boxed{
+\operatorname{Swish}'(u)
+=\sigma(u)+u\sigma(u)(1-\sigma(u))
+}.
+$$
+
+For a scalar loss $L=\langle g,y\rangle$ with
+
+$$
+a=xW_1\in\mathbb{R}^{m},\qquad
+b=xW_3\in\mathbb{R}^{m},\qquad
+c=\operatorname{Swish}(a)\odot b\in\mathbb{R}^{m},\qquad
+y=cW_2\in\mathbb{R}^{d},
+$$
+
+the gradients are
+
+$$
+\delta_c=gW_2^\top,\qquad
+\delta_a=\delta_c\odot b\odot\operatorname{Swish}'(a),\qquad
+\delta_b=\delta_c\odot\operatorname{Swish}(a),
+$$
+
+$$
+\nabla_xL=\delta_aW_1^\top+\delta_bW_3^\top,
+\qquad
+\nabla_{W_1}L=x^\top\delta_a,
+\qquad
+\nabla_{W_3}L=x^\top\delta_b,
+\qquad
+\nabla_{W_2}L=c^\top g.
+$$
+
+Finally, matching the standard FFN parameter count gives
+
+$$
+2dm+md=3dm
+\stackrel{!}{=}8d^2
+\quad\Longrightarrow\quad
+\boxed{m=\frac{8d}{3}}.
+$$
+
+**Steps.**
+
+1. Apply the product rule to GELU:
+   $$
+   \frac{d}{dx}[x\Phi(x)]
+   =1\cdot\Phi(x)+x\frac{d}{dx}\Phi(x).
+   $$
+   The derivative of the normal CDF is its density, $\Phi'(x)=\phi(x)$, so
+   $$
+   \frac{d}{dx}\operatorname{GELU}(x)=\Phi(x)+x\phi(x).
+   $$
+2. Differentiate the sigmoid:
+   $$
+   \sigma'(u)
+   =\frac{e^{-u}}{(1+e^{-u})^2}
+   =\sigma(u)(1-\sigma(u)).
+   $$
+   Since $\operatorname{Swish}(u)=u\sigma(u)$, the product rule gives
+   $$
+   \operatorname{Swish}'(u)
+   =\sigma(u)+u\sigma'(u)
+   =\sigma(u)+u\sigma(u)(1-\sigma(u)).
+   $$
+3. Write the SwiGLU forward graph with shapes:
+   $$
+   x\in\mathbb{R}^{d},\quad
+   W_1,W_3\in\mathbb{R}^{d\times m}
+   \Longrightarrow
+   a,b\in\mathbb{R}^{m},
+   $$
+   $$
+   \operatorname{Swish}(a)\odot b=c\in\mathbb{R}^{m},
+   \quad
+   W_2\in\mathbb{R}^{m\times d}
+   \Longrightarrow y=cW_2\in\mathbb{R}^{d}.
+   $$
+4. For $L=\langle g,y\rangle=g y^\top$, the differential through $y=cW_2$ is
+   $$
+   dL=g(d c\,W_2+c\,dW_2)^\top
+   =\langle gW_2^\top,dc\rangle
+   +\langle c^\top g,dW_2\rangle_F.
+   $$
+   Hence $\delta_c=gW_2^\top$ and $\nabla_{W_2}L=c^\top g$.
+5. Since $c=\operatorname{Swish}(a)\odot b$, its differential is
+   $$
+   dc=\operatorname{diag}(b)\operatorname{diag}(\operatorname{Swish}'(a))\,da
+   +\operatorname{diag}(\operatorname{Swish}(a))\,db.
+   $$
+   Applying the transpose-Jacobian chain rule gives
+   $$
+   \delta_a=\delta_c\odot b\odot\operatorname{Swish}'(a),
+   \qquad
+   \delta_b=\delta_c\odot\operatorname{Swish}(a).
+   $$
+6. The two affine branches have
+   $$
+   da=dx\,W_1+x\,dW_1,\qquad
+   db=dx\,W_3+x\,dW_3.
+   $$
+   Substituting $\delta_a,\delta_b$ and collecting coefficients of $dx,dW_1,dW_3$ gives
+   $$
+   \nabla_xL=\delta_aW_1^\top+\delta_bW_3^\top,
+   $$
+   $$
+   \nabla_{W_1}L=x^\top\delta_a,\qquad
+   \nabla_{W_3}L=x^\top\delta_b.
+   $$
+7. The standard FFN has two matrices with $4d^2$ parameters each, so $8d^2$ total, ignoring biases. SwiGLU has two input matrices with $dm$ parameters each and one output matrix with $md$ parameters:
+   $$
+   dm+dm+md=3dm.
+   $$
+   Equating $3dm=8d^2$ and dividing by $3d$ gives $m=8d/3$. For $d=12$, the exact matching width is $m=32$, and both designs contain $1152$ weights.
+8. The numerical check verifies the GELU Jacobian, all four SwiGLU parameter gradients, and the parameter-count equality. It reports GELU Jacobian maximum absolute error $3.256264147211141\times10^{-10}$ and SwiGLU gradient maximum absolute error $3.388396258019455\times10^{-9}$.
+
+**Check.** checks/M3/D-M3.4-01.py uses the shared float64 harness for GELU and the complete SwiGLU scalar-loss gradient, then checks $m=8d/3$ at $d=12$; it prints passed = True.
+
+**Claim, correctly scoped.** Equal parameter count does not imply equal optimization dynamics or equal quality. The equation $m=8d/3$ only matches the number of dense weights under the stated two-branch parameterization and ignores biases, normalization, and implementation rounding.
+
+**Approximation, labeled.** Production implementations sometimes replace exact GELU with a tanh-based approximation. This lesson's executable check uses the exact $\operatorname{erf}$ definition above, so no approximation error is folded into the derivative verification.
+
+**Intuition.** GELU gates a coordinate by its Gaussian-CDF probability. SwiGLU lets one learned branch modulate another, so it spends a third matrix on multiplicative selectivity and compensates by using a narrower hidden layer.
+
+## 4. Numerical verification
+
+The float64 check output is:
+
+| Quantity | Numerical output | Result |
+| --- | --- | --- |
+| GELU Jacobian | maximum absolute error $3.256264147211141\times10^{-10}$ | pass |
+| SwiGLU gradients | maximum absolute error $3.388396258019455\times10^{-9}$ across $x,W_1,W_2,W_3$ | pass |
+| GELU derivative at zero | $0.5$ | pass |
+| Parameter equality at $d=12,m=32$ | standard $1152$, SwiGLU $1152$ | pass |
+
+Run python -m pytest course/tests from the repository parent to execute this check and all earlier lessons.
+
+## 5. Interactive visualizations
+
+This lesson adds no new widget ID. The existing frontend can reuse its scalar-curve conventions to render GELU, Swish, and their derivatives if desired; the authoritative course artifact here is the pure NumPy check and the SwiGLU gradient path. The next lesson uses the same FFN shapes when discussing optimizer and inference accounting.
+
+## 6. Closing
+
+**Counterintuitive question.** Why can a SwiGLU FFN use a hidden width of only $8d/3$ and still have the same dense parameter count as a $4d$ FFN? **Worked answer:** the standard FFN has two matrices, each contributing $4d^2$, for $8d^2$ total. SwiGLU has three matrices, with two of shape $d\times m$ and one of shape $m\times d$, for $3dm$ total. Setting $3dm=8d^2$ gives $m=8d/3$; the smaller hidden width compensates for the extra input branch.
+
+**Assignment A-M3.** Add GELU and SwiGLU as configurable FFN choices in code/minilm/, run the shared gradient checks, and record loss/throughput at matched parameter counts on the A-M3 corpus. Keep the exact-vs-approximate activation choice explicit in the configuration.
+
+**Spine check.** Architecturally, the FFN is a positionwise nonlinear writer after attention, and GLU variants change that writer from one activation path to a gated product. Probabilistically, it maps each prefix-conditioned representation independently at its position, so it changes the local conditional parameterization without adding a new cross-position path.

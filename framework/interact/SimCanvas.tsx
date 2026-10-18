@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { onThemeChange } from '../theme/theme-state';
 import { useAnimationFrame } from './useAnimationFrame';
 
 export type Draw = (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
@@ -34,6 +35,9 @@ export function SimCanvas({ draw, label, height = 320, running = false, onTick, 
   };
 
   useEffect(() => paint.current());
+
+  // Canvas colours come from CSS variables; repaint when the page theme (or the OS scheme, for Auto) changes.
+  useEffect(() => onThemeChange(() => paint.current()), []);
 
   useEffect(() => {
     const canvas = ref.current;

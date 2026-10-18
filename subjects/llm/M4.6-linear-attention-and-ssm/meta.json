@@ -1,0 +1,40 @@
+{
+  "subject": "llm",
+  "id": "M4.6",
+  "module": "M4",
+  "title": {
+    "en": "Linear attention and state-space models: the return to recurrence",
+    "zh": "线性注意力与状态空间模型：回归循环结构"
+  },
+  "prereqs": [
+    "M4.5"
+  ],
+  "estimatedHours": 10,
+  "spine": {
+    "en": {
+      "a": "Dense attention pays for every query-key pair; kernel factorization, delta updates, and state-space recurrences replace the quadratic materialized path with a matrix state or a scanned state.",
+      "b": "The model remains a prefix-conditioned next-token predictor. The recurrent state is a compressed statistic of the prefix, and each update chooses what to write, correct, decay, or forget."
+    },
+    "zh": {
+      "a": "稠密注意力需为每个查询-键对付出代价；核分解、增量更新和状态空间循环用矩阵状态或扫描状态取代了二次方显式路径。",
+      "b": "模型仍是一个前缀条件化的下一个 token 预测器。循环状态是前缀的压缩统计量，每次更新决定写入、修正、衰减还是遗忘什么内容。"
+    }
+  },
+  "derivations": [
+    "D-M4.6-01",
+    "D-M4.6-02",
+    "D-M4.6-03",
+    "D-M4.6-04"
+  ],
+  "visualizations": [
+    "V-M4-f"
+  ],
+  "assignment": "A-M4",
+  "references": [
+    "katharopoulos2020",
+    "yang2024",
+    "gu2021",
+    "gu2023",
+    "dao2024"
+  ]
+}

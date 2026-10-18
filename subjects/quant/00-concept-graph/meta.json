@@ -1,0 +1,13 @@
+{
+  "id": "QUANT-0",
+  "subject": "quant",
+  "module": "Aalto and MIT course concept graph",
+  "title": { "en": "Quantitative mathematics course graph: Aalto and MIT", "zh": "量化数学课程星图：Aalto 与 MIT" },
+  "prereqs": [],
+  "spine": {
+    "en": { "a": "Explore the original Aalto prerequisites and added university course coverage.", "b": "Inspect concepts and lecture evidence before choosing what to study next." },
+    "zh": { "a": "探索原 Aalto 先修关系与新增大学公开课的专题覆盖。", "b": "结合概念定义与讲义证据，选择下一步学习内容。" }
+  },
+  "visualizations": ["Course concept graph"],
+  "references": ["Aalto lecture notes and slides", "MIT OpenCourseWare: 18.06SC, 18.02SC, 6.041SC, 18.650, 18.065", "Personal local study"]
+}

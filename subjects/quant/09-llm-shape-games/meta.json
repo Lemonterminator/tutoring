@@ -1,0 +1,13 @@
+{
+  "id": "GAME-M0-SHAPES",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "llm-foundations",
+  "module": "Math practice",
+  "title": {
+    "en": "LLM lesson one: shapes and transpose",
+    "zh": "LLM 第一课：形状与转置"
+  },
+  "prereqs": [],
+  "sourceLesson": "llm:M0.1"
+}

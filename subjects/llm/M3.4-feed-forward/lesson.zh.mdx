@@ -1,0 +1,224 @@
+## 1. 动机
+
+注意力机制在位置间传递信息，而前馈网络则变换每个位置上的信息。因此，其激活函数并非装饰性细节：它控制哪些局部方向接收平滑梯度，且门控变体将参数量用于两个分支的习得乘积。
+
+本课将推导 GELU 的确切导数、SwiGLU 所使用的 Swish 函数的导数、SwiGLU 块的完整标量损失梯度，以及使参数数量与标准 $d\to4d\to d$ FFN 相匹配的隐藏宽度计算。
+
+## 2. 前向定义
+
+对于标量 $x\in\mathbb{R}$，令 $\Phi$ 和 $\phi$ 分别为标准正态分布的累积分布函数（CDF）和概率密度函数（PDF）：
+
+$$
+\Phi(x)=\frac{1}{2}\left(1+\operatorname{erf}\left(\frac{x}{\sqrt2}\right)\right),
+\qquad
+\phi(x)=\frac{1}{\sqrt{2\pi}}e^{-x^2/2}.
+$$
+
+GELU 定义为
+
+$$
+\operatorname{GELU}(x)=x\Phi(x).
+$$
+
+对于模型向量 $x\in\mathbb{R}^{d}$ 和隐藏层宽度 $m$，标准的两矩阵前馈神经网络（FFN）使用
+
+$$
+\operatorname{FFN}(x)=\operatorname{GELU}(xW_1)W_2,
+\qquad
+W_1\in\mathbb{R}^{d\times 4d},\quad
+W_2\in\mathbb{R}^{4d\times d}.
+$$
+
+GLU 族使用两个输入分支。定义
+
+$$
+\operatorname{Swish}(u)=u\sigma(u),
+\qquad
+\sigma(u)=\frac{1}{1+e^{-u}},
+$$
+
+以及 SwiGLU 块
+
+$$
+\operatorname{SwiGLU}(x)
+=\left(\operatorname{Swish}(xW_1)\odot xW_3\right)W_2,
+$$
+
+其中
+
+$$
+W_1,W_3\in\mathbb{R}^{d\times m},
+\qquad
+W_2\in\mathbb{R}^{m\times d},
+\qquad
+\operatorname{SwiGLU}(x)\in\mathbb{R}^{d}.
+$$
+
+此处所有向量均遵循 $xW$ 的行向量代码约定；数学参数形状已明确展示。
+
+**参考文献。** GELU 由 Hendrycks 和 Gimpel 提出 (https://arxiv.org/abs/1606.08415)。GLU 变体及 SwiGLU 参数化遵循 Shazeer 的工作 (https://arxiv.org/abs/2002.05202)。
+
+## 3. 推导过程
+
+### D-M3.4-01 · GELU、Swish、SwiGLU 的梯度与 $8d/3$ 宽度
+
+**定理。** GELU 的精确导数为
+
+$$
+\boxed{
+\frac{d}{dx}\operatorname{GELU}(x)
+=\Phi(x)+x\phi(x)
+}.
+$$
+
+Swish 的导数为
+
+$$
+\boxed{
+\operatorname{Swish}'(u)
+=\sigma(u)+u\sigma(u)(1-\sigma(u))
+}.
+$$
+
+对于标量损失 $L=\langle g,y\rangle$，其中
+
+$$
+a=xW_1\in\mathbb{R}^{m},\qquad
+b=xW_3\in\mathbb{R}^{m},\qquad
+c=\operatorname{Swish}(a)\odot b\in\mathbb{R}^{m},\qquad
+y=cW_2\in\mathbb{R}^{d},
+$$
+
+其梯度为
+
+$$
+\delta_c=gW_2^\top,\qquad
+\delta_a=\delta_c\odot b\odot\operatorname{Swish}'(a),\qquad
+\delta_b=\delta_c\odot\operatorname{Swish}(a),
+$$
+
+$$
+\nabla_xL=\delta_aW_1^\top+\delta_bW_3^\top,
+\qquad
+\nabla_{W_1}L=x^\top\delta_a,
+\qquad
+\nabla_{W_3}L=x^\top\delta_b,
+\qquad
+\nabla_{W_2}L=c^\top g.
+$$
+
+最后，匹配标准 FFN 的参数数量可得
+
+$$
+2dm+md=3dm
+\stackrel{!}{=}8d^2
+\quad\Longrightarrow\quad
+\boxed{m=\frac{8d}{3}}.
+$$
+
+**步骤。**
+
+1. 对 GELU 应用乘积法则：
+   $$
+   \frac{d}{dx}[x\Phi(x)]
+   =1\cdot\Phi(x)+x\frac{d}{dx}\Phi(x).
+   $$
+   正态分布 CDF 的导数是其密度函数 $\Phi'(x)=\phi(x)$，因此
+   $$
+   \frac{d}{dx}\operatorname{GELU}(x)=\Phi(x)+x\phi(x).
+   $$
+2. 对 sigmoid 求导：
+   $$
+   \sigma'(u)
+   =\frac{e^{-u}}{(1+e^{-u})^2}
+   =\sigma(u)(1-\sigma(u)).
+   $$
+   由于 $\operatorname{Swish}(u)=u\sigma(u)$，应用乘积法则得
+   $$
+   \operatorname{Swish}'(u)
+   =\sigma(u)+u\sigma'(u)
+   =\sigma(u)+u\sigma(u)(1-\sigma(u)).
+   $$
+3. 写出带有形状的 SwiGLU 前向图：
+   $$
+   x\in\mathbb{R}^{d},\quad
+   W_1,W_3\in\mathbb{R}^{d\times m}
+   \Longrightarrow
+   a,b\in\mathbb{R}^{m},
+   $$
+   $$
+   \operatorname{Swish}(a)\odot b=c\in\mathbb{R}^{m},
+   \quad
+   W_2\in\mathbb{R}^{m\times d}
+   \Longrightarrow y=cW_2\in\mathbb{R}^{d}.
+   $$
+4. 对于 $L=\langle g,y\rangle=g y^\top$，通过 $y=cW_2$ 的微分是
+   $$
+   dL=g(d c\,W_2+c\,dW_2)^\top
+   =\langle gW_2^\top,dc\rangle
+   +\langle c^\top g,dW_2\rangle_F.
+   $$
+   因此 $\delta_c=gW_2^\top$ 且 $\nabla_{W_2}L=c^\top g$。
+5. 由于 $c=\operatorname{Swish}(a)\odot b$，其微分为
+   $$
+   dc=\operatorname{diag}(b)\operatorname{diag}(\operatorname{Swish}'(a))\,da
+   +\operatorname{diag}(\operatorname{Swish}(a))\,db.
+   $$
+   应用转置雅可比链式法则得
+   $$
+   \delta_a=\delta_c\odot b\odot\operatorname{Swish}'(a),
+   \qquad
+   \delta_b=\delta_c\odot\operatorname{Swish}(a).
+   $$
+6. 两个仿射分支具有
+   $$
+   da=dx\,W_1+x\,dW_1,\qquad
+   db=dx\,W_3+x\,dW_3.
+   $$
+   代入 $\delta_a,\delta_b$ 并合并 $dx,dW_1,dW_3$ 的系数得
+   $$
+   \nabla_xL=\delta_aW_1^\top+\delta_bW_3^\top,
+   $$
+   $$
+   \nabla_{W_1}L=x^\top\delta_a,\qquad
+   \nabla_{W_3}L=x^\top\delta_b.
+   $$
+7. 标准 FFN 有两个矩阵，每个包含 $4d^2$ 个参数，因此总计 $8d^2$（忽略偏置）。SwiGLU 有两个输入矩阵，每个包含 $dm$ 个参数，以及一个输出矩阵，包含 $md$ 个参数：
+   $$
+   dm+dm+md=3dm.
+   $$
+   令 $3dm=8d^2$ 相等并除以 $3d$ 可得 $m=8d/3$。对于 $d=12$，精确匹配的宽度为 $m=32$，且两种设计均包含 $1152$ 个权重。
+8. 数值检查验证了 GELU 雅可比矩阵、所有四个 SwiGLU 参数梯度以及参数数量相等性。它报告 GELU 雅可比矩阵的最大绝对误差为 $3.256264147211141\times10^{-10}$，SwiGLU 梯度的最大绝对误差为 $3.388396258019455\times10^{-9}$。
+
+**检查。** checks/M3/D-M3.4-01.py 使用共享的 float64 测试框架来验证 GELU 和完整的 SwiGLU 标量损失梯度，然后在 $m=8d/3$ 处检查 $d=12$；它输出 passed = True。
+
+**正确限定范围的断言。** 参数数量相等并不意味着优化动态或质量相等。方程 $m=8d/3$ 仅在所述的双分支参数化下匹配稠密权重的数量，且忽略了偏置、归一化和实现舍入误差。
+
+**已标记的近似。** 生产环境中的实现有时会用基于 tanh 的近似值替换精确的 GELU。本课的可执行检查使用了上述精确的 $\operatorname{erf}$ 定义，因此导数验证中未包含任何近似误差。
+
+**直观理解。** GELU 通过其高斯 CDF 概率对坐标进行门控。SwiGLU 允许一个学习到的分支调节另一个分支，因此它将第三个矩阵用于乘法选择性，并通过使用更窄的隐藏层来补偿。
+
+## 4。数值验证
+
+float64 检查输出如下：
+
+| 量 | 数值输出 | 结果 |
+| --- | --- | --- |
+| GELU Jacobian | 最大绝对误差 $3.256264147211141\times10^{-10}$ | 通过 |
+| SwiGLU 梯度 | 在 $3.388396258019455\times10^{-9}$ 上的最大绝对误差 $x,W_1,W_2,W_3$ | 通过 |
+| GELU 在零点的导数 | $0.5$ | 通过 |
+| 在 $d=12,m=32$ 处的参数相等性 | 标准 $1152$，SwiGLU $1152$ | 通过 |
+
+从仓库父目录运行 python -m pytest course/tests 以执行此检查及所有之前的课程。
+
+## 5。交互式可视化
+
+本课未新增任何 widget ID。现有前端可根据需要复用其标量曲线约定来渲染 GELU、Swish 及其导数；此处权威的教材工件是纯 NumPy 检查以及 SwiGLU 梯度路径。下一课在讨论优化器和推理核算时将使用相同的 FFN 形状。
+
+## 6。结语
+
+**反直觉的问题。** 为什么 SwiGLU FFN 的隐藏宽度仅为 $8d/3$，却能与 $4d$ FFN 拥有相同的稠密参数量？**解答：** 标准 FFN 包含两个矩阵，每个贡献 $4d^2$，总计 $8d^2$。SwiGLU 包含三个矩阵，其中两个形状为 $d\times m$，一个形状为 $m\times d$，总计 $3dm$。设定 $3dm=8d^2$ 可得 $m=8d/3$；较小的隐藏宽度补偿了额外的输入分支。
+
+**作业 A-M3。** 在 code/minilm/ 中将 GELU 和 SwiGLU 添加为可配置的 FFN 选项，运行共享的梯度检查，并记录在 A-M3 语料库上匹配参数量时的损失和吞吐量。在配置中明确区分精确与近似激活函数的选择。
+
+**核心检查。** 从架构上看，FFN 是注意力机制之后的逐位置非线性写入器，而 GLU 变体将该写入器从单一路径激活改为门控乘积。从概率角度看，它在每个位置独立地映射前缀条件表示，因此改变了局部条件参数化，而未引入新的跨位置路径。

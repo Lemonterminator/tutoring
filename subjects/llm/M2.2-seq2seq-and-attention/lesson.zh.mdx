@@ -1,0 +1,233 @@
+## 1。动机
+
+编码器-解码器 RNN 将源序列压缩为循环状态，然后要求解码器生成目标序列。单个固定向量使得信息路径随源长度增长。注意力机制引入了可微的读取操作：每个解码步骤对所有编码器状态进行评分，对分数进行归一化，并构建上下文向量。该读取在图深度上是直接的，而分数计算仍需遍历所有源位置执行工作。
+
+本课推导通过上下文两个分支流向编码器状态的梯度：直接值分支和间接 softmax 对齐分支。数值目标被刻意设计为局部的，$L=u^\top c_t$，因此每个注意力导数均可在不将其隐藏于完整框架内部的情况下进行验证。
+
+## 2。前向定义
+
+设源序列长度为 $S$，编码器状态为 $h_j\in\mathbb{R}^{D}$（其中 $j=1,\ldots,S$），解码器状态为 $s_t\in\mathbb{R}^{D_s}$。在解码步骤 $t$，定义对齐分数 $e_t\in\mathbb{R}^{S}$、权重 $\alpha_t\in\Delta^{S-1}$ 以及上下文向量 $c_t\in\mathbb{R}^{D}$：
+
+$$
+\alpha_{tj}=\frac{\exp(e_{tj})}{\sum_{r=1}^{S}\exp(e_{tr})},
+\qquad
+c_t=\sum_{j=1}^{S}\alpha_{tj}h_j,
+$$
+
+$$
+\text{decoder input at step }t=[y_{t-1};c_t].
+$$
+
+加性 Bahdanau 分数为
+
+$$
+e_{tj}=v^\top\tanh(W_as_{t-1}+U_ah_j),
+$$
+
+其中 $W_a\in\mathbb{R}^{A\times D_s}$、$U_a\in\mathbb{R}^{A\times D}$ 和 $v\in\mathbb{R}^{A}$。通用的乘性 Luong 分数为
+
+$$
+e_{tj}=s_t^\top W h_j,
+$$
+
+其中 $W\in\mathbb{R}^{D_s\times D}$；当维度匹配时，点积特例设定 $W=I$。随后，解码器更新其循环状态并输出目标条件分布。这些检查隔离了上下文映射，但使用了上述精确的分数函数。
+
+**源注。** Bahdanau、Cho 和 Bengio 在《通过联合学习对齐与翻译实现神经机器翻译》（[arXiv](https://arxiv.org/abs/1409.0473)）中引入了加性对齐模型。Luong、Pham 和 Manning 在《基于注意力的神经机器翻译的有效方法》（[ACL Anthology](https://aclanthology.org/D15-1166/)）中对比了乘性注意力机制。本课中的方程陈述了 NumPy 原型所采用的约定。
+
+## 3。推导过程
+
+### D-M2.2-01 · 通过注意力机制的编码器状态梯度
+
+**定理。** 固定一个解码器步骤，记 $H\in\mathbb{R}^{S\times D}$ 为矩阵，其第 $j$ 行为 $h_j^\top$。令 $u=\nabla_{c_t}L\in\mathbb{R}^{D}$ 且 $r=Hu\in\mathbb{R}^{S}$。Softmax 雅可比矩阵为
+
+$$
+J_\alpha=\frac{\partial\alpha_t}{\partial e_t}
+=\operatorname{diag}(\alpha_t)-\alpha_t\alpha_t^\top\in\mathbb{R}^{S\times S}.
+$$
+
+定义
+
+$$
+\bar e:=J_\alpha^\top r
+=\alpha_t\odot\left(r-\alpha_t^\top r\right)\in\mathbb{R}^{S}.
+$$
+
+则注意力机制对编码器状态梯度的贡献为
+
+$$
+\nabla_{h_j}L\ \ni\ \alpha_{tj}u+\bar e_j\frac{\partial e_{tj}}{\partial h_j}.
+$$
+
+对于 Bahdanau 注意力，其中 $a_j=W_as_{t-1}+U_ah_j$，
+
+$$
+\frac{\partial e_{tj}}{\partial h_j}
+=U_a^\top\left(v\odot(1-\tanh^2(a_j))\right)\in\mathbb{R}^{D},
+$$
+
+因此
+
+$$
+\nabla_{h_j}L\ \ni\
+\alpha_{tj}u+\bar e_jU_a^\top\left(v\odot(1-\tanh^2(a_j))\right).
+$$
+
+对于 Luong 注意力，
+
+$$
+\frac{\partial e_{tj}}{\partial h_j}=W^\top s_t,
+\qquad
+\nabla_{h_j}L\ \ni\ \alpha_{tj}u+\bar e_jW^\top s_t.
+$$
+
+符号 $\ni$ 强调这些是通过该注意力上下文的路径；完整模型可以添加来自编码器状态的其他路径。
+
+**步骤。**
+
+1. 从 $c_t=\sum_j\alpha_{tj}h_j$ 开始。扰动一个编码器行，同时暂时固定权重。直接值路径为
+   $$
+   dc_t\big|_{\mathrm{value}}=\alpha_{tj}dh_j.
+   $$
+   因此反向模式对 $\alpha_{tj}u$ 贡献了 $\nabla_{h_j}L$。
+2. 相同的扰动可以改变分数，从而改变每个归一化权重。在矩阵形式下，权重微分为
+   $$
+   d\alpha_t=J_\alpha\,de_t.
+   $$
+   这正是来自 D-M0.1-01 的行 Softmax 雅可比矩阵。
+3. 由权重引起的上下文微分为
+   $$
+   dc_t\big|_{\mathrm{weights}}=H^\top d\alpha_t.
+   $$
+   取标量损失微分并代入 $d\alpha_t$，得到
+   $$
+   dL\big|_{\mathrm{weights}}
+   =u^\top H^\top J_\alpha de_t
+   =(Hu)^\top J_\alpha de_t
+   =r^\top J_\alpha de_t.
+   $$
+4. 通过移动矩阵转置来识别分数空间梯度：
+   $$
+   r^\top J_\alpha de_t
+   =(J_\alpha^\top r)^\top de_t
+   =\bar e^\top de_t.
+   $$
+   由于 Softmax 的 $J_\alpha$ 是对称的，故 $J_\alpha^\top=J_\alpha$，且逐坐标地
+   $$
+   \bar e_j=\alpha_{tj}r_j-\alpha_{tj}\sum_{r=1}^{S}\alpha_{tr}r_r
+   =\alpha_{tj}(r_j-\alpha_t^\top r).
+   $$
+5. 在加法情况下，$e_{tj}=v^\top\tanh(a_j)$ 且 $a_j=W_as_{t-1}+U_ah_j$。首先，
+   $$
+   de_{tj}
+   =\left(v\odot(1-\tanh^2(a_j))\right)^\top da_j.
+   $$
+   接着，固定 $s_{t-1}$，有 $da_j=U_adh_j$。因此
+   $$
+   de_{tj}
+   =\left[U_a^\top\left(v\odot(1-\tanh^2(a_j))\right)\right]^\top dh_j,
+   $$
+   这识别出了显示的加法分数梯度。
+6. 在乘法情况下，$e_{tj}=s_t^\top Wh_j$。固定 $s_t$，有
+   $$
+   de_{tj}=s_t^\top Wdh_j=(W^\top s_t)^\top dh_j.
+   $$
+   这识别出了 $\partial e_{tj}/\partial h_j=W^\top s_t$。
+7. 将步骤 1 中的直接值贡献与步骤 4--6 中的间接分数贡献相加。这为每种评分族得出了编码器状态公式。相同的计算也产生了 $v,W_a,U_a$ 或 $W$ 的梯度；检查通过中心差分比较所有这些数组以及编码器/解码器状态。
+8. 玩具目标使用 $L=u^\top c_t$，因此 $u$ 已知确切值。NumPy 检查运行了带有 $S=4,D=3,D_s=5$ 的 Bahdanau 和 Luong 注意力，确认 $\alpha_t$ 的每一行之和为 1，并报告最大绝对误差低于 $9\times10^{-12}$。
+
+**检查。** checks/M2/D-M2.2-01.py 检查完整的加法和乘法注意力梯度，并打印 `passed: True`。
+
+**直觉。** 编码器状态既是被平均的值，也是可能改变每个值权重的键。$\alpha_{tj}u$ 项是直接读取；Softmax-雅可比项是由改变一个分数引起的竞争效应。
+
+### D-M2.2-02 · 有无注意力机制的路径长度
+
+**断言。** 在课程主干使用的串行编码器 - 解码器图中，来自 $h_1$ 的信息在没有注意力的情况下，通过 $s_t$ 个循环转换到达解码器状态 $S+t$。有了注意力机制，依赖关系在解码器步骤 $t$ 处通过一次加权求和进入上下文；分数计算仍然检查所有 $S$ 个编码器状态，但对于该读取操作，顺序依赖路径长度为 1。
+
+**步骤。**
+
+1. 没有注意力机制时，编码器循环必须将源位置 $1$ 携带通过剩余的源转换。将源侧路径计为 $S$ 个转换，将解码器侧到步骤 $t$ 的路径计为 $t$ 个转换，得到
+   $$
+   \operatorname{path}_{\mathrm{no\ attention}}=S+t.
+   $$
+2. 有了注意力机制，解码器在步骤 $t$ 通过
+   $h_1,\ldots,h_S$
+读取 $$
+   c_t=\sum_{j=1}^{S}\alpha_{tj}h_j.
+   $$。图中存在从每个 $h_j$ 到 $c_t$ 的直接加权求和边，因此
+   $$
+   \operatorname{path}_{\mathrm{attention\ read}}=1.
+   $$
+3. 对于已检查的示例 $S=7,t=5$，两条路径长度分别为 $12$ 和 $1$。这是关于串行依赖深度的陈述，而非关于总算术量：计算 $S$ 个分数和加权求和仍然是每个解码器步骤 $O(S)$ 的工作量。
+4. 更短的读取路径是 Spine A 以及 M3 中 Transformer 的动机。这并不意味着注意力是免费的，也不意味着解码器可以忽略目标输出上的因果掩码。
+
+**检查。** checks/M2/D-M2.2-02 评估 $S=7,t=5$，获得 $12$ 对比 $1$，并打印 `passed: True`。
+
+**直觉。** 注意力机制用“现在请求相关的源行”取代了“通过每个循环步骤记住一个源项”。它在保留对当前查询的源位置扫描的同时，减少了串行路径长度。
+
+### D-M2.2-03 · 双向和堆叠循环编码器
+
+**断言。** 双向编码器计算
+
+$$
+\overrightarrow h_j=F_{\rightarrow}(x_j,\overrightarrow h_{j-1}),\qquad
+\overleftarrow h_j=F_{\leftarrow}(x_j,\overleftarrow h_{j+1}),
+$$
+
+并暴露
+
+$$
+h_j=[\overrightarrow h_j;\overleftarrow h_j]\in\mathbb{R}^{2H}.
+$$
+
+堆叠编码器对表示序列应用另一个循环映射：
+
+$$
+h_j^{(1)}=[\overrightarrow h_j^{(1)};\overleftarrow h_j^{(1)}],\qquad
+h_j^{(\ell)}=F^{(\ell)}(h_j^{(\ell-1)},h_{j-1}^{(\ell)},h_{j+1}^{(\ell)}).
+$$
+
+双向性适用于已完成的源序列，但在自回归生成的目标上使用双向循环将使用未来的目标 token 并违反因果分解。
+
+**步骤。**
+
+1. 前向编码器从左向右扫描。它初始化 $\overrightarrow h_0$ 并根据 $\overrightarrow h_j$ 和 $x_j$ 计算 $\overrightarrow h_{j-1}$。
+2. 后向编码器从右向左扫描。它初始化 $\overleftarrow h_{S+1}$ 并根据 $\overleftarrow h_j$ 和 $x_j$ 计算 $\overleftarrow h_{j+1}$。由于源已经可用，两个扫描都可以看到整个源。
+3. 拼接将状态宽度从 $H$ 加倍至 $2H$。注意力机制将拼接后的向量视为编码器值；其评分矩阵使用相应的输入宽度 $D=2H$。
+4. 堆叠编码器将同一源位置的前一层表示馈送到下一个循环层。形状检查构建了一个 $(T,D)$ 输入，一个 $(T,2H)$ 双向序列，以及一个 $(T,H_2)$ 第二层序列。
+5. 对于自回归目标生成，条件分解为
+   $$
+   p(y_{1:T}\mid x)=\prod_{t=1}^{T}p(y_t\mid y_{<t},x).
+   $$
+   后向目标循环将依赖于 $y_{t+1:T}$，这在生成时不可用。因此，在此 seq2seq 设置中，双向性属于源编码器，而不属于因果目标解码器。
+
+**检查。** checks/M2/D-M2.2-03 验证前向/后向/堆叠形状，并将兼容性边界记录为 `encoder-side only`；`passed: True`。
+
+**直觉。** “双向”关乎哪个序列已经完成。它对于编码已知源很有用，但不能用于在因果生成器中窥探未来 token。
+
+## 4. 数值验证
+
+注意力梯度检查使用确定性的 float64 NumPy 计算和通用的有限差分测试框架。路径长度和双向检查明确化了其离散假设，以防止小部件或课程将依赖深度与算术计数混淆。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M2.2-01 | Bahdanau/Luong 全梯度误差低于 $9\times10^{-12}$；所有注意力行求和为一 | pass |
+| D-M2.2-02 | $S=7,t=5$: 无注意力的路径长度为 $12$，而加权读取为 $1$ | pass |
+| D-M2.2-03 | 前向 $(6,5)$，双向 $(6,10)$，堆叠 $(6,3)$；仅限编码器侧 | pass |
+
+从仓库根目录运行 `python -m pytest course/tests`。页面显示静态检查摘要；CI 执行 NumPy 检查。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M2-c" />
+
+**V-M2-c — Seq2seq 对齐矩阵**。规范为 `viz/specs/V-M2-c.yaml`，纯计算模块为 `viz/compute/alignment_matrix.ts`，可复现的测试夹具为 `viz/data/V-M2-c-reverse-alignment.json`。请选择复制模式或反向模式、源长度以及温度参数。热力图在每个解码步骤返回一行归一化的注意力值，而 A-M2 训练器则从确定性反向夹具导出学习到的对齐矩阵。
+
+当前前端可以使用其现有的 Canvas2D 层渲染返回的二维数组。计算契约无需绘图库或浏览器端 Python 运行时。
+
+## 6。结语
+
+**反直觉的问题。** 如果注意力机制将依赖路径缩短为一次加权读取，为何长源序列仍然代价高昂？**解答：** D-M2.2-02 区分了串行路径长度与算术成本。在解码器步骤 $t$，模型仍需计算 $S$ 分数，对 $S$ 个位置应用 softmax，并累加 $S$ 个值贡献。注意力机制改变的是信息路由的图深度，而非该查询所检查的源位置数量。后续架构将改变这些读取的批处理或近似方式，但这一区别依然存在。
+
+**作业 A-M2。** 使用 `code/numpy_rnn/seq2seq_attn.py` 复现 Bahdanau/Luong 梯度检查，逐行导出 V-M2-c 对齐数据，并在 95% 次更新内将声明的反向序列夹具训练至至少 500 的精确 token 准确率。在 README 中明确保留编码器侧的双向约定。
+
+**核心检查。** 从架构角度看，seq2seq 注意力机制将固定向量瓶颈转化为对编码器状态的可微读取；从概率角度看，解码器仍以因果方式分解目标似然，而注意力权重是内部归一化计算，而非新的目标分布。

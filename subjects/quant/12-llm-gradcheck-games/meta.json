@@ -1,0 +1,13 @@
+{
+  "id": "GAME-M0-GRADCHECK",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "llm-foundations",
+  "module": "Math practice",
+  "title": {
+    "en": "LLM lesson one: reverse mode and finite differences",
+    "zh": "LLM 第一课：反向传播与有限差分"
+  },
+  "prereqs": [],
+  "sourceLesson": "llm:M0.1"
+}

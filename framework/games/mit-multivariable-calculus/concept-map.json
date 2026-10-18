@@ -1,0 +1,245 @@
+{
+  "ocw-calc-applications-gravitational-attraction": [
+    "MIT-MV-53"
+  ],
+  "ocw-calc-applications-mass-and-average-value": [
+    "MIT-MV-36"
+  ],
+  "ocw-calc-applications-moment-of-inertia": [
+    "MIT-MV-36"
+  ],
+  "ocw-calc-approximation-formula": [
+    "MIT-MV-19"
+  ],
+  "ocw-calc-area-and-determinants-in-2d": [
+    "MIT-MV-04"
+  ],
+  "ocw-calc-calculating-flux-finding-nds": [
+    "MIT-MV-55"
+  ],
+  "ocw-calc-change-of-variables": [
+    "MIT-MV-37"
+  ],
+  "ocw-calc-clearer-notation": [
+    "MIT-MV-29"
+  ],
+  "ocw-calc-conservative-fields-path-independence-exact-differentials": [
+    "MIT-MV-41"
+  ],
+  "ocw-calc-constrained-differentials": [
+    "MIT-MV-29"
+  ],
+  "ocw-calc-cross-products": [
+    "MIT-MV-05"
+  ],
+  "ocw-calc-curl": [
+    "MIT-MV-42"
+  ],
+  "ocw-calc-curl-and-physics": [
+    "MIT-MV-63"
+  ],
+  "ocw-calc-curl-f-0-implies-conservative": [
+    "MIT-MV-44"
+  ],
+  "ocw-calc-curl-in-3d": [
+    "MIT-MV-59"
+  ],
+  "ocw-calc-definition-of-double-integration": [
+    "MIT-MV-32"
+  ],
+  "ocw-calc-diffusion-equation": [
+    "MIT-MV-57"
+  ],
+  "ocw-calc-directional-derivatives": [
+    "MIT-MV-26"
+  ],
+  "ocw-calc-divergence-theorem": [
+    "MIT-MV-56"
+  ],
+  "ocw-calc-dot-products": [
+    "MIT-MV-02"
+  ],
+  "ocw-calc-double-integrals-in-polar-coordinates": [
+    "MIT-MV-35"
+  ],
+  "ocw-calc-equations-of-lines": [
+    "MIT-MV-11"
+  ],
+  "ocw-calc-equations-of-planes": [
+    "MIT-MV-06"
+  ],
+  "ocw-calc-equations-of-planes-ii": [
+    "MIT-MV-09"
+  ],
+  "ocw-calc-example-polar-coordinates": [
+    "MIT-MV-37"
+  ],
+  "ocw-calc-examples-of-double-integration": [
+    "MIT-MV-33"
+  ],
+  "ocw-calc-exchanging-the-order-of-integration": [
+    "MIT-MV-34"
+  ],
+  "ocw-calc-extended-green-s-theorem-boundaries-with-multiple-pieces": [
+    "MIT-MV-47"
+  ],
+  "ocw-calc-flux-in-2d": [
+    "MIT-MV-46"
+  ],
+  "ocw-calc-flux-through-a-surface": [
+    "MIT-MV-54"
+  ],
+  "ocw-calc-functions-of-two-variables-graphs": [
+    "MIT-MV-17"
+  ],
+  "ocw-calc-fundamental-theorem-for-line-integrals": [
+    "MIT-MV-40"
+  ],
+  "ocw-calc-general-parametric-equations-the-cycloid": [
+    "MIT-MV-12"
+  ],
+  "ocw-calc-geometric-approach": [
+    "MIT-MV-39"
+  ],
+  "ocw-calc-gradient-definition-perpendicular-to-level-curves": [
+    "MIT-MV-25"
+  ],
+  "ocw-calc-gradient-fields": [
+    "MIT-MV-41"
+  ],
+  "ocw-calc-gradient-fields-and-potential-functions": [
+    "MIT-MV-58"
+  ],
+  "ocw-calc-green-s-theorem": [
+    "MIT-MV-43"
+  ],
+  "ocw-calc-intersection-of-a-line-and-a-plane": [
+    "MIT-MV-11"
+  ],
+  "ocw-calc-kepler-s-second-law": [
+    "MIT-MV-14"
+  ],
+  "ocw-calc-level-curves-and-contour-plots": [
+    "MIT-MV-17"
+  ],
+  "ocw-calc-line-integrals-in-space": [
+    "MIT-MV-58"
+  ],
+  "ocw-calc-linear-systems-and-planes": [
+    "MIT-MV-09"
+  ],
+  "ocw-calc-matrix-inverses": [
+    "MIT-MV-08"
+  ],
+  "ocw-calc-maxwell-s-equations": [
+    "MIT-MV-63"
+  ],
+  "ocw-calc-meaning-of-matrix-multiplication": [
+    "MIT-MV-07"
+  ],
+  "ocw-calc-nds-for-a-surface-z-f-x-y": [
+    "MIT-MV-55"
+  ],
+  "ocw-calc-normal-form-of-green-s-theorem": [
+    "MIT-MV-46"
+  ],
+  "ocw-calc-optimization-problems": [
+    "MIT-MV-20"
+  ],
+  "ocw-calc-other-ways-to-find-nds": [
+    "MIT-MV-55"
+  ],
+  "ocw-calc-partial-derivatives": [
+    "MIT-MV-18"
+  ],
+  "ocw-calc-physical-meaning-of-flux-del-notation": [
+    "MIT-MV-56"
+  ],
+  "ocw-calc-planimeter-green-s-theorem-and-area": [
+    "MIT-MV-45"
+  ],
+  "ocw-calc-point-cusp-on-cycloid": [
+    "MIT-MV-12"
+  ],
+  "ocw-calc-potential-functions": [
+    "MIT-MV-41"
+  ],
+  "ocw-calc-proof": [
+    "MIT-MV-25"
+  ],
+  "ocw-calc-proof-of-green-s-theorem": [
+    "MIT-MV-45"
+  ],
+  "ocw-calc-proof-of-lagrange-multipliers": [
+    "MIT-MV-27"
+  ],
+  "ocw-calc-proof-of-stokes-theorem": [
+    "MIT-MV-60"
+  ],
+  "ocw-calc-proof-of-the-divergence-theorem": [
+    "MIT-MV-57"
+  ],
+  "ocw-calc-second-derivative-test": [
+    "MIT-MV-22"
+  ],
+  "ocw-calc-simply-connected-regions-and-conservative-fields": [
+    "MIT-MV-44"
+  ],
+  "ocw-calc-simply-connected-regions-topology": [
+    "MIT-MV-61"
+  ],
+  "ocw-calc-solutions-to-square-systems": [
+    "MIT-MV-10"
+  ],
+  "ocw-calc-spherical-coordinates": [
+    "MIT-MV-52"
+  ],
+  "ocw-calc-stokes-theorem": [
+    "MIT-MV-60"
+  ],
+  "ocw-calc-stokes-theorem-and-surface-independence": [
+    "MIT-MV-61"
+  ],
+  "ocw-calc-summary-of-multiple-integration": [
+    "MIT-MV-62"
+  ],
+  "ocw-calc-the-chain-rule-with-more-variables": [
+    "MIT-MV-24"
+  ],
+  "ocw-calc-total-differentials-and-the-chain-rule": [
+    "MIT-MV-23"
+  ],
+  "ocw-calc-triple-integrals-in-spherical-coordinates": [
+    "MIT-MV-52"
+  ],
+  "ocw-calc-triple-integrals-rectangular-and-cylindrical-coordinates": [
+    "MIT-MV-50"
+  ],
+  "ocw-calc-uses-of-the-dot-product-lengths-and-angles": [
+    "MIT-MV-02"
+  ],
+  "ocw-calc-vector-components": [
+    "MIT-MV-03"
+  ],
+  "ocw-calc-vector-fields": [
+    "MIT-MV-38"
+  ],
+  "ocw-calc-vector-fields-in-space": [
+    "MIT-MV-54"
+  ],
+  "ocw-calc-vectors": [
+    "MIT-MV-01"
+  ],
+  "ocw-calc-velocity-and-acceleration": [
+    "MIT-MV-13"
+  ],
+  "ocw-calc-velocity-and-arc-length": [
+    "MIT-MV-13"
+  ],
+  "ocw-calc-volumes-and-determinants-in-space": [
+    "MIT-MV-04"
+  ],
+  "ocw-calc-work-and-line-integrals": [
+    "MIT-MV-39"
+  ]
+}

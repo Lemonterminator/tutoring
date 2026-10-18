@@ -1,0 +1,52 @@
+{
+  "id": "QUANT-BS7",
+  "subject": "quant",
+  "module": "BS paper · Greeks and puts (07/08)",
+  "title": {
+    "en": "Put pricing, parity and Greeks",
+    "zh": "Put 定价、平价与 Greeks"
+  },
+  "prereqs": [
+    "QUANT-BS6"
+  ],
+  "estimatedHours": 1.5,
+  "spine": {
+    "en": {
+      "a": "Rebuild the derivation with paper and pencil.",
+      "b": "Compare assumptions, formulas and the supplied numerical evidence."
+    },
+    "zh": {
+      "a": "用纸笔重建每步推导，先尝试再打开答案。",
+      "b": "对照假设、公式、图片与提供的数值证据。"
+    }
+  },
+  "assignment": "Paper pauses · chapter 07",
+  "references": [
+    "Quant_interview BS assignment (5 pages)",
+    "Original corrected paper-workbook derivations"
+  ],
+  "navigation": {
+    "previous": {
+      "id": "QUANT-BS6",
+      "title": {
+        "en": "Vega, Theta, Rho and dividend sensitivity",
+        "zh": "Vega、Theta、Rho 与股息敏感度"
+      },
+      "devHref": "/subjects/quant/24-bs-first-order-greeks/index.html",
+      "buildHref": "/quant-24-bs-first-order-greeks.html"
+    },
+    "indexHref": {
+      "dev": "/subjects/quant/18-bs-paper-course/index.html",
+      "build": "/quant-18-bs-paper-course.html"
+    },
+    "next": {
+      "id": "QUANT-BS8",
+      "title": {
+        "en": "Higher Greeks, Hessians and IV conditioning",
+        "zh": "高阶 Greeks、Hessian 与 IV 条件数"
+      },
+      "devHref": "/subjects/quant/26-bs-higher-greeks/index.html",
+      "buildHref": "/quant-26-bs-higher-greeks.html"
+    }
+  }
+}

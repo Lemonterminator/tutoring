@@ -1,0 +1,109 @@
+## 1. 动机
+
+M5.1 定义了一张未从记忆中填补空白的卡片。M5.2 为该交接快照中的家族实例化了该卡片。其目的是按设计轴进行比较，而非宣称存在单一的最佳架构。
+
+源规则十分严格：一个字段要么链接到主要技术报告、模型卡片或配置，要么标记为未知。家族名称不能作为特定变体中某个字段的证据。当后续模型没有公开架构报告时，卡片将记录这一缺失。
+
+## 2. 卡片阅读规则
+
+每张卡片需分两轮阅读。首先阅读身份标识与来源状态，随后阅读六个 M4 维度：
+
+| M4 维度 | 卡片问题 |
+| --- | --- |
+| M4.1 scaling/accounting | 哪些参数是总计、活跃、驻留或重计算的？ |
+| M4.2 online softmax | 稠密注意力路径是实例化、分块、局部还是稀疏的？ |
+| M4.3 cache lineage | K/V 头是否分组、潜在压缩或以其他方式缩减？ |
+| M4.4 MoE | 专家如何被选择、平衡和通信？ |
+| M4.5 long context | 哪些位置是局部、全局、插值、下沉或索引的？ |
+| M4.6 recurrence/SSM | 哪些层携带矩阵/状态递推，比例是多少？ |
+
+“未知”具有语义内容。它表示本课程在该字段没有经过核实的原始来源。它不是零值、默认 Transformer 值，也不是邀请根据基准行为进行推断。
+
+## 3. 案例卡片
+
+### DeepSeek：从潜在缓存到稀疏注意力
+
+[DeepSeek-V2 技术报告](https://arxiv.org/abs/2405.04434) 报告了 236B 总参数量、21B 激活参数量、128K 上下文窗口，并采用了 MLA 和 DeepSeekMoE。[DeepSeek-V3 报告](https://arxiv.org/abs/2412.19437) 报告了 671B 总参数量和 37B 激活参数量，保留了 MLA 和 DeepSeekMoE，并增加了无辅助损失的平衡策略和多 token 预测。同一份报告还描述了 FP8 训练路径。
+
+[DeepSeek-V3.2 报告](https://arxiv.org/abs/2512.02556) 引入了 DeepSeek 稀疏注意力（DSA）。该卡片将 DSA 记录为架构增量，并未静默地将 V3 的所有字段复制到 V3.2。[DeepSeek 透明度中心](https://www.deepseek.com/en/transparency/) 和 [V4 技术文档](https://fe-static.deepseek.com/chat/transparency/deepseek-V4-model-card-EN.pdf) 为 V4 条目提供了来源：V4-Pro 为 1.6T 总参数量 / 49B 激活参数量，V4-Flash 为 284B 总参数量 / 13B 激活参数量，两者在交接快照中均具有 1M 上下文窗口，报告的选项包括压缩稀疏注意力、高度压缩注意力、mHC、早期哈希路由 MoE、sigmoid 专家偏置、YaRN 以及 FP4 索引器。该卡片链接了报告，并将未在该报告中声明的任何字段保留为未知。
+
+这一谱系展示了四个独立的维度：MLA 改变了缓存状态；MoE 将总计算与激活计算分离；DSA 改变了读取哪些键；V4 同时改变了注意力压缩和残差传输。
+
+### Qwen：从分组缓存到混合循环
+
+[Qwen3 技术报告](https://arxiv.org/abs/2505.09388) 涵盖了从 0.6B 到 235B 的稠密和 MoE 变体，是 Qwen3 家族卡片的来源。Qwen3 的交接维度是 GQA 加上 QK-norm。
+
+Qwen3-Next 卡片链接了其 [模型卡片](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) 和家族架构公告。所教授的维度是混合门控 DeltaNet 加上带有稀疏 MoE 和多 token 预测的门控注意力。[Qwen3.5 公告](https://qwen.ai/blog?email_hash=23463b99b62a72f26ed677cc556c44e8&id=qwen3.5) 报告了 397B 总参数量 / 17B 激活参数量的变体，并描述了相同的混合方向。[Qwen3.6-27B 公告](https://qwen.ai/blog?id=qwen3.6-27b&lang=zh-CN) 为 27B 稠密变体提供了来源。交接快照记录 Qwen3.5/3.6 家族支持 1M token 输入；在没有匹配来源的情况下，卡片不会将该数字转移到未经验证的变体上。
+
+设计教训并非“循环取代注意力”，而是混合架构可以选择将部分层预算用于循环状态，同时保留注意力机制用于内容检索。
+
+### OpenAI：gpt-oss 作为公开比较点
+
+[gpt-oss 模型卡片](https://openai.com/index/gpt-oss-model-card/) 异常明确。它报告 gpt-oss-20b 为 21B 总参数量 / 3.6B 激活参数量，具有 24 层；gpt-oss-120b 为 117B 总参数量 / 5.1B 激活参数量，具有 36 层；两者均支持 128K 上下文。它描述了交替的局部带状注意力和全注意力，带宽为 128，分组多查询注意力（GQA）的组大小为 8，采用 RoPE、注意力及 MoE 块前的 RMSNorm、Pre-LN 位置以及门控 SwiGLU。该卡片报告了 32 个专家以及针对 4B 变体的 top-20 路由策略。对于 120B 的专家总数，该教训保持字段对来源版本敏感，而不是合并相互矛盾的快照。
+
+服务层面的教训无需猜测隐藏的内部细节即可见：局部/全注意力交替限制了某些注意力交互，GQA 减少了缓存宽度，且激活参数量远小于驻留权重。该卡片未对 GPT-5 做出任何声明；[OpenAI 模型概览](https://openai.com/open-models/) 并非针对该私有系列的架构报告。
+
+### Google：局部/全局注意力与故意的未知
+
+[Gemma 3 技术报告](https://arxiv.org/abs/2503.19786) 为 1B、4B、12B 和 27B 的发布尺寸提供了来源，至少支持 128K 上下文，具有较短的局部注意力跨度，以及较大的局部到全局注意力层比率。它还报告了开发配方中的蒸馏过程。该卡片仅在报告中明确说明时，才描述位置、归一化和专家字段。
+
+交接快照列出的 Gemma 4 尺寸包括 E2B/E4B、12B、26B-A4B 和 31B。虽然链接了 [Gemma 文档](https://ai.google.dev/gemma)，但未在已检查来源中声明的架构字段仍保留为未知。这是针对公开细节不完整当前模型的必要行为。
+
+### Z.ai：GLM-4.5 与验证边界
+
+[GLM-4.5 技术报告](https://arxiv.org/abs/2508.06471) 报告了 355B 总参数量 / 32B 激活参数的 MoE 模型，以及一个 106B 的紧凑变体。交接卡片仅在报告或交接的已验证来源支持时，才记录更深更窄的 MoE、部分 RoPE、QK-norm 和 MTP 维度。GLM-5.x 名称保留为单独的卡片。该卡片不会臆造 GLM-5.1、GLM-5.2 或 GLM-5.3 中发生了什么变化。
+
+### Moonshot、Meta、SSM 混合模型与 Claude
+
+[Kimi K2 技术报告](https://arxiv.org/abs/2507.20534) 是 K2 谱系维度的来源。[Kimi K3 发布和报告页面](https://www.kimi.com/news/kimi-k3-open-source) 报告了一个 2.8T 的 MoE 模型，具有 104B 激活参数量和 1M 上下文窗口，并命名了 Kimi Delta Attention 和注意力残差。该卡片链接了这些声明，并将其他字段保留为未知。
+
+[Meta Llama 4 公告](https://ai.meta.com/blog/llama-4-multimodal-intelligence/) 和 [Llama 4 模型卡片](https://huggingface.co/meta-llama/Llama-4-Scout-17B-16E-Instruct) 为交接中的 iRoPE、交错 NoPE 和分块注意力维度提供了来源。特定变体的数字属于模型卡片，而非通用的 Llama 4 句子。
+
+[Mamba-2/SSD 报告](https://arxiv.org/abs/2405.21060) 是结构化状态空间维度的来源。Nemotron-H、Granite 4、Falcon-H1 和 MiniMax-M1/M3 在各自模型的报告附加之前，保留为分组教学卡片；它们的注意力与 SSM 比率未知。最后，Claude 卡片链接了 [Anthropic 公开概览](https://www.anthropic.com/claude) 并标记未公开的架构字段。API 行为、定价和上下文限制无法识别私有架构。
+
+## 4。数值验证
+
+卡比较器不会重新计算模型内部细节。它仅验证每个选定的单元格是否包含状态和源路径。随后，设计空间计算器应用来自 M3.5 和 M4 的精确会计恒等式：
+
+$$
+B_{\mathrm{KV}}=2L\,n\,h_{\mathrm{kv}}\,d_h\,b,
+\qquad
+\text{decode weight FLOPs/token}\approx 2N_{\mathrm{active}}.
+$$
+
+对于相同的 $L,n,d_h,b$，将 $h_{\mathrm{kv}}$ 从 $32$ 更改为 $8$ 会使 KV 缓存除以 $4$。用局部窗口替换完整的注意力层会将该层的键数量从 $n$ 更改为 $w$。循环比率会改变注意力层的数量，但它增加了状态更新的工作量；这并非免费删除一个层。
+
+计算器将这些报告为透明代理：
+
+$$
+C_{\mathrm{decode}}
+=2N_{\mathrm{active}}
+ +2(\text{attention layers})(\text{heads})(\text{keys/query})d_h
+ +(\text{recurrent layers})d_{\mathrm{state}}^2.
+$$
+
+最后一个表达式是一个教学成本模型，而非硬件基准测试。卡片的精确数值来自链接的源文件；该代理仅使每个 M4 切换的方向可见。
+
+检查项包括 MHA/GQA 缓存比率 $4$、MLA 潜在宽度缩减、3:1 混合层拆分、稀疏键数量以及专家并行分发字节数。比较器和计算器均使用确定性输入。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M5-b" />
+
+<CourseWidget id="V-M5-c" />
+
+**V-M5-b — 显卡对比器。** 规范位于 viz/specs/V-M5-b.yaml，纯计算模块为 viz/compute/architecture_comparator.ts。选择两到四张显卡。行保持固定的模板顺序。单元格显示其数值、状态和来源 URL。可见的洞察是差异和未知项逐字段出现。
+
+**V-M5-c — 设计空间计算器。** 规范位于 viz/specs/V-M5-c.yaml，纯计算模块为 viz/compute/design_space_calculator.ts。保持活动参数固定，然后切换 KV heads、MLA latent width、local window、sparse top-k、recurrence ratio 和 expert parallelism。可见的洞察是相等的活动参数并不意味着相等的缓存字节或解码成本。
+
+现有前端可将 V-M5-b 渲染为表格，将 V-M5-c 渲染为关联的数字卡片/图表。计算模块不包含 DOM 访问，且可独立测试。
+
+## 6。结语
+
+**反直觉的问题。** 为什么两个总参数量和激活参数量相同的模型，其 KV 缓存大小会相差 10 倍，而解码吞吐量却相差 3 倍？
+
+**解答示例。** 总参数量和激活参数量控制着不同的项。缓存字节数取决于 $L$、$n$、$h_{\mathrm{kv}}$、$d_h$ 以及标量精度。解码工作量还取决于每个查询读取多少个键、有多少层使用循环结构，以及专家路由是否将激活值在不同设备间移动。因此，注意力变体、窗口方案、循环比率、精度和专家并行度解释了这种差异；仅凭参数量无法解释。
+
+**作业 A-M5。** 位于 code/minilm/a_m5.py 的作业代码暴露了三个玩具配置切换选项：类似 DeepSeek-V3 的 MLA+MoE+MTP，类似 Gemma-3 的具有双 RoPE 基数的局部/全局注意力机制，以及类似 Qwen3-Next 的门控 DeltaNet/注意力 3:1 混合架构。使用相同的确定性语料库运行所有三种配置，并在一张表中报告损失、每秒令牌数和缓存字节数。这些是玩具轴复现，并非声称与生产环境等效。
+
+**核心检查。** 每个卡片仍然将前缀映射到下一个令牌的分布。这些案例的区别在于该前缀如何存储、选择和传输。最终未解决的缺陷是来源问题：私有或文档不足的模型必须保留未知字段。

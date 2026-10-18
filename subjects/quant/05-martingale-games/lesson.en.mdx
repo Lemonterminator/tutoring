@@ -1,0 +1,42 @@
+import { MartingaleGame } from '../../../framework/quant/MartingaleGame';
+import { graphConceptHref, quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## Start the challenge
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to game library</a>
+
+Graph node: <a href={graphConceptHref('martingale')}>Martingale</a>. The difficulty is reasoning: check **what is known now** at every step. Fixed templates generate random numbers; a new round changes the complete set. No local model is needed to generate exercises.
+
+Notation: $M_n$ is the current value; $\mathcal F_n$ is all available information through the present; $E[\,\cdot\mid\mathcal F_n]$ averages the futures still possible under that information, using their probabilities. You need $1/2$, $1/4$ and small-integer arithmetic, not measure-theoretic proofs yet.
+
+<MartingaleGame lang="en" />
+
+## Stage route
+
+1. Build the martingale condition and calculate a fair conditional mean.
+2. Switch to a biased coin and identify a submartingale.
+3. Read a four-leaf probability tree and construct a Doob martingale backwards.
+4. Find a process with constant mean that is not a martingale.
+5. Decide whether a stake peeks into the future.
+6. Compensate the drift of a squared process.
+7. Enumerate bounded stopped payoffs, then examine an unbounded-waiting trap.
+
+## Read the definition after playing
+
+A discrete-time process $(M_n)$ is a martingale relative to a filtration $(\mathcal F_n)$ when all of these hold:
+
+- **Adaptedness**: $M_n$ is known at time $n$, meaning it is $\mathcal F_n$-measurable.
+- **Integrability**: $E[|M_n|]<\infty$ at every time.
+- **Conditional mean preservation**: $E[M_{n+1}\mid\mathcal F_n]=M_n$ almost surely.
+
+The finite-valued, finite-horizon examples satisfy the first two conditions, allowing you to focus on the third. The martingale property depends on both the filtration and probability law. Changing either requires checking the property again.
+
+## Remaining limits
+
+Our four-leaf trees permit direct enumeration. This does not establish mastery of general conditional expectations, zero-probability events or continuous-time martingales. Square compensation practices one construction; stopping covers a bounded rule and a failure example rather than every version of optional stopping.
+
+Next time avoid hints and explain why excluded branches cannot remain in a conditional average. In the final stage the first hitting time of $+1$ is almost surely finite but has infinite expectation. **Stopping almost surely** alone does not preserve the initial expected value.
+
+## Original notes
+
+Consult [MIT 18.445 conditional expectation and martingales, Lecture 15](https://ocw.mit.edu/courses/18-445-introduction-to-stochastic-processes-spring-2015/resources/mit18_445s15_lecture15/) and the [lecture notes index](https://ocw.mit.edu/courses/18-445-introduction-to-stochastic-processes-spring-2015/pages/lecture-notes/) as needed. Play first; check definitions and theorem assumptions when stuck.

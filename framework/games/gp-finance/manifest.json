@@ -1,0 +1,135 @@
+{
+ "course": "aalto-cs-e4895-gaussian-processes",
+ "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes",
+ "upstreamCommit": "383632fae0a12ddd2c3beaeb4690119b1eac5e5c",
+ "license": null,
+ "attribution": "Aalto University CS-E4895 Gaussian Processes (2023) and CS-E4075 Special course on Gaussian processes; slides © their lecturers. Mirror: github.com/SpringNuance/Gaussian-Processes. GPML © Rasmussen & Williams, MIT Press 2006.",
+ "units": [
+  [
+   "Finance bridge (extension, not course content)",
+   "金融桥接（扩展，非课程内容）"
+  ]
+ ],
+ "version": 1,
+ "games": [
+  {
+   "id": "GP-F1",
+   "sequence": 1,
+   "unit": 1,
+   "session": "F1",
+   "kind": "bonus",
+   "title": {
+    "en": "Covariance as a kernel: portfolio variance and factor models",
+    "zh": "协方差即核：组合方差与因子模型"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%202%20Bayesian%20regression.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 2: Bayesian regression · pp. 17–24",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%202%20Bayesian%20regression.pdf",
+     "filename": "Lecture 2 Bayesian regression.pdf",
+     "page": 17
+    },
+    {
+     "kind": "notes",
+     "title": "Lecture 10: Latent modelling and unsupervised learning · pp. 39–55",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%2010%20Latent%20modelling%20and%20unsupervised%20learning.pdf",
+     "filename": "Lecture 10 Latent modelling and unsupervised learning.pdf",
+     "page": 39
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.1.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 29
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 31
+    }
+   ]
+  },
+  {
+   "id": "GP-F2",
+   "sequence": 2,
+   "unit": 1,
+   "session": "F2",
+   "kind": "bonus",
+   "title": {
+    "en": "Minimum variance, precision matrices and shrinkage",
+    "zh": "最小方差、精度矩阵与收缩"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%204%20Integration%20and%20model%20selection.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 4: Integration and model selection · pp. 47–49",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%204%20Integration%20and%20model%20selection.pdf",
+     "filename": "Lecture 4 Integration and model selection.pdf",
+     "page": 47
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §5.4.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 134
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.3",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 219
+    }
+   ]
+  },
+  {
+   "id": "GP-F3",
+   "sequence": 3,
+   "unit": 1,
+   "session": "F3",
+   "kind": "bonus",
+   "title": {
+    "en": "Black–Litterman as a GP posterior",
+    "zh": "Black–Litterman 即 GP 后验"
+   },
+   "officialUrl": "https://github.com/SpringNuance/Gaussian-Processes/blob/383632fae0a12ddd2c3beaeb4690119b1eac5e5c/Lectures/Lecture%201%20Introduction.pdf",
+   "sources": [
+    {
+     "kind": "notes",
+     "title": "Lecture 1: Introduction · pp. 59–62",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%201%20Introduction.pdf",
+     "filename": "Lecture 1 Introduction.pdf",
+     "page": 59
+    },
+    {
+     "kind": "notes",
+     "title": "Lecture 3: Gaussian process regression · pp. 4–9",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Lecture%203%20Gaussian%20process%20regression.pdf",
+     "filename": "Lecture 3 Gaussian process regression.pdf",
+     "page": 4
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §2.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 31
+    },
+    {
+     "kind": "textbook",
+     "title": "GPML §A.2",
+     "asset": "aalto-cs-e4895-gaussian-processes/materials/Gaussian%20Processes%20for%20Machine%20Learning.pdf",
+     "filename": "Gaussian Processes for Machine Learning.pdf",
+     "page": 218
+    }
+   ]
+  }
+ ]
+}

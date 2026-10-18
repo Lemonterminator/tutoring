@@ -1,0 +1,52 @@
+{
+  "id": "QUANT-BS2",
+  "subject": "quant",
+  "module": "BS paper · Pricing and PDE (02/08)",
+  "title": {
+    "en": "Delta and Gamma: slope and curvature",
+    "zh": "Delta、Gamma：斜率与曲率"
+  },
+  "prereqs": [
+    "QUANT-BS1"
+  ],
+  "estimatedHours": 1,
+  "spine": {
+    "en": {
+      "a": "Rebuild the derivation with paper and pencil.",
+      "b": "Compare assumptions, formulas and the supplied numerical evidence."
+    },
+    "zh": {
+      "a": "用纸笔重建每步推导，先尝试再打开答案。",
+      "b": "对照假设、公式、图片与提供的数值证据。"
+    }
+  },
+  "assignment": "Paper pauses · chapter 02",
+  "references": [
+    "Quant_interview BS assignment (5 pages)",
+    "Original corrected paper-workbook derivations"
+  ],
+  "navigation": {
+    "previous": {
+      "id": "QUANT-BS1",
+      "title": {
+        "en": "P/Q measures, diffusion and BS pricing",
+        "zh": "P/Q 测度、扩散与 BS 定价"
+      },
+      "devHref": "/subjects/quant/19-bs-model-price/index.html",
+      "buildHref": "/quant-19-bs-model-price.html"
+    },
+    "indexHref": {
+      "dev": "/subjects/quant/18-bs-paper-course/index.html",
+      "build": "/quant-18-bs-paper-course.html"
+    },
+    "next": {
+      "id": "QUANT-BS3",
+      "title": {
+        "en": "Finite differences, floating-point error and PDE grids",
+        "zh": "有限差分、浮点误差与 PDE 网格"
+      },
+      "devHref": "/subjects/quant/21-bs-finite-differences/index.html",
+      "buildHref": "/quant-21-bs-finite-differences.html"
+    }
+  }
+}

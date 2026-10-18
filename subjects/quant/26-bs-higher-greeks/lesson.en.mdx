@@ -1,0 +1,213 @@
+import { BSMaterials, bsMaterialHref } from "../../../framework/quant/BSPaperCourse";
+import bsFigure0 from "../../../content/bs-math/assets/taylor_risk_approximation.png";
+
+<div class="bs-paper-content">
+
+Objective: Reconstruct higher-order Greeks using calculus, unifying changes in multiple risk inputs into a Taylor expansion; extend to numerical issues with IV. Duration approximately 90-120 minutes. Prerequisites: 02, 06, 07.
+
+## 1. Multivariate Price Is Not Just Spot Curvature
+
+First consider only $S,\sigma$ two inputs. Let $s=\delta S$, $v=\delta\sigma$; the price change to second order is
+
+$$
+\delta V=\Delta s+\nu v+\frac12\Gamma s^2+V_{S\sigma}sv+\frac12 V_{\sigma\sigma}v^2+O((|s|+|v|)^3).
+$$
+
+Here the units of each input are fixed; for strict comparison of 'magnitude', one should first nondimensionalize by their respective scales. There is no $1/2$ before the mixed terms: in the Hessian quadratic form, the two symmetric cross terms each have $1/2$, summing exactly to 1.
+
+Vanna is defined as $V_{S\sigma}=\Delta_\sigma=\nu_S$; Vomma/Volga is defined as $V_{\sigma\sigma}=\nu_\sigma$. Names may vary by software convention; this textbook always uses the partial derivative definitions as the standard.
+
+## 2. Vanna: First Take the sigma Derivative of Delta
+
+In Part 06, we obtained $(d_1)_\sigma=-d_2/\sigma$. Therefore
+
+$$
+\operatorname{Vanna}=e^{-qT}\phi(d_1)(d_1)_\sigma=-\frac{e^{-qT}\phi(d_1)d_2}{\sigma}.
+$$
+
+Alternatively, take the derivative of $\nu=A\phi(d_1)\sqrt T$ with respect to $S$, using $\phi'=-d_1\phi$ to get
+
+$$
+\operatorname{Vanna}=\frac{\nu}{S}\left(1-\frac{d_1}{\tau}\right).
+$$
+
+The two expressions are equal because $\tau-d_1=-d_2$. In smooth regions, mixed partial derivatives are symmetric, providing a second check route.
+
+## 3. Vomma: Taking the sigma derivative of Vega again
+
+In Vega, $A\sqrt T$ does not vary with $\sigma$, so only the density derivative is needed:
+
+$$
+\operatorname{Vomma}=\nu\frac{d_1d_2}{\sigma}.
+$$
+
+Vega is always positive, but the sign of Vomma is determined by $d_1d_2$, so the price is not necessarily globally convex with respect to volatility. Taking the parameter card from Part 07 as an example, $d_2=0$, both Vanna and Vomma are zero; this is a special point and does not imply that the general value is zero.
+
+**Paper pause A:** At zero carry ATM, $d_1=\tau/2,d_2=-\tau/2$, is Vomma positive or negative?
+
+<details class="bs-paper-answer">
+<summary>Answer to Pause A</summary>
+
+
+$d_1d_2=-\tau^2/4$, hence $\operatorname{Vomma}=-\nu\sigma T/4<0$. An increase in volatility raises the price, but the marginal price benefit from the increase can decrease.
+
+
+</details>
+
+## 4. Speed and Zomma: How does Gamma change with respect to inputs?
+
+First take the logarithm of Gamma: $\log\Gamma=-qT+\log\phi(d_1)-\log S-\log\sigma-\log T/2$. Differentiating with respect to $S$ yields Speed:
+
+$$
+\operatorname{Speed}=V_{SSS}=-\frac{\Gamma}{S}\left(1+\frac{d_1}{\tau}\right).
+$$
+
+Differentiating with respect to $\sigma$ yields Zomma:
+
+$$
+\operatorname{Zomma}=V_{SS\sigma}=\frac{\Gamma}{\sigma}(d_1d_2-1).
+$$
+
+Speed is the coefficient of the forward Gamma leading error $h f^{(3)}$ in Part 03. Thus, a "higher-order Greek" is also a quantity that determines truncation error in numerical analysis. The CS leading error for Delta is $-h^2\operatorname{Speed}/6$.
+
+## 5. Time-Dependent Greeks: Unified calendar-time notation
+
+Let
+
+$$
+g=(d_1)_T=\frac{r-q}{\tau}-\frac{d_2}{2T}.
+$$
+
+Charm is defined as the partial derivative of Delta with respect to calendar time $\partial_t\Delta=-\Delta_T$. For Call and Put respectively, we have
+
+$$
+\operatorname{Charm}_C=q\Delta_C-e^{-qT}\phi(d_1)g.
+$$
+
+$$
+\operatorname{Charm}_P=q\Delta_P-e^{-qT}\phi(d_1)g.
+$$
+
+The difference between the two is $q e^{-qT}$. This difference can also be obtained by taking the calendar-time derivative of the Delta parity directly.
+
+Color is defined as $\partial_t\Gamma=-\Gamma_T$. Logarithmic differentiation yields
+
+$$
+\operatorname{Color}=\Gamma\left(q+\frac1{2T}+d_1g\right).
+$$
+
+Veta is defined as $\partial_t\nu=-\nu_T$, similarly
+
+$$
+\operatorname{Veta}=\nu\left(q-\frac1{2T}+d_1g\right).
+$$
+
+These time derivatives hold the current Spot and other model inputs constant; they do not equal the total change in Delta/Gamma/Vega observed along a random market path. Some references define Charm/Color/Veta using derivatives with respect to remaining maturity, in which case the signs will be opposite to those here.
+
+**paper pause B:** Derive Color from $\log\Gamma$, then derive Veta from $\log\nu$. Why does one yield $+1/(2T)$ while the other has a negative sign?
+
+<details class="bs-paper-answer">
+<summary>Answer to pause B</summary>
+
+
+$\partial_T\log\Gamma=-q-d_1g-1/(2T)$, $\partial_T\log\nu=-q-d_1g+1/(2T)$. The calendar-time derivative carries a negative sign; the root cause is that Gamma contains $T^{-1/2}$, while Vega contains $T^{1/2}$.
+
+
+</details>
+
+## 6. Ultima, Dual Greeks, and Elasticity
+
+Let $p=d_1d_2$. From $d_{1,\sigma}=-d_2/\sigma$, $d_{2,\sigma}=-d_1/\sigma$, we obtain $p_\sigma=-(d_1^2+d_2^2)/\sigma$. Differentiating Vomma again:
+
+$$
+\operatorname{Ultima}=V_{\sigma\sigma\sigma}=\frac{\nu}{\sigma^2}\left(p(p-1)-d_1^2-d_2^2\right).
+$$
+
+Differentiating with respect to the strike $K$ yields Dual Delta, which should not be confused with Spot Delta:
+
+$$
+C_K=-e^{-rT}\Phi(d_2),\quad P_K=e^{-rT}\Phi(-d_2).
+$$
+
+$$
+C_{KK}=P_{KK}=\frac{e^{-rT}\phi(d_2)}{K\sigma\sqrt T}.
+$$
+
+Finally, the price elasticity Lambda is $\lambda=S\Delta/V$, representing the local percentage rate of price change. If $V$ is very small, this ratio becomes large and ill-conditioned; do not divide directly when $V=0$.
+
+All these higher-order Greeks involving $\sigma$ or at least second-order $S$ derivatives are identical for Call/Put pairs with the same parameters, because the parity difference $A-B$ is independent of volatility and linear in Spot. Charm is a first-order Spot plus time derivative, and thus retains the Call/Put difference.
+
+## 7. How to numerically verify mixed derivatives?
+
+A central mixed difference that does not require new production interfaces is
+
+$$
+V_{S\sigma}\approx\frac{V(S+h,\sigma+k)-V(S+h,\sigma-k)-V(S-h,\sigma+k)+V(S-h,\sigma-k)}{4hk}.
+$$
+
+The local truncation error is $O(h^2+k^2)$, and roundoff error can be amplified by $1/(hk)$. One can also cross-check by differencing the analytic Vega in the $S$ direction and the analytic Delta in the $\sigma$ direction; this saves price calls, but if the analytic formulas share a common error, they may still support each other incorrectly.
+
+Do not simply nest the same ordinary complex $i$ CS to compute mixed derivatives: the inner "take imaginary part" step usually destroys the analytic structure required by the outer step. Higher-order CS, multicomplex, and automatic differentiation can serve as follow-up routes, requiring explicit representations and theory.
+
+<Figure id="bs-08-figure-0">
+
+<img class="bs-paper-image" src={bsFigure0} alt="Delta-Gamma-Vega Approximation and Mixed Terms" />
+
+<figcaption>Delta-Gamma-Vega Approximation and Mixed Terms</figcaption>
+
+</Figure>
+
+Figure: At a non-special parameter point, simultaneously change $S,\sigma$, comparing the exact price recalculation, linear approximation, and second-order approximation. It is the local error within the model, not market prediction performance.
+
+## 8. Connecting Greeks to model risk and surface inputs
+
+If the volatility input from an external system is itself $\sigma(S)$, the total Spot derivative of the price is not the fixed-volatility Delta:
+
+$$
+\frac{dV}{dS}=\Delta+\nu\sigma_S.
+$$
+
+$$
+\frac{d^2V}{dS^2}=\Gamma+2\operatorname{Vanna}\sigma_S+\operatorname{Vomma}\sigma_S^2+\nu\sigma_{SS}.
+$$
+
+This explains why the system should simultaneously specify "Greeks with fixed model inputs" and "risk moving according to a certain volatility surface rule". The formulas earlier in this course are all partial derivatives with other BS inputs fixed.
+
+## 9. IV: Vega determines the local sensitivity of the inverse problem
+
+Given a compliant market price $V_m$, solve for $V(\sigma)=V_m$. Under $S,K,T>0$ and finite positive $\sigma$, Vega is greater than 0, so internally reachable prices correspond to a unique positive IV. Boundary prices may only correspond to the limits of zero volatility or infinite volatility; out-of-bound quotes have no solution under this model.
+
+Differentiating the implicit function yields
+
+$$
+\delta\sigma\approx\frac{\delta V_m}{\nu},\quad \frac{d\sigma}{dV_m}=\frac{1}{\nu}.
+$$
+
+For deep OTM or very short maturities, Vega can be very small, so tiny quote errors correspond to large IV uncertainty. The Newton update is
+
+$$
+\sigma_{n+1}=\sigma_n-\frac{V(\sigma_n)-V_m}{\nu(\sigma_n)}.
+$$
+
+Large steps may produce negative volatility, and Vomma changes the curvature of the price with respect to volatility. A reliable implementation should first check no-arbitrage boundaries, establish a bracket, and fall back to bisection if Newton steps go out of bounds or Vega is too small. A small price residual does not automatically guarantee accurate IV: one should also consider the residual divided by Vega, the bracket width, and the IV interval corresponding to bid/ask.
+
+**Paper pause C:** If the price error is 0.01, and Vega is 40 and 0.1 respectively, estimate the IV error.
+
+<details class="bs-paper-answer">
+<summary> paper pause C answer</summary>
+
+
+respectively 0.00025 (0.025 percentage points) and 0.1 (10 percentage points). The absolute price accuracy is the same, but the accuracy of the implied volatility differs. This repository currently does not publish an IV solver.
+
+
+</details>
+
+## 10. The final acceptance card
+
+Cover the main text, and reconstruct Vanna, Vomma, Speed, Zomma, Charm, Color, Veta, Ultima from $\phi'=-x\phi$, $d_{1,\sigma}=-d_2/\sigma$, and the logarithmic expressions of Gamma/Vega. Then explain how they enter the price Taylor expansion, finite difference truncation error, IV Newton denominator, and the system's risk input chain.
+
+This course set completes all mathematical tasks of the original assignment here, and extends Put and common higher-order Greeks; whether the production interface is implemented remains subject to the status table on the course homepage.
+
+</div>
+
+<BSMaterials lang="en" lesson={8} />

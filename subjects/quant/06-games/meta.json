@@ -1,0 +1,6 @@
+{
+  "id": "QUANT-GAMES", "subject": "quant", "kind": "game-index",
+  "module": "Math games",
+  "title": { "en": "Math game library", "zh": "数学小游戏专区" },
+  "prereqs": []
+}

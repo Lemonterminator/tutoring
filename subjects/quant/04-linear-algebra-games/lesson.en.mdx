@@ -1,0 +1,57 @@
+import { FundamentalSpacesGame } from '../../../framework/quant/FundamentalSpacesGame';
+import { DotProductGame } from '../../../framework/quant/DotProductGame';
+import { graphConceptHref, quantLessonHref } from '../../../framework/quant/learning-resources';
+import { openCourseAsset } from '../../../framework/quant/OpenCourseLibrary';
+
+## Four fundamental subspaces challenge
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to game library</a>
+
+<a href={quantLessonHref('GAME-MIT-LA')}>Continue with the complete MIT 18.06SC course: 41 games, each with its original materials →</a>
+
+Based on MIT 18.06SC Fall 2011 Lecture 10, this game uses the lecture's 3×4 rank-2 matrix to practice the column space, nullspace, row space, and left nullspace. Work through the guided steps, then check both nullspace dimensions independently for a new matrix.
+
+<FundamentalSpacesGame lang="en" />
+
+The round connects the two orthogonal-complement pairs to Rⁿ and Rᵐ, derives the four dimensions from m, n, and r, checks solvability and the full solution set of Ax=b, and revisits the lecture's diagonal-subspace example for 3×3 matrices.
+
+The graph's <a href={graphConceptHref('four-fundamental-subspaces')}>Four fundamental subspaces</a> node links to course evidence. <a href={openCourseAsset('18-06sc-linear-algebra-fall-2011/materials/62a9db9eeab190694d40afe4734068ca_MIT18_06SCF11_Ses1.10sum.pdf') + '#page=1'} target="_blank" rel="noopener noreferrer">Open the original MIT lecture summary PDF</a>.
+
+### Practice limits
+
+- The questions check dimension relations, orthogonal pairs, and concepts within fixed templates. Finishing does not show that you can find bases for all four spaces of an arbitrary matrix.
+- Guided questions use the lecture's 3×4 example. The final step changes m, n, and r but remains template practice. Next, work through elimination and special solutions for an unfamiliar matrix.
+- There is no timer or lost life. Hint and retry counts are practice records, not mastery scores.
+
+## Another round: dot products and orthogonality
+
+This pilot connects to the graph's <a href={graphConceptHref('orthogonality')}>orthogonality node</a>. You only need small-integer arithmetic. There is no timer and no lost lives.
+
+One rule: the dot product of two-dimensional vectors means **multiply matching entries, then add the products**. Two nonzero vectors with zero dot product are perpendicular. We use the ordinary Euclidean dot product here.
+
+<DotProductGame lang="en" />
+
+## What the four dot-product games practice
+
+1. **Build a formula**: place multiplication and addition symbols, then calculate in two steps.
+2. **Signs**: apply the same rule with negative entries.
+3. **Orthogonality detective**: calculate before deciding; some pairs are perpendicular and some are not.
+4. **Complete a vector**: find an integer that makes the dot product zero. Finish with an independent problem without displayed intermediate results.
+
+Do not rush. Explain why entries in matching positions are paired, then start another round. Hint and retry counts describe this round only.
+
+## Limits of the dot-product game
+
+- **Filling blanks does not show explanation**: numeric and symbol answers do not establish geometric understanding. Arrow diagrams and short explanations should follow.
+- **Scaffolding arranges your reasoning**: following steps may hide difficulty starting alone. The final problem removes intermediate results; later practice should include delayed recall and unfamiliar questions.
+- **Small integers cover little**: fractions, higher dimensions, matrices, proofs and other inner products are outside this pilot and need gradual introduction.
+- **Random numbers give limited variation**: numbers and orthogonality vary within fixed templates. Error diagnosis, counterexamples, diagrams and modeling should follow.
+- **Interaction has a cost**: difficulty dragging is not necessarily mathematical difficulty. Symbols also support selecting by click and then selecting a blank, including keyboard operation.
+
+Use this to practice and find gaps. Finishing a round does not establish mastery, and there is no reason to grind familiar tasks for points.
+
+## Dot-product source and next steps
+
+Compare the formula and orthogonality criterion with [MIT 18.02SC Dot Product notes](https://ocw.mit.edu/courses/18-02sc-multivariable-calculus-fall-2010/6082f2744b609da87e23f3d8feed0565_MIT18_02SC_notes_1.pdf). Angles require nonzero vectors. Although the zero vector has zero dot product with every vector, we do not use it for angle questions here.
+
+If this format suits you, try two-dimensional matrix-vector multiplication next, followed by projection and least squares.

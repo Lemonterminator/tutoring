@@ -1,0 +1,215 @@
+## 1. 动机
+
+M0.5.1 已确立，架构仅需计算每个条件概率。下一个缺陷在于，“循环梯度”这一术语听起来可能比其最简单的精确情况更为复杂。AR(1) 是一个标量线性 RNN：其似然函数、梯度乘数、自相关系数和稳态方差均可用闭式表达。本课将该案例作为 M1 的数值基准。
+
+## 2。前向定义
+
+设 $x_t\in\mathbb{R}$ 为标量时间序列，$\phi\in\mathbb{R}$ 为标量系数，$\varepsilon_t\in\mathbb{R}$ 为独立噪声且满足 $\varepsilon_t\sim\mathcal{N}(0,\sigma^2)$，其中 $\sigma>0$ 为标量。AR(1) 模型为
+
+$$
+x_t=\phi x_{t-1}+\varepsilon_t\in\mathbb{R},
+\qquad
+p(x_t\mid x_{t-1};\phi,\sigma)=\mathcal{N}(\phi x_{t-1},\sigma^2)\in\mathbb{R}_{\ge 0}.
+$$
+
+将其写为具有隐藏状态 $h_t\in\mathbb{R}$、省略输入且 $W_h=[\phi]\in\mathbb{R}^{1\times1}$ 的线性 RNN，即
+
+$$
+h_t=W_hh_{t-1}=\phi h_{t-1}\in\mathbb{R},
+\qquad
+\frac{\partial h_t}{\partial h_{t-k}}\in\mathbb{R}.
+$$
+
+组件 **V-M0.5-a** 暴露了 $\phi$、$\sigma$、预测步长（horizon）和随机种子（seed）。其方程包括上述递推关系以及来自 $\phi^k$ 的闭式乘数 D-M0.5.2-02。
+
+## 3. 推导
+
+### D-M0.5.2-01 · 高斯 AR(1) 的最大似然估计即最小二乘法
+
+**断言。** 在固定 $\sigma>0$ 和观测值 $x_{1:T}\in\mathbb{R}^{T}$ 的情况下，最大似然估计为
+
+$$
+\hat{\phi}=\frac{\sum_{t=2}^{T}x_tx_{t-1}}{\sum_{t=2}^{T}x_{t-1}^{2}}\in\mathbb{R},
+$$
+
+前提是分母不为零。
+
+**步骤。**
+
+1. 写出标量高斯条件密度：
+   $$
+   p(x_t\mid x_{t-1};\phi,\sigma)=\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left[-\frac{(x_t-\phi x_{t-1})^2}{2\sigma^2}\right]\in\mathbb{R}_{\ge0}.
+   $$
+   （AR(1) 方程设定了条件均值，而高斯噪声设定了方差。）
+2. 将 $t=2,\ldots,T$ 的条件概率相乘：
+   $$
+   \mathcal{L}(\phi)=\prod_{t=2}^{T}p(x_t\mid x_{t-1};\phi,\sigma)\in\mathbb{R}_{\ge0}.
+   $$
+   （独立的噪声使得条件似然函数成为乘积形式。）
+3. 取对数：
+   $$
+   \ell(\phi)=\log\mathcal{L}(\phi)
+   =-\frac{T-1}{2}\log(2\pi\sigma^2)-\frac{1}{2\sigma^2}\sum_{t=2}^{T}(x_t-\phi x_{t-1})^2\in\mathbb{R}.
+   $$
+   （对数将乘积转换为求和，并揭示了平方残差项。）
+4. 由于 $\sigma$ 是固定的，第一项对于 $\phi$ 而言是常数：
+   $$
+   \arg\max_\phi\ell(\phi)=\arg\min_\phi\sum_{t=2}^{T}(x_t-\phi x_{t-1})^2\in\mathbb{R}.
+   $$
+   （乘以正常数 $2\sigma^2$ 并改变符号不会改变优化器。）
+5. 对变量部分求导：
+   $$
+   \frac{d\ell}{d\phi}=\frac{1}{\sigma^2}\sum_{t=2}^{T}x_{t-1}(x_t-\phi x_{t-1})\in\mathbb{R}.
+   $$
+   （$(x_t-\phi x_{t-1})^2$ 的导数是 $-2x_{t-1}(x_t-\phi x_{t-1})$。）
+6. 令导数为零并展开求和：
+   $$
+   0=\sum_{t=2}^{T}x_{t-1}x_t-\phi\sum_{t=2}^{T}x_{t-1}^2\in\mathbb{R}.
+   $$
+   （可微的内部最优解满足标量正规方程。）
+7. 求解 $\phi$：
+   $$
+   \hat{\phi}=\frac{\sum_{t=2}^{T}x_tx_{t-1}}{\sum_{t=2}^{T}x_{t-1}^{2}}\in\mathbb{R}.
+   $$
+   （非零分母允许除法运算，并给出了修正后的一阶滞后分母。）
+
+**检查。** `checks/M0.5/D-M0.5.2-01.py` — `phi_hat = 0.4055944055944055`，正规方程误差 `3.469e-16`，`passed = True`。
+
+**直觉。** 高斯 AR(1) 的最大似然估计等同于对标量滞后项进行普通最小二乘法。概率模型提供了损失函数；闭式解为梯度下降法提供了参考答案。
+
+### D-M0.5.2-02 · AR(1) 是线性 RNN，其稳定性由 $|\phi|<1$ 决定
+
+**断言。** 对于无噪声递推关系 $x_t=\phi x_{t-1}$，
+
+$$
+\frac{\partial x_t}{\partial x_{t-k}}=\phi^k\in\mathbb{R}.
+$$
+
+对于带噪声的 AR(1) 过程，平稳条件是 $|\phi|<1$，$k$ 阶滞后自相关系数为 $\rho(k)=\phi^k$，平稳方差为 $\sigma^2/(1-\phi^2)\in\mathbb{R}_{>0}$。
+
+**步骤。**
+
+1. 识别标量 RNN 转移：$h_t=\phi h_{t-1}$，其中 $W_h=[\phi]\in\mathbb{R}^{1\times1}$。（线性 RNN 除了其循环权重外没有激活函数的雅可比矩阵。）
+2. 对一步求导：
+   $$
+   \frac{\partial h_t}{\partial h_{t-1}}=\phi\in\mathbb{R}.
+   $$
+   （标量映射 $h\mapsto\phi h$ 的导数即为其系数。）
+3. 对两步应用链式法则：
+   $$
+   \frac{\partial h_t}{\partial h_{t-2}}
+   =\frac{\partial h_t}{\partial h_{t-1}}\frac{\partial h_{t-1}}{\partial h_{t-2}}
+   =\phi^2\in\mathbb{R}.
+   $$
+   （局部雅可比矩阵沿路径相乘。）
+4. 对 $k$ 步重复相同的乘法：
+   $$
+   \frac{\partial h_t}{\partial h_{t-k}}=\prod_{j=0}^{k-1}\phi=\phi^k\in\mathbb{R}.
+   $$
+   （所有 $k$ 个局部雅可比矩阵均为同一标量。）
+5. 对于带噪声过程，设 $v_t=\operatorname{Var}(x_t)\in\mathbb{R}_{\ge0}$。独立性和零噪声均值给出：
+   $$
+   v_t=\operatorname{Var}(\phi x_{t-1}+\varepsilon_t)=\phi^2v_{t-1}+\sigma^2\in\mathbb{R}_{\ge0}.
+   $$
+   （由于 $\varepsilon_t$ 与过去状态独立，协方差项消失。）
+6. 有限的平稳方差 $v$ 必须满足：
+   $$
+   v=\phi^2v+\sigma^2\quad\Longrightarrow\quad v(1-\phi^2)=\sigma^2\quad\Longrightarrow\quad v=\frac{\sigma^2}{1-\phi^2}\in\mathbb{R}_{>0}.
+   $$
+   （求解不动点方程仅在 $1-\phi^2>0$ 时给出正有限值。）
+7. 不等式 $1-\phi^2>0$ 等价于 $|\phi|<1$。（对正标量不等式开平方得到平稳性条件。）
+8. 定义 $k$ 阶滞后自协方差 $\gamma(k)=\operatorname{Cov}(x_t,x_{t-k})\in\mathbb{R}$。对于 $k\ge1$，
+   $$
+   \gamma(k)=\operatorname{Cov}(\phi x_{t-1}+\varepsilon_t,x_{t-k})=\phi\gamma(k-1)\in\mathbb{R}.
+   $$
+   （当前的新息与较旧的状态独立。）
+9. 从 $\gamma(0)=v$ 开始，递归至 $\gamma(k)=\phi^kv$ 并除以 $v>0$：
+   $$
+   \rho(k)=\frac{\gamma(k)}{\gamma(0)}=\phi^k\in[-1,1].
+   $$
+   （自相关系数是归一化的自协方差，因此平稳方差相互抵消。）
+10. 因此，M1 的梯度消失或爆炸与将 $\phi$ 替换为局部雅可比矩阵乘积的标量公式相同。（线性情况在引入非线性门控和矩阵之前隔离了该机制。）
+
+**检查。** `checks/M0.5/D-M0.5.2-02.py` — 梯度乘数 `0.20971520000000007`，有限差分误差 `2.538e-12`，平稳方差误差 `0.0`，不稳定方差 `2304.3008679515206`，`passed = True`。
+
+**直觉。** 同一个数值控制着两种现象：$\phi^k$ 决定了状态扰动能保留多少以及相关性能保留多少。小部件 V-M0.5-a 使共享曲线可见，而 $\phi$ 的符号区分了交替记忆与非交替记忆。
+
+### D-M0.5.2-03 · AR(p) 最小二乘法与 Yule–Walker 方程
+
+**断言。** 对于 $p$ 阶自回归
+
+$$
+x_t=\sum_{j=1}^{p}\phi_jx_{t-j}+\varepsilon_t\in\mathbb{R},
+\qquad
+\boldsymbol{\phi}\in\mathbb{R}^{p},
+$$
+
+最小二乘法给出正规方程 $X^\top X\hat{\boldsymbol{\phi}}=X^\top y\in\mathbb{R}^{p}$，而平稳零均值过程给出 Yule–Walker 方程组 $\Gamma_p\boldsymbol{\phi}=\boldsymbol{\gamma}_{1:p}\in\mathbb{R}^{p}$。
+
+**步骤。**
+
+1. 将滞后观测值堆叠为 $X\in\mathbb{R}^{n\times p}$，目标值堆叠为 $y\in\mathbb{R}^{n}$，使得 $y\approx X\boldsymbol{\phi}$。（每一行包含 $p$ 个滞后标量预测因子。）
+2. 定义残差平方和：
+   $$
+   S(\boldsymbol{\phi})=\|y-X\boldsymbol{\phi}\|_2^2\in\mathbb{R}_{\ge0}.
+   $$
+   （高斯固定方差似然函数与此目标函数的区别仅在于常数和正比例因子。）
+3. 对向量参数求导：
+   $$
+   \nabla_{\boldsymbol{\phi}}S=-2X^\top(y-X\boldsymbol{\phi})\in\mathbb{R}^{p}.
+   $$
+   （转置将 $\mathbb{R}^{n}$ 中的残差映射回 $p$ 参数坐标。）
+4. 令梯度为零：
+   $$
+   X^\top X\hat{\boldsymbol{\phi}}=X^\top y\in\mathbb{R}^{p}.
+   $$
+   （这是向量正规方程；当 $X^\top X$ 可逆时，求解它即可得到最小二乘解。）
+5. 对于平稳零均值过程，定义 $\gamma(k)=\mathbb{E}[x_tx_{t-k}]\in\mathbb{R}$ 并使用 $\gamma(-k)=\gamma(k)$。（平稳性使得协方差仅依赖于滞后阶数。）
+6. 将 AR(p) 方程乘以 $x_{t-k}$，取期望，并利用 $1\le k\le p$ 的新息独立性：
+   $$
+   \gamma(k)=\sum_{j=1}^{p}\phi_j\gamma(k-j)\in\mathbb{R}.
+   $$
+   （对于这些正滞后阶数，噪声项与过去状态的协方差为零。）
+7. 将 $p$ 个方程收集为 Toeplitz 系统：
+   $$
+   \underbrace{\begin{bmatrix}
+   \gamma(0)&\gamma(1)&\cdots&\gamma(p-1)\\
+   \gamma(1)&\gamma(0)&\cdots&\gamma(p-2)\\
+   \vdots&\vdots&\ddots&\vdots\\
+   \gamma(p-1)&\gamma(p-2)&\cdots&\gamma(0)
+   \end{bmatrix}}_{\Gamma_p\in\mathbb{R}^{p\times p}}
+   \boldsymbol{\phi}
+   =\underbrace{\begin{bmatrix}\gamma(1)\\\gamma(2)\\\vdots\\\gamma(p)\end{bmatrix}}_{\boldsymbol{\gamma}_{1:p}\in\mathbb{R}^{p}}.
+   $$
+   （自协方差的对称性产生了 Toeplitz 条目。）
+8. 这些是 Yule–Walker 方程，并非声称有限样本的最小二乘估计量精确等于样本 Yule–Walker 估计量。（尽管两个估计量都针对同一个平稳 AR 族，但它们使用了不同的有限样本方程。）
+
+**检查。** `checks/M0.5/D-M0.5.2-03.py` — 正规方程误差 `0.0`，Yule–Walker 误差 `1.388e-17`，`passed = True`。
+
+**直觉。** AR(1) 给出一个标量正规方程。AR(p) 将其转化为矩阵系统，而平稳性将协方差版本转化为结构化的 Toeplitz 系统。
+
+## 4. 数值验证
+
+所有三项检查均使用确定性 float64 数组。它们验证了修正后的滞后一阶分母、精确的递归乘数、平稳不动点、不稳定情况以及两个 AR(p) 线性系统。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M0.5.2-01 | `phi_hat = 0.4055944055944055`；正规方程误差 `3.469e-16` | pass |
+| D-M0.5.2-02 | 乘数 `0.20971520000000007`；平稳误差 `0.0`；不稳定方差 `2304.3008679515206` | pass |
+| D-M0.5.2-03 | 正规方程误差 `0.0`；Yule–Walker 误差 `1.388e-17` | pass |
+
+从仓库父目录运行 `python -m pytest course/tests`。`viz/compute/ar1_explorer.ts` 由 Node 单独测试，并共享相同的闭式输出。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M0.5-a" />
+
+**V-M0.5-a — AR(1) 探索器。** 读者可控制 $\phi$、$\sigma$、地平线（horizon）和种子（seed）。纯计算模块返回确定性噪声轨迹，以及梯度乘数和自相关的数组 $\{\phi^k\}$，并在 $|\phi|<1$ 时返回平稳方差。其核心洞见在于 $\phi^k$ 既是自相关又是梯度乘数；该组件的规范为 `viz/specs/V-M0.5-a.yaml`，其经过测试的计算为 `viz/compute/ar1_explorer.ts`。
+
+## 6. 结语
+
+**反直觉的问题。** 如果 $|\phi|<1$ 对于有限的平稳方差是必需的，为什么更小的 $|\phi|$ 会使长程学习变得更加困难？**解答：** D-M0.5.2-02 给出 $\partial x_t/\partial x_{t-k}=\phi^k$。当 $|\phi|$ 远小于 1 时，过程是稳定的，但梯度乘数迅速衰减；当 $|\phi|$ 超过 1 时，乘数增长且方差不再稳定。稳定性与长程梯度传输是相关但不同的设计目标。
+
+**作业 A-M0.5.** 通过闭式解和梯度下降法拟合 AR(1) 系数，并导出 V-M0.5-a 所使用的确定性轨迹。作业合同位于 `code/common/A-M0.5-README.md`。
+
+**核心检查。** 从架构角度看，AR(1) 是一维线性 RNN，它隔离了循环雅可比矩阵乘法。从概率角度看，其高斯似然函数将该递归转化为最小二乘估计器，并提供精确的平稳性诊断。

@@ -1,0 +1,430 @@
+## 1. Motivation
+
+M1 showed that a vanilla RNN sends a long-range gradient through a product of recurrent Jacobians. A gated cell adds a second route: an explicit state update whose old-state coefficient can be close to one. This lesson keeps two facts separate. The LSTM cell path is additive, but the gates that write to it are still nonlinear. Also, the notation $\partial c_t/\partial c_{t-1}$ can refer either to a direct graph edge with $h_{t-1}$ held fixed or to a collapsed function after substituting $h_{t-1}=o_{t-1}\odot\tanh(c_{t-1})$. The first is the reverse-mode edge used by the unrolled graph; the second includes the gate leak.
+
+The numerical checks use float64 central differences. Every parameter array in the complete LSTM and GRU checks is compared, not only a selected weight matrix.
+
+## 2. Forward definition
+
+Let $x_t\in\mathbb{R}^{D}$, $h_t,c_t\in\mathbb{R}^{H}$, and let
+
+$$
+q_t=[h_{t-1};x_t]\in\mathbb{R}^{H+D}.
+$$
+
+For the LSTM, use one stacked affine map for the three sigmoid gates:
+
+$$
+W\in\mathbb{R}^{3H\times(H+D)},\qquad b\in\mathbb{R}^{3H},\qquad
+W_g\in\mathbb{R}^{H\times(H+D)},\qquad b_g\in\mathbb{R}^{H}.
+$$
+
+Split the first affine output into three blocks of length $H$:
+
+$$
+[f_t;i_t;o_t]=\sigma(Wq_t+b),\qquad
+f_t,i_t,o_t\in(0,1)^H,
+$$
+
+$$
+g_t=\tanh(W_gq_t+b_g)\in(-1,1)^H,
+$$
+
+$$
+c_t=f_t\odot c_{t-1}+i_t\odot g_t\in\mathbb{R}^{H},\qquad
+h_t=o_t\odot\tanh(c_t)\in\mathbb{R}^{H}.
+$$
+
+The output layer is
+
+$$
+z_t=W_yh_t+c\in\mathbb{R}^{V},\qquad
+p_t=\operatorname{softmax}(z_t)\in\Delta^{V-1},\qquad
+\ell_t=-\log p_t[y_t],\qquad L=\sum_{t=1}^{T}\ell_t.
+$$
+
+The implementation stores $W$ in the order $[f;i;o]$. Thus $W_{f,h}$, $W_{i,h}$, and $W_{o,h}$ mean the first, second, and third $H$ rows restricted to the first $H$ hidden columns. The output projection is shared over time.
+
+**Source note.** The LSTM cell definition is the architecture introduced by Hochreiter and Schmidhuber, “Long Short-Term Memory” ([technical report PDF](https://www.bioinf.jku.at/publications/older/2604.pdf)). The GRU equations are the gated recurrent unit used by Cho et al., “Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation” ([arXiv](https://arxiv.org/abs/1406.1078)). The equations above fix the conventions used by the numerical checks; the URLs are the primary technical sources.
+
+For comparison, a GRU has update and reset gates and one candidate:
+
+$$
+z_t=\sigma(W_zq_t+b_z),\qquad r_t=\sigma(W_rq_t+b_r),
+$$
+
+$$
+\widetilde q_t=[r_t\odot h_{t-1};x_t],\qquad
+\widetilde h_t=\tanh(W_n\widetilde q_t+b_n),
+$$
+
+$$
+h_t=(1-z_t)\odot h_{t-1}+z_t\odot\widetilde h_t.
+$$
+
+Here $W_z,W_r,W_n\in\mathbb{R}^{H\times(H+D)}$ and each bias is in $\mathbb{R}^{H}$. The symbol $z_t$ is a GRU update gate here; it is not the LSTM/output logit $z_t$ above when the two cells are discussed in the same paragraph.
+
+## 3. Derivations
+
+### D-M2.1-01 · The LSTM cell Jacobian and the constant error carousel
+
+**Theorem.** The direct-edge partial derivative, with $h_{t-1}$ held fixed, is
+
+$$
+\left.\frac{\partial c_t}{\partial c_{t-1}}\right|_{h_{t-1}\ \mathrm{fixed}}
+=\operatorname{diag}(f_t)\in\mathbb{R}^{H\times H}.
+$$
+
+If instead we substitute $h_{t-1}=o_{t-1}\odot\tanh(c_{t-1})$ before differentiating, the collapsed total derivative is
+
+$$
+\frac{dc_t}{dc_{t-1}}
+=\operatorname{diag}(f_t)
++\left[
+\operatorname{diag}(c_{t-1})\frac{\partial f_t}{\partial h_{t-1}}
++\operatorname{diag}(g_t)\frac{\partial i_t}{\partial h_{t-1}}
++\operatorname{diag}(i_t)\frac{\partial g_t}{\partial h_{t-1}}
+\right]
+\operatorname{diag}\left(o_{t-1}\odot(1-\tanh^2(c_{t-1}))\right).
+$$
+
+The first term is the **constant error carousel**: it is an additive state path rather than a product of sigmoid or tanh derivatives. The bracket is the gate leak. Both formulas are correct because they answer different derivative questions; standard statements of $\partial c_t/\partial c_{t-1}=f_t$ mean the direct-edge partial.
+
+**Steps.**
+
+1. Hold $h_{t-1}$ and $x_t$ fixed. Then $q_t=[h_{t-1};x_t]$ is fixed, so $f_t$, $i_t$, and $g_t$ are fixed while $c_{t-1}$ varies. (This is the local graph edge used by reverse-mode propagation.)
+2. Differentiate the elementwise state equation coordinate by coordinate:
+   $$
+   c_{t,r}=f_{t,r}c_{t-1,r}+i_{t,r}g_{t,r}.
+   $$
+   For a coordinate $s$,
+   $$
+   \left.\frac{\partial c_{t,r}}{\partial c_{t-1,s}}\right|_{h_{t-1}\ \mathrm{fixed}}
+   =f_{t,r}\mathbf{1}_{r=s}.
+   $$
+   (The write term has no direct dependence on $c_{t-1}$ under this partial.)
+3. Collecting the $H^2$ entries gives
+   $$
+   dc_t=\operatorname{diag}(f_t)dc_{t-1}.
+   $$
+   Because each $f_{t,r}$ can be near one, this term can carry a component without multiplying it by a sigmoid derivative at every step.
+4. For the collapsed derivative, first substitute the previous hidden state:
+   $$
+   h_{t-1}=o_{t-1}\odot\tanh(c_{t-1}),\qquad
+   \frac{dh_{t-1}}{dc_{t-1}}
+   =D_h:=\operatorname{diag}\left(o_{t-1}\odot(1-\tanh^2(c_{t-1}))\right).
+   $$
+   (The output gate is treated as the fixed value from the previous timestep in this substitution.)
+5. Write the differential of the state update while allowing the gates to change through $h_{t-1}$:
+   $$
+   dc_t
+   =\operatorname{diag}(f_t)dc_{t-1}
+   +\operatorname{diag}(c_{t-1})df_t
+   +\operatorname{diag}(g_t)di_t
+   +\operatorname{diag}(i_t)dg_t.
+   $$
+   (This is the product rule for each of the four coordinatewise products.)
+6. Each gate depends on $h_{t-1}$ through the hidden columns of its affine map. For the sigmoid derivative $\sigma'(a)=\sigma(a)(1-\sigma(a))$,
+   $$
+   \frac{\partial f_t}{\partial h_{t-1}}
+   =\operatorname{diag}(f_t\odot(1-f_t))W_{f,h},
+   $$
+   $$
+   \frac{\partial i_t}{\partial h_{t-1}}
+   =\operatorname{diag}(i_t\odot(1-i_t))W_{i,h}.
+   $$
+   For the candidate, $\tanh'(a)=1-\tanh^2(a)$, so
+   $$
+   \frac{\partial g_t}{\partial h_{t-1}}
+   =\operatorname{diag}(1-g_t^{\odot2})W_{g,h}.
+   $$
+7. Apply the chain rule $df_t=(\partial f_t/\partial h_{t-1})dh_{t-1}$, and the analogous identities for $i_t$ and $g_t$. Substitute $dh_{t-1}=D_hdc_{t-1}$ into step 5 and factor out $dc_{t-1}$. The boxed collapsed expression follows.
+8. If a sigmoid gate is saturated, $f_r(1-f_r)$ or $i_r(1-i_r)$ is close to zero. If the candidate tanh is saturated, $1-g_r^2$ is close to zero. Therefore the bracket can be small even though the direct diagonal term is not small. (This is a local statement about the gate leak, not a claim that every LSTM gradient is constant.)
+9. The check evaluates both functions independently. The direct function freezes $h_{t-1}$; the collapsed function computes $h_{t-1}=o_{t-1}\odot\tanh(c_{t-1})$. It also drives the gate pre-activations to $30$ and verifies that the collapsed-minus-direct leak norm becomes $2.5602028843728444\times10^{-14}$.
+
+**Check.** checks/M2/D-M2.1-01.py reports direct and collapsed Jacobian maximum absolute errors below $5\times10^{-11}$, saturated gate-leak norm $2.5602028843728444\times10^{-14}$, and `passed: True`.
+
+**Intuition.** The cell can carry old state through $f_t\odot c_{t-1}$ while the gates decide whether to write. “Additive memory path” does not mean “all gradients are exactly constant”: the gate-dependent leak remains in the collapsed state-to-state derivative.
+
+### D-M2.1-02 · Full LSTM backward pass
+
+**Theorem.** Let $\delta h_t$ denote the total gradient arriving at $h_t$ after the output contribution at time $t$ and all later recurrent contributions have been accumulated. Let $\delta c_{T+1}=0$. For $t$ processed from $T$ down to $1$,
+
+$$
+\delta c_t
+=\delta h_t\odot o_t\odot(1-\tanh^2(c_t))
++\delta c_{t+1}\odot f_{t+1},
+$$
+
+where the second term is omitted at $t=T$. Define the gate pre-activation gradients
+
+$$
+\delta o_t=\delta h_t\odot\tanh(c_t)\odot o_t(1-o_t),
+$$
+
+$$
+\delta f_t=\delta c_t\odot c_{t-1}\odot f_t(1-f_t),\qquad
+\delta i_t=\delta c_t\odot g_t\odot i_t(1-i_t),
+$$
+
+$$
+\delta g_t=\delta c_t\odot i_t\odot(1-g_t^2).
+$$
+
+With $\delta^{\mathrm{gate}}_t=[\delta f_t;\delta i_t;\delta o_t]\in\mathbb{R}^{3H}$ and $q_t=[h_{t-1};x_t]$,
+
+$$
+\nabla_W L=\sum_{t=1}^{T}\delta^{\mathrm{gate}}_tq_t^\top\in\mathbb{R}^{3H\times(H+D)},
+$$
+
+$$
+\nabla_{W_g}L=\sum_{t=1}^{T}\delta g_tq_t^\top\in\mathbb{R}^{H\times(H+D)},
+$$
+
+$$
+\nabla_bL=\sum_t\delta^{\mathrm{gate}}_t,\qquad
+\nabla_{b_g}L=\sum_t\delta g_t.
+$$
+
+The hidden-state recursion from the cell gates is
+
+$$
+\delta h_{t-1}^{\mathrm{from\ gates}}
+=W_{h\text{-part}}^\top\delta^{\mathrm{gate}}_t
++W_{g,h\text{-part}}^\top\delta g_t\in\mathbb{R}^{H},
+$$
+
+and the output contribution at the same earlier timestep is added as $W_y^\top(p_{t-1}-e_{y_{t-1}})$. The cell contribution is carried separately as $\delta c_{t-1}=\delta c_t\odot f_t$. Finally,
+
+$$
+\nabla_{W_y}L=\sum_t(p_t-e_{y_t})h_t^\top,\qquad
+\nabla_cL=\sum_t(p_t-e_{y_t}).
+$$
+
+**Steps.**
+
+1. At time $t$, the output logits are $z_t=W_yh_t+c$. The softmax-cross-entropy derivative from M0 is
+   $$
+   \delta z_t:=\nabla_{z_t}\ell_t=p_t-e_{y_t}\in\mathbb{R}^{V}.
+   $$
+   The output path contributes $W_y^\top\delta z_t\in\mathbb{R}^{H}$ to $\delta h_t$.
+2. The local hidden equation is $h_t=o_t\odot\tanh(c_t)$. A perturbation of $c_t$ gives
+   $$
+   dh_t=\operatorname{diag}(o_t\odot(1-\tanh^2(c_t)))dc_t.
+   $$
+   Reverse mode transposes this diagonal matrix, which is unchanged by transposition, so the local contribution to $\delta c_t$ is $\delta h_t\odot o_t\odot(1-\tanh^2(c_t))$.
+3. The next cell equation contains $f_{t+1}\odot c_t$. Its differential with respect to $c_t$ is $\operatorname{diag}(f_{t+1})$. Reverse mode therefore sends $\delta c_{t+1}\odot f_{t+1}$ into $c_t$. Adding the two paths gives the stated $\delta c_t$; at the final step define $\delta c_{T+1}=0$.
+4. Differentiate the output-gate branch $o_t\odot\tanh(c_t)$ with respect to $o_t$. The upstream vector is $\delta h_t\odot\tanh(c_t)$. Multiplying by the sigmoid derivative gives
+   $$
+   \delta o_t=(\delta h_t\odot\tanh(c_t))\odot o_t\odot(1-o_t)\in\mathbb{R}^{H}.
+   $$
+5. For the state equation, the derivative with respect to $f_t$ is $c_{t-1}$, the derivative with respect to $i_t$ is $g_t$, and the derivative with respect to $g_t$ is $i_t$. Thus the pre-activation gradients before the elementwise nonlinearities are
+   $$
+   \delta f_t=(\delta c_t\odot c_{t-1})\odot f_t\odot(1-f_t),
+   $$
+   $$
+   \delta i_t=(\delta c_t\odot g_t)\odot i_t\odot(1-i_t),
+   $$
+   $$
+   \delta g_t=(\delta c_t\odot i_t)\odot(1-g_t^2).
+   $$
+   Each expression has shape $\mathbb{R}^{H}$.
+6. Stack the three sigmoid pre-activation gradients in the implementation's order: $\delta^{\mathrm{gate}}_t=[\delta f_t;\delta i_t;\delta o_t]$. Since the affine differential is $d(Wq_t+b)=(dW)q_t+W\,dq_t$,
+   $$
+   dL_t=(\delta^{\mathrm{gate}}_t)^\top(dW)q_t
+   =\operatorname{tr}\left((\delta^{\mathrm{gate}}_tq_t^\top)^\top dW\right).
+   $$
+   Therefore the time-$t$ matrix contribution is $\delta^{\mathrm{gate}}_tq_t^\top\in\mathbb{R}^{3H\times(H+D)}$. The same differential for $W_g$ gives $\delta g_tq_t^\top\in\mathbb{R}^{H\times(H+D)}$.
+7. The shared parameter is reused at every time, so add the outer products over $t$. Adding a bias has $db$ directly, hence its time-$t$ contribution is the corresponding pre-activation vector and the sequence gradient is its sum.
+8. To propagate to $h_{t-1}$, split $W$ and $W_g$ into hidden and input columns. The affine differentials contain $W_{h\text{-part}}dh_{t-1}$ and $W_{g,h\text{-part}}dh_{t-1}$, so reverse mode gives
+   $$
+   \delta h_{t-1}^{\mathrm{from\ gates}}
+   =W_{h\text{-part}}^\top\delta^{\mathrm{gate}}_t
+   +W_{g,h\text{-part}}^\top\delta g_t.
+   $$
+   Add the output term from time $t-1$ when forming the total $\delta h_{t-1}$, and pass $\delta c_{t-1}=\delta c_t\odot f_t$ along the explicit cell edge. No gate term is silently dropped.
+9. The check constructs $H=6,D=4,V=5,T=5$ arrays and compares every entry of $W,b,W_g,b_g,W_y,c$ with central differences at `rtol=1e-5`. The largest absolute error is $1.3712259922976304\times10^{-9}$.
+
+**Check.** checks/M2/D-M2.1-02.py checks all six LSTM parameter arrays and prints `passed: True`.
+
+**Intuition.** There are two backward streams. The cell stream carries $\delta c$ through the forget gate, while the hidden stream fans into the output gate and all three affine gate maps. Keeping the streams separate is what prevents the direct carousel term from being accidentally replaced by a saturated activation derivative.
+
+### D-M2.1-03 · Full GRU backward pass and its learned leaky integrator
+
+**Theorem.** Write $q_t=[h_{t-1};x_t]$ and $\widetilde q_t=[r_t\odot h_{t-1};x_t]$. For an incoming $\delta h_t$,
+
+$$
+\delta\widetilde h_t=\delta h_t\odot z_t,\qquad
+\delta z_t=\delta h_t\odot(\widetilde h_t-h_{t-1}),\qquad
+\delta h_{t-1}^{\mathrm{direct}}=\delta h_t\odot(1-z_t).
+$$
+
+The candidate pre-activation gradient is
+
+$$
+\delta a^n_t=\delta\widetilde h_t\odot(1-\widetilde h_t^2).
+$$
+
+Split $W_n^\top\delta a^n_t=[u_t;v_t]$ into hidden and input parts. Then
+
+$$
+\delta r_t=u_t\odot h_{t-1},\qquad
+\delta a^r_t=\delta r_t\odot r_t(1-r_t),\qquad
+\delta h_{t-1}^{\mathrm{candidate}}=u_t\odot r_t,
+$$
+
+$$
+\delta a^z_t=\delta z_t\odot z_t(1-z_t).
+$$
+
+The parameter gradients are the shared outer products
+
+$$
+\nabla_{W_z}L=\sum_t\delta a^z_tq_t^\top,\qquad
+\nabla_{W_r}L=\sum_t\delta a^r_tq_t^\top,\qquad
+\nabla_{W_n}L=\sum_t\delta a^n_t\widetilde q_t^\top,
+$$
+
+with the analogous bias sums. The recurrent hidden gradient includes
+
+$$
+\delta h_{t-1}
+=\delta h_t\odot(1-z_t)
++u_t\odot r_t
++W_{z,h}^\top\delta a^z_t
++W_{r,h}^\top\delta a^r_t,
+$$
+
+plus the earlier output-layer contribution when the total recursion is assembled.
+
+**Steps.**
+
+1. Differentiate the mixture update coordinatewise:
+   $$
+   h_{t,r}=(1-z_{t,r})h_{t-1,r}+z_{t,r}\widetilde h_{t,r}.
+   $$
+   Holding the three right-hand factors separate, the derivative with respect to $\widetilde h_t$ is $z_t$, the derivative with respect to $z_t$ is $\widetilde h_t-h_{t-1}$, and the direct derivative with respect to $h_{t-1}$ is $1-z_t$. Multiplying by $\delta h_t$ gives the first three displayed gradients.
+2. The candidate is $\widetilde h_t=\tanh(W_n\widetilde q_t+b_n)$. Therefore
+   $$
+   \delta a^n_t=\delta\widetilde h_t\odot(1-\widetilde h_t^2)\in\mathbb{R}^{H}.
+   $$
+   Since $d(W_n\widetilde q_t)=dW_n\widetilde q_t+W_nd\widetilde q_t$, its parameter contribution is $\delta a^n_t\widetilde q_t^\top$.
+3. Propagate the candidate affine gradient into $\widetilde q_t$:
+   $$
+   d\widetilde q_t=W_n^\top\delta a^n_t=[u_t;v_t],
+   $$
+   where $u_t\in\mathbb{R}^{H}$ multiplies $r_t\odot h_{t-1}$ and $v_t\in\mathbb{R}^{D}$ multiplies $x_t$. The reset-gate path therefore receives $\delta r_t=u_t\odot h_{t-1}$, and the hidden input to the candidate receives $u_t\odot r_t$.
+4. Apply the sigmoid derivative to the reset gate:
+   $$
+   \delta a^r_t=(u_t\odot h_{t-1})\odot r_t\odot(1-r_t).
+   $$
+   The reset affine map uses $q_t$, so its parameter contribution is $\delta a^r_tq_t^\top$ and its hidden contribution is $W_{r,h}^\top\delta a^r_t$.
+5. Apply the sigmoid derivative to the update gate:
+   $$
+   \delta a^z_t=(\delta h_t\odot(\widetilde h_t-h_{t-1}))\odot z_t\odot(1-z_t).
+   $$
+   Its parameter contribution is $\delta a^z_tq_t^\top$, and its hidden contribution is $W_{z,h}^\top\delta a^z_t$.
+6. Add the direct mixture path, the candidate path, and the two gate-affine paths. This gives the displayed $\delta h_{t-1}$. Add $W_y^\top(p_{t-1}-e_{y_{t-1}})$ when the output loss at the earlier timestep is included. The input-side pieces are not propagated recurrently, but they are present in the parameter outer products through $q_t$ and $\widetilde q_t$.
+7. Rewrite the forward mixture as
+   $$
+   h_t=h_{t-1}+z_t\odot(\widetilde h_t-h_{t-1}).
+   $$
+   This is an elementwise learned exponential moving average: $z_t$ is the write/update fraction and $1-z_t$ is the carry fraction. If $z_t$ and $\widetilde h_t$ are held fixed, the carry contribution to the local Jacobian is exactly
+   $$
+   \operatorname{diag}(1-z_t).
+   $$
+   The other terms in the full Jacobian come from the gates and candidate depending on $h_{t-1}$.
+8. The check uses the same $H=6,D=4,V=5,T=5$ size and finite-differences every GRU parameter array. It also varies a hidden vector while holding $z_t$ and $\widetilde h_t$ fixed and checks the additive diagonal term.
+
+**Check.** checks/M2/D-M2.1-03 reports a full-gradient maximum absolute error of $1.137638444019995\times10^{-9}$ and additive-path Jacobian error $3.447064855777171\times10^{-11}$; `passed: True`.
+
+**Intuition.** A GRU chooses between carrying and writing at every coordinate. The same update gate controls both: a small $z_t$ preserves the old state and also suppresses the candidate's ability to write the current input.
+
+### D-M2.1-04 · Parameter counts and per-step cost
+
+**Claim.** Ignoring the output projection, an LSTM has four affine parameter blocks and a GRU has three. Each block has $H(H+D)$ weights and $H$ biases, so
+
+$$
+P_{\mathrm{LSTM}}=4\bigl(H(H+D)+H\bigr),\qquad
+P_{\mathrm{GRU}}=3\bigl(H(H+D)+H\bigr).
+$$
+
+The corresponding recurrent affine work is $4H(H+D)$ and $3H(H+D)$ multiply-accumulate operations per step. If one multiply and one addition count as two floating-point operations, these affine portions are $8H(H+D)$ and $6H(H+D)$ FLOPs, respectively. Elementwise sigmoid/tanh, products, and additions add $O(H)$ work; the output projection adds $VH$ multiply-accumulates when logits are computed.
+
+**Steps.**
+
+1. One LSTM gate block maps $\mathbb{R}^{H+D}$ to $\mathbb{R}^{H}$, so its weight matrix contains $H(H+D)$ entries and its bias contains $H$ entries.
+2. There are three sigmoid blocks plus one candidate tanh block. Multiplying the one-block count by four gives the LSTM expression.
+3. One GRU update, reset, or candidate block has the same input and output dimensions. Multiplying by three gives the GRU expression.
+4. A dense matrix-vector product with an $H\times(H+D)$ matrix has $H(H+D)$ multiply-accumulate pairs. Count four or three such products for the two cells. The gate nonlinearities do not change the leading quadratic term.
+5. For the checked $H=6,D=4$ fixture, one block has $6(6+4)=60$ weights and six biases. Hence $P_{\mathrm{LSTM}}=4(60+6)=264$, $P_{\mathrm{GRU}}=3(60+6)=198$, and the affine MAC counts are $240$ and $180$.
+
+**Check.** checks/M2/D-M2.1-04 reproduces $264$, $198$, $240$, and $180$ and prints `passed: True`.
+
+**Intuition.** Gating spends extra affine bandwidth to buy a controllable state path. A GRU has fewer gates, while an LSTM exposes a separate cell and output gate; neither count alone determines quality.
+
+### D-M2.1-05 · Forget-gate bias initialization
+
+**Claim.** If the LSTM forget-gate bias is initialized to $1$, then before learned pre-activation variation the gate value is
+
+$$
+f_t\approx\sigma(1)=\frac{1}{1+e^{-1}}=0.7310585786300049.
+$$
+
+With bias $0$, the corresponding value is $\sigma(0)=0.5$. Along the direct carousel path over $k$ steps, the scalar retention factors are approximately $f^k$; at $k=8$ they are $0.08158633452069013$ for bias $1$ and $0.00390625$ for bias $0$.
+
+**Steps.**
+
+1. Set the forget pre-activation to its bias-only value. With bias $b_f=1$,
+   $$
+   f=\sigma(b_f)=\frac{e^{b_f}}{1+e^{b_f}}=\frac{1}{1+e^{-1}}.
+   $$
+   With $b_f=0$, $f=1/2$.
+2. Use the direct-edge Jacobian from D-M2.1-01. In one coordinate with a fixed forget value, one step maps a perturbation by $\delta c_t=f\delta c_{t-1}$.
+3. Repeating the same scalar factor for $k$ steps gives
+   $$
+   \delta c_k=f^k\delta c_0.
+   $$
+   This is a simplified retention calculation, not a claim that a trained LSTM has constant gates.
+4. At $k=8$, the bias-zero factor is $(0.5)^8=0.00390625$. The bias-one factor is $(0.7310585786300049)^8=0.08158633452069013$, about twenty-one times larger.
+5. The result is an initialization heuristic. It keeps the carousel more open at the start, but input-dependent gates, the gate leak, and optimization still determine the trained trajectory.
+
+**Source note.** Jozefowicz, Zaremba, and Sutskever, “An Empirical Exploration of Recurrent Network Architectures,” reports the forget-bias comparison in its empirical architecture study ([ACL Anthology](https://aclanthology.org/N15-1013/)). The numerical values above are evaluated directly from the sigmoid, not recalled from the paper.
+
+**Check.** checks/M2/D-M2.1-05 verifies both sigmoid values and the $k=8$ products; `passed: True`.
+
+**Intuition.** A positive forget bias starts the cell with a longer memory time constant. It does not freeze the state: the input and candidate gates can still write, and a saturated or poorly conditioned gate network can still create weak gradients elsewhere.
+
+## 4. Numerical verification
+
+All five checks use deterministic float64 NumPy computations and the shared `code/common/gradcheck.py` harness where a derivative is being compared. D-M2.1-02 and D-M2.1-03 check every parameter array at $H=6,D=4,T=5$; D-M2.1-01 checks both meanings of the LSTM cell Jacobian.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M2.1-01 | direct/collapsed Jacobian errors below $5\times10^{-11}$; saturated leak norm $2.5602028843728444\times10^{-14}$ | pass |
+| D-M2.1-02 | all LSTM arrays; maximum absolute error $1.3712259922976304\times10^{-9}$ | pass |
+| D-M2.1-03 | all GRU arrays; maximum absolute error $1.137638444019995\times10^{-9}$; additive-path error $3.447064855777171\times10^{-11}$ | pass |
+| D-M2.1-04 | LSTM/GRU parameters $264/198$; affine MACs $240/180$ | pass |
+| D-M2.1-05 | $\sigma(1)=0.7310585786300049$; eight-step retention $0.08158633452069013$ versus $0.00390625$ | pass |
+
+Run `python -m pytest course/tests` from the repository parent. The browser reader has no Python runtime, so the page displays these deterministic outputs while CI executes the checks.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M2-a" />
+
+<CourseWidget id="V-M2-b" />
+
+**V-M2-a — Gate timeline.** The specification is `viz/specs/V-M2-a.yaml` and the pure compute module is `viz/compute/gate_timeline.ts`. Type text and inspect the forget, input, and output gate heatmaps over character positions. The preview uses deterministic float-equivalent gate equations; A-M2 can replace the trace with a trained char-LSTM export without changing the widget contract.
+
+**V-M2-b — Gradient highway.** The specification is `viz/specs/V-M2-b.yaml`, the pure compute module is `viz/compute/gradient_highway.ts`, and the static fixture is `viz/data/V-M2-b-gradient-highway.json`. Toggle forget bias $0/1$ and compare $f^k$ with an RNN factor curve. The plot visualizes the direct carousel term, not the complete collapsed Jacobian including gate leakage.
+
+The compute modules return plain arrays and do not assume a plotting library. The existing Preact/MDX reader can render them with its current Canvas2D layer.
+
+## 6. Closing
+
+**Counterintuitive question.** Why can a GRU with $z_t\to0$ everywhere still fail on a very long dependency even though its additive term is exactly $h_{t-1}$? **Worked answer:** D-M2.1-03 rewrites the update as $h_t=h_{t-1}+z_t\odot(\widetilde h_t-h_{t-1})$. When $z_t\to0$, the direct carry Jacobian tends to the identity, so old state can be preserved. But the same factor $z_t$ multiplies the candidate contribution: the model stops writing current inputs into the state. A cell that preserves an old value but cannot update it has memory retention without useful memory capacity. The trade-off is between carrying and writing, not a guarantee of arbitrary long-range computation.
+
+**Assignment A-M2.** Implement `code/numpy_rnn/lstm.py`, `gru.py`, and `seq2seq_attn.py`; reproduce all M2.1 and M2.2 checks; export V-M2-b data; and train the declared reverse-sequence attention fixture to at least 95% exact token accuracy within 500 updates. The assignment README records the deterministic fixtures and the command used to reproduce the result.
+
+**Spine check.** Architecture-wise, LSTM and GRU add learned carry/write paths to the recurrent state, while attention will later provide a direct weighted read from all encoder states. Probability-wise, both cells still emit a causal conditional and can be trained with teacher forcing; the gate equations change the state Jacobians and memory/write trade-off, not the autoregressive factorization.

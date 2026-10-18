@@ -1,0 +1,13 @@
+{
+  "id": "QUANT-P4", "subject": "quant", "module": "Quant pricing · C++ numerical engineering (4/4)",
+  "title": { "en": "Building and validating a C++ pricing library", "zh": "构建并验证 C++ 定价库" },
+  "prereqs": ["QUANT-P1", "QUANT-P2", "QUANT-P3", "C++17"],
+  "estimatedHours": 8,
+  "spine": {
+    "en": { "a": "Specify degenerate-input semantics once for scalar, vector and parallel paths.", "b": "Use independent numerical properties and a five-week build route." },
+    "zh": { "a": "为标量、向量、并行路径统一规定退化输入语义。", "b": "用独立数值性质和五周路线推进实现。" }
+  },
+  "derivations": ["Kernel contract", "Parallel execution rules", "Scale-aware validation"],
+  "assignment": "C++/Python behavior table, golden cases and validation report",
+  "references": ["C++ parallel algorithms draft", "cppreference execution policies", "Wichura 1988"]
+}

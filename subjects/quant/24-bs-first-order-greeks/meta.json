@@ -1,0 +1,52 @@
+{
+  "id": "QUANT-BS6",
+  "subject": "quant",
+  "module": "BS paper · Greeks and puts (06/08)",
+  "title": {
+    "en": "Vega, Theta, Rho and dividend sensitivity",
+    "zh": "Vega、Theta、Rho 与股息敏感度"
+  },
+  "prereqs": [
+    "QUANT-BS5"
+  ],
+  "estimatedHours": 1.5,
+  "spine": {
+    "en": {
+      "a": "Rebuild the derivation with paper and pencil.",
+      "b": "Compare assumptions, formulas and the supplied numerical evidence."
+    },
+    "zh": {
+      "a": "用纸笔重建每步推导，先尝试再打开答案。",
+      "b": "对照假设、公式、图片与提供的数值证据。"
+    }
+  },
+  "assignment": "Paper pauses · chapter 06",
+  "references": [
+    "Quant_interview BS assignment (5 pages)",
+    "Original corrected paper-workbook derivations"
+  ],
+  "navigation": {
+    "previous": {
+      "id": "QUANT-BS5",
+      "title": {
+        "en": "Complex CDF, Hermite polynomials and P3",
+        "zh": "复数 CDF、Hermite 多项式与 P3"
+      },
+      "devHref": "/subjects/quant/23-bs-cdf-hermite/index.html",
+      "buildHref": "/quant-23-bs-cdf-hermite.html"
+    },
+    "indexHref": {
+      "dev": "/subjects/quant/18-bs-paper-course/index.html",
+      "build": "/quant-18-bs-paper-course.html"
+    },
+    "next": {
+      "id": "QUANT-BS7",
+      "title": {
+        "en": "Put pricing, parity and Greeks",
+        "zh": "Put 定价、平价与 Greeks"
+      },
+      "devHref": "/subjects/quant/25-bs-put-parity/index.html",
+      "buildHref": "/quant-25-bs-put-parity.html"
+    }
+  }
+}

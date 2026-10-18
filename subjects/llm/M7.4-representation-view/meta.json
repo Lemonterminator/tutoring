@@ -1,0 +1,39 @@
+{
+  "subject": "llm",
+  "id": "M7.4",
+  "module": "M7",
+  "title": {
+    "en": "Representation-theoretic view — positions as translations and spectra",
+    "zh": "表示论视角——位置作为平移与谱"
+  },
+  "prereqs": [
+    "M3.2",
+    "M4.5",
+    "M7.1"
+  ],
+  "estimatedHours": 5,
+  "spine": {
+    "en": {
+      "a": "RoPE is a unitary representation of the integer translation group; relative-position attention is an invariant inner product and a finite spectral kernel.",
+      "b": "Position methods differ by the object they modify: RoPE changes the representation, YaRN reshapes its frequency support, and ALiBi/T5 add Toeplitz logit corrections."
+    },
+    "zh": {
+      "a": "RoPE 是整数平移群的酉表示；相对位置注意力是不变内积和有限谱核。",
+      "b": "位置方法的区别在于它们修改的对象：RoPE 改变表示，YaRN 重塑其频率支撑，而 ALiBi/T5 添加 Toeplitz 对数几率修正。"
+    }
+  },
+  "derivations": [
+    "D-M7.4-01"
+  ],
+  "visualizations": [
+    "V-M7-e"
+  ],
+  "assignment": "A-M7",
+  "references": [
+    "su2021",
+    "peng2023",
+    "press2022",
+    "raffel2020",
+    "ostmeier2024"
+  ]
+}

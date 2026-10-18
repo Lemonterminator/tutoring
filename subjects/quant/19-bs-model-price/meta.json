@@ -1,0 +1,52 @@
+{
+  "id": "QUANT-BS1",
+  "subject": "quant",
+  "module": "BS paper · Pricing and PDE (01/08)",
+  "title": {
+    "en": "P/Q measures, diffusion and BS pricing",
+    "zh": "P/Q 测度、扩散与 BS 定价"
+  },
+  "prereqs": [
+    "QUANT-P2"
+  ],
+  "estimatedHours": 2,
+  "spine": {
+    "en": {
+      "a": "Rebuild the derivation with paper and pencil.",
+      "b": "Compare assumptions, formulas and the supplied numerical evidence."
+    },
+    "zh": {
+      "a": "用纸笔重建每步推导，先尝试再打开答案。",
+      "b": "对照假设、公式、图片与提供的数值证据。"
+    }
+  },
+  "assignment": "Paper pauses · chapter 01",
+  "references": [
+    "Quant_interview BS assignment (5 pages)",
+    "Original corrected paper-workbook derivations"
+  ],
+  "navigation": {
+    "previous": {
+      "id": "QUANT-BS0",
+      "title": {
+        "en": "BS and Greeks: paper course",
+        "zh": "BS 与 Greeks：纸笔推导课程"
+      },
+      "devHref": "/subjects/quant/18-bs-paper-course/index.html",
+      "buildHref": "/quant-18-bs-paper-course.html"
+    },
+    "indexHref": {
+      "dev": "/subjects/quant/18-bs-paper-course/index.html",
+      "build": "/quant-18-bs-paper-course.html"
+    },
+    "next": {
+      "id": "QUANT-BS2",
+      "title": {
+        "en": "Delta and Gamma: slope and curvature",
+        "zh": "Delta、Gamma：斜率与曲率"
+      },
+      "devHref": "/subjects/quant/20-bs-delta-gamma/index.html",
+      "buildHref": "/quant-20-bs-delta-gamma.html"
+    }
+  }
+}

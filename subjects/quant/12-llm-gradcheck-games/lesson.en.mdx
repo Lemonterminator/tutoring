@@ -1,0 +1,18 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { gradcheckCards } from '../../../framework/games/llm-foundations-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+
+## Start practicing
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to game library</a>
+
+Accumulate gradients through the four-node computation graph, then diagnose central differences and error thresholds. Covers D-M0.1-05 and the numerical harness; teaching step sizes are distinguished from the harness’s ε=10⁻⁶.
+
+<PracticeGame generate={gradcheckCards} lang="en" />
+
+## Limits and source lesson
+
+The browser grades exercise answers; it does not run the lesson’s Python checks or establish correctness of implemented gradients. Excessively small steps suffer from floating-point rounding.
+
+<SourceLessonLink source="llm:M0.1" lang="en" />

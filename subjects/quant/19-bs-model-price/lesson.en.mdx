@@ -1,0 +1,1172 @@
+import { BSMaterials, bsMaterialHref } from "../../../framework/quant/BSPaperCourse";
+import { RadonNikodymLab } from "../../../framework/quant/RadonNikodymLab";
+import bsFigure1 from "../../../content/bs-math/assets/price_delta_gamma.png";
+import bsFigure0 from "../../../content/bs-math/assets/measure_distributions.png";
+
+<div class="bs-paper-content">
+
+This lesson answers one question: why can’t we use probabilities about how a stock will move directly to price an option? Starting from a two-state example, we derive a continuous-time stock model, an option-price formula, and a pricing equation. The later Greeks are derivatives of the price function derived here.
+
+Suggested time: about 90–120 minutes for the pricing route, plus 35–50 minutes for the [Radon–Nikodym foundations in 1.4](#rn-foundations). Prerequisites are the normal distribution, exponentials and logarithms, the chain rule, and the form of Itô’s formula. If probability reweighting is unfamiliar, work through 1.4.1–1.4.5 before the SDE derivation; keep 1.4.9 as an optional connection to generative diffusion. At each paper pause, try the calculation before opening its answer.
+
+## 1. First fix the P and Q measures, dividends, and time
+
+### 1.1 BS is the model, Q is the measure used for pricing
+
+Black–Scholes (usually called Black–Scholes–Merton when dividends are included) specifies how a stock price changes and what trades are available. A probability measure specifies how probabilities are assigned to those changes. Keep the stock-price model separate from the probability rule used to calculate an expectation.
+
+In this model, the no-arbitrage price of a European option can be written as a discounted expectation under the risk-neutral measure $Q$. We use the money-market account, which grows at the risk-free rate $r$, as the numeraire: it is the reference asset for comparing values at different times.
+
+"Measure" can initially be understood as a set of rules assigning probabilities to events. The same event "stock price at maturity exceeds 100" can have different weights under P and Q; changing the measure does not alter the realized stock price path.
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Comparison Item
+
+</th>
+<th>
+
+P: Physical / Real-World Measure
+
+</th>
+<th>
+
+Q: Risk-Neutral Pricing Measure
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+Primary Question
+
+</td>
+<td>
+
+How will a certain event occur, and what is its probability?
+
+</td>
+<td>
+
+What is the arbitrage-free price of a replicable payoff?
+
+</td>
+</tr>
+<tr>
+<td>
+
+Source of Probability
+
+</td>
+<td>
+
+Modeling the true data-generating process, estimated using historical data and current information
+
+</td>
+<td>
+
+Determined by no-arbitrage and the numeraire within the given market model
+
+</td>
+</tr>
+<tr>
+<td>
+
+Expected Return After Dividend Reinvestment
+
+</td>
+<td>
+
+$\mu$ in the model
+
+</td>
+<td>
+
+$r$ in the model
+
+</td>
+</tr>
+<tr>
+<td>
+
+Compensation for bearing stock risk
+
+</td>
+<td>
+
+Risk premium may exist $\mu-r$
+
+</td>
+<td>
+
+Risk compensation enters event pricing weights
+
+</td>
+</tr>
+<tr>
+<td>
+
+Can probability be used directly as a real-world forecast
+
+</td>
+<td>
+
+It is a forecasting target, but estimates may still be wrong
+
+</td>
+<td>
+
+It cannot be directly treated as the probability of occurrence under P
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+“Risk-neutral” describes the return relationship under Q’s pricing weights; real-world investors may still dislike risk. The next section uses a hand-calculable example to show where these weights come from.
+
+<details class="bs-paper-answer">
+<summary>Supplement: when equivalence and uniqueness apply</summary>
+
+Equivalent measures P and Q agree on which events have probability zero, though they can assign different weights to events with nonzero probability. Probability zero does not mean logically impossible: under a continuous distribution, each individual value can have probability zero.
+
+In the standard complete Black–Scholes market with one stock, constant coefficients, and continuous trading, the equivalent risk-neutral measure is unique once the money-market account is specified. An incomplete market may have several such measures. The [Utah lecture notes, Sections 2.8 and 3.5](https://www.math.utah.edu/~zhu/5760.13f/chapter06note.pdf) explain the basic definition and its connection to pricing; the derivation below follows this course's continuous dividend convention.
+
+</details>
+
+### 1.2 A two-state example: Where do pricing weights come from?
+
+Consider a one-period model with no dividends and $r=0$. The stock price is 100 today and can be either 120 or 80 next period. Suppose your real-world forecast assigns an up probability $p_P=0.7$. Then the expected terminal price under P is:
+
+$$
+E_P[S_1]=0.7\times120+0.3\times80=108.
+$$
+
+Now find a set of probabilities for pricing. With zero interest and no dividends in this example, no-arbitrage pricing requires that the expected stock price under Q equals today’s 100:
+
+$$
+100=120p_Q+80(1-p_Q),\quad p_Q=0.5.
+$$
+
+Check the Call with strike 100. Its payoff is 20 in the up state and 0 in the down state. Buying half a share and borrowing 40 reproduces both payoffs:
+
+- If the stock is 120: $0.5\times120-40=20$.
+- If the stock is 80: $0.5\times80-40=0$.
+
+This is a replicating portfolio. In this one-period example it is set up once; the continuous-time model will require its holdings to be adjusted. Its cost today is:
+
+$$
+C_0=0.5\times100-40=10=E_Q[H].
+$$
+
+If the option were quoted at 14, selling it and spending 10 to build the replicating portfolio would leave 4 today, while the portfolio would cover the option payoff at expiration. That is an arbitrage, so 14 is inconsistent with the stock price. Directly using P's probability, $0.7\times20=14$, gives precisely this wrong price.
+
+Why price using 0.5 instead of 0.7? The replicating portfolio pays the same option payoff in both states, and the price is constrained by the replication cost. The true up probability may influence your trading view, but it cannot change the replication cost given this set of asset prices.
+
+**Paper pause P/Q-1:** Change the real-world up probability to 0.4. Recalculate $E_P[S_1]$ and the P expected payoff of the Call; do the Q weights and the replication price change?
+
+<details class="bs-paper-answer">
+<summary>Pause P/Q-1 Answer</summary>
+
+
+$E_P[S_1]=96$, $E_P[H]=8$. When the spot, terminal states, and interest rates are unchanged, neither $p_Q=0.5$ nor the Call replication price 10 changes. The 0.7 and 0.4 here are pedagogical assumptions, not derived from market data.
+
+
+</details>
+
+### 1.3 Same diffusion model: different drifts under P and Q
+
+**Start with the symbols and units.** $u$ is calendar time along the path, the current time is $t$, maturity is $t_e$, and time to maturity is $T=t_e-t$. Measure time in years throughout. $S_u$ is the ex-dividend price of one share at time $u$, in currency units per share; dividends distributed separately to the holder are not part of that price.
+
+- $r$: the continuously compounded annual risk-free rate, in inverse years. One currency unit deposited today becomes $e^{rh}$ after $h$ years, so the discount factor is $e^{-rh}$.
+- $q$: the continuous dividend yield, also in inverse years. One share pays cash dividends of $qS_u\,du$ over a short interval of $du$ years. The parameter $q$ is a proportional rate, not a cash amount.
+- $\mu$: the instantaneous expected total return rate under P, including dividends, in inverse years. Total return includes price changes and dividends received, so the ex-dividend price has expected growth rate $\mu-q$. Some textbooks use $\mu$ for the ex-dividend drift; check the convention first.
+- $\sigma$: the volatility of relative price changes, in inverse square-root years, with $\sigma>0$. The standard deviation of the relative price change over a short interval of $h$ years is approximately $\sigma\sqrt{h}$. An annualized volatility of 20% does not mean an expected return of 20%.
+
+“Constant” is a modeling assumption: these four parameters do not change with time or random outcomes over the horizon; the stock price is still random. Also assume a positive initial stock price, a finite horizon, continuous trading, fractional shares, borrowing and lending at $r$, and no taxes or transaction costs.
+
+**Dividends, ex-dividend prices, and ETF dist / acc labels.** A dividend is cash income distributed by a company to its shareholders. Ex-dividend means a new buyer no longer acquires the right to the declared dividend; the ex-dividend date and payment date can differ. Isolating this distribution from other price changes, a dividend of one currency unit per share lowers the theoretical ex-dividend price by one unit relative to the cum-dividend price. The existing holder's stock value plus dividend cash does not increase simply because cash is distributed.
+
+An ETF dist (distributing) share class pays distributed income to holders; an acc (accumulating) share class keeps and reinvests income inside the fund. These labels help explain the difference between taking cash out and keeping income invested, but “ex-dividend” describes entitlement and price; it does not mean “dist.” Reinvesting inside an acc ETF generally does not automatically increase the ETF units in your account. Buying more units with a dist payment does increase your holdings; you can do this yourself or use a broker’s dividend-reinvestment service. See Vanguard’s [income distribution policy](https://fund-docs.vanguard.com/etf-prospectus-en.pdf) and its [accumulating product’s reinvestment explanation](https://www.vanguard.co.uk/uk-fund-directory/product/etf/equity/9580/ftse-100-ucits-etf-gbp-accumulating).
+
+This section approximates real, discrete distributions by a **continuous cash flow proportional to the stock price**, $qS_u\,du$; it does not introduce a separate acc ETF into BS. The instantaneous total gain from one share is $dS_u+qS_u\,du$. Thus the stock price models under the two measures are:
+
+$$
+P:\quad dS_u=(\mu-q)S_u\,du+\sigma S_u\,dW_u^P.
+$$
+
+$$
+Q:\quad dS_u=(r-q)S_u\,du+\sigma S_u\,dW_u^Q.
+$$
+
+The $du$ term is the drift, describing the instantaneous conditional mean; the $dW$ term describes random fluctuations. $W^P$ is Brownian motion under P, and $W^Q$ is Brownian motion under Q: under their respective measures, a future increment over $h$ years is independent of information already available, with mean zero and variance $h$. Under Q, the total gain has drift $rS_u\,du$. Dividends contribute $qS_u\,du$, leaving $(r-q)S_u\,du$ for price growth.
+
+For example, take $r=0.03,q=0.01,\mu=0.08,\sigma=0.20$ (teaching assumptions). Under P the instantaneous expected total return is 8%, comprising 7% price growth and 1% dividends; under Q pricing weights it is 3% = 2% + 1%. Volatility remains 20% under both measures. Changing measure changes probability weights and drift; do not treat the two Brownian motions as the same random variable under the same measure and mechanically replace $\mu$ with $r$ path by path. Section 1.4 explains the change in weights.
+
+**Paper hint: why does discounting only the ex-dividend price leave a term?** Use the Q equation above and the deterministic function $f(u)=e^{-r(u-t)}$. The result below needs only the stochastic product rule:
+
+$$
+d(f(u)S_u)=f(u)\,dS_u+S_u\,df(u)+d[f,S]_u.
+$$
+
+Hint: first find $df(u)$, substitute Q's $dS_u$, then combine the two $du$ coefficients. The symbol $[f,S]$ denotes quadratic covariation; because $f$ is a smooth deterministic time function with no Brownian fluctuations, this term is zero. Alternatively, apply the two-variable Itô formula to $g(u,x)=e^{-r(u-t)}x$, noting that its second derivative in $x$ is zero. Try the calculation before opening the worked steps.
+
+<details class="bs-paper-answer">
+<summary>Worked steps: discounting the ex-dividend stock price</summary>
+
+Differentiate the discount factor to get $df(u)=-rf(u)\,du$. Substitution into the product rule gives:
+
+$$
+\begin{aligned}
+d(f(u)S_u)
+&=f(u)\bigl((r-q)S_u\,du+\sigma S_u\,dW_u^Q\bigr)-rf(u)S_u\,du\\
+&=\bigl((r-q)-r\bigr)f(u)S_u\,du+\sigma f(u)S_u\,dW_u^Q.
+\end{aligned}
+$$
+
+The interest-rate terms cancel, while the dividend term remains:
+
+$$
+d(e^{-r(u-t)}S_u)=-q e^{-r(u-t)}S_u\,du+\sigma e^{-r(u-t)}S_u\,dW_u^Q.
+$$
+
+This $-q$ term means that tracking the stock price alone leaves out dividends paid to the holder.
+
+</details>
+
+To track total return, start with one share at time $t$ and immediately reinvest every dividend in the same stock, without adding external cash. This is a self-financing reinvestment strategy. If the share count is $n_u$, set up:
+
+$$
+S_u\,dn_u=n_uqS_u\,du,\qquad n_t=1.
+$$
+
+The left side is the cost of additional shares; the right side is dividends paid by shares already held. You can cancel the positive stock price and solve this ordinary differential equation. Here $n_u$ counts the shares purchased by direct reinvestment, not an acc ETF investor’s units. Let wealth be $Y_u=n_uS_u$, and calculate its discounted value $M_u=e^{-r(u-t)}Y_u$. Then use the product rule to check whether the $du$ term cancels.
+
+<details class="bs-paper-answer">
+<summary>Worked steps: reinvested shares and discounted wealth</summary>
+
+From $dn_u=qn_u\,du$ and $n_t=1$, we get $n_u=e^{q(u-t)}$. This is the number of shares held through direct reinvestment, not the number of units in an acc ETF. The risk-free discounted value of wealth is:
+
+$$
+M_u=e^{-r(u-t)}Y_u=e^{-(r-q)(u-t)}S_u.
+$$
+
+Applying the product rule again, the deterministic factor's $-(r-q)M_u\,du$ cancels the stock-price drift's $(r-q)M_u\,du$, leaving:
+
+$$
+dM_u=\sigma M_u\,dW_u^Q.
+$$
+
+The discount rate remains $r$; $r-q$ appears in the exponent because reinvestment increases the share count.
+
+</details>
+
+**How does a martingale connect back to 1.2?** Let $\mathcal{F}_s$ be all information known by time $s$. For $M$ to be a martingale under Q, its current value must be determined by the information already available (adaptedness), it must satisfy $E_Q[|M_u|]<\infty$ (integrability), and for every $t\le s\le u\le t_e$ it must satisfy:
+
+$$
+E_Q[M_u\mid\mathcal{F}_s]=M_s.
+$$
+
+This says that at time $s$, if we hold the known information fixed and average future discounted wealth using Q weights, we get the current discounted wealth. Individual paths can still rise or fall. Under the constant-coefficient, finite-horizon assumptions here, discounted wealth after reinvestment is indeed a martingale. In a calculation, first specify the measure and the wealth process being tracked, then check whether its drift vanishes; this is a useful clue when testing for a martingale. Under suitable adaptedness and local integrability conditions, a remaining Brownian stochastic integral first gives a local martingale; obtaining the martingale relation above requires sufficient integrability, so the absence of a $du$ term alone is not enough.
+
+**The one-step statement in 1.2 that the expected stock price under Q equals today's price is this same relationship.** There $r=q=0$, so the discount factor and reinvested share count are both one, $M=S$, and the initial stock price is known:
+
+$$
+E_Q[S_1\mid\mathcal{F}_0]=0.5\times120+0.5\times80=100=S_0.
+$$
+
+The expectation under P in that example is 108, so its stock price is not a martingale under P. With interest and dividends, future stock price need not have Q expectation equal to today's price; discounted wealth with dividends reinvested must satisfy the conditional expectation relationship above. Starting at $s=t$, this is equivalent to:
+
+$$
+E_Q[S_u\mid\mathcal{F}_t]=S_t e^{(r-q)(u-t)}.
+$$
+
+Derive the last equation yourself from $E_Q[M_u\mid\mathcal{F}_t]=M_t=S_t$: take the deterministic exponential factor outside the conditional expectation.
+
+<div id="rn-foundations" />
+
+### 1.4 Mathematical foundations: build the Radon–Nikodym derivative before Girsanov
+
+The exponential weight is easier to understand after constructing its finite-state counterpart. Work through the first five steps using probabilities and ordinary integrals; steps six and seven connect them to the SDE in 1.3. These examples and derivations develop the study notes supplied for this lesson. The last step separates the valid diffusion-model connections from claims that need additional assumptions.
+
+#### 1.4.1 What stays fixed, and what changes?
+
+Four objects do different jobs: the sample space $\Omega$ lists outcomes, $\mathcal{F}$ lists events we can ask about, a random variable $X:\Omega\to\mathbb{R}$ assigns a value to an outcome, and a probability measure assigns probabilities to events. In continuous time, an outcome can be an entire price path; $\mathcal{F}_u$ represents the information available by time $u$.
+
+Use the two outcomes in 1.2. Keep the stock values and Call payoffs fixed, but compare their probability masses:
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Outcome
+
+</th>
+<th>
+
+$S_1$
+
+</th>
+<th>
+
+$H$
+
+</th>
+<th>
+
+P mass
+
+</th>
+<th>
+
+Q mass
+
+</th>
+<th>
+
+Weight $L=Q/P$
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+Up
+
+</td>
+<td>
+
+120
+
+</td>
+<td>
+
+20
+
+</td>
+<td>
+
+$7/10$
+
+</td>
+<td>
+
+$1/2$
+
+</td>
+<td>
+
+$5/7$
+
+</td>
+</tr>
+<tr>
+<td>
+
+Down
+
+</td>
+<td>
+
+80
+
+</td>
+<td>
+
+0
+
+</td>
+<td>
+
+$3/10$
+
+</td>
+<td>
+
+$1/2$
+
+</td>
+<td>
+
+$5/3$
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+The weight tells us how much of the original probability mass to retain at an outcome. On Up, multiply by $5/7$; on Down, multiply by $5/3$. Thus:
+
+$$
+Q(A)=\sum_{\omega\in A}L(\omega)P(\{\omega\})=E_P[L1_A].
+$$
+
+**The RN derivative is this outcome-dependent multiplier.** It is a random variable because different outcomes receive different weights. It is not itself a probability: $5/3>1$ is allowed. For probability measures its P average must be one:
+
+$$
+E_P[L]=\frac{7}{10}\frac57+\frac{3}{10}\frac53=1.
+$$
+
+To average a payoff under Q, multiply each P contribution by the same weight:
+
+$$
+E_Q[H]=E_P[LH]=\frac{7}{10}\frac57\,20+\frac{3}{10}\frac53\,0=10.
+$$
+
+The raw P average is 14. Neither the payoff nor either terminal stock value changed. The weights changed. Replication and market prices determined Q in 1.2; the RN derivative describes how to convert a given P to that Q. It does not select a financial pricing measure by itself.
+
+<RadonNikodymLab />
+
+#### 1.4.2 Why absolute continuity is required
+
+Suppose P assigns zero mass to an event A. Multiplication by an integrable weight cannot create mass there. A necessary condition is therefore:
+
+$$
+Q\ll P\quad\Longleftrightarrow\quad P(A)=0\ \Rightarrow\ Q(A)=0\quad\text{for every }A\in\mathcal{F}.
+$$
+
+This is absolute continuity of Q with respect to P. In particular, if P says Up has probability zero while Q says one half, no RN weight can implement that change. Avoid the tempting expression “infinity times zero”; an integrable density still assigns zero integral to a P-null event.
+
+**Radon–Nikodym theorem, probability version.** On the same measurable space, if $Q\ll P$, there exists a nonnegative measurable function $L$, unique P-almost surely, such that:
+
+$$
+L=\frac{dQ}{dP},\qquad Q(A)=\int_A L\,dP\quad\text{for every }A\in\mathcal{F}.
+$$
+
+Taking $A=\Omega$ gives $E_P[L]=1$. Conversely, any nonnegative measurable L with P average one defines a probability measure by this formula. “Unique P-almost surely” means values on a P-null set may differ without affecting any integral. This is a theorem statement, not a proof of the general existence result; see [MIT, Advanced Stochastic Processes, Lecture 9, p. 3](https://ocw.mit.edu/courses/15-070j-advanced-stochastic-processes-fall-2013/69dc2223b9957bbcc754de94dfc64cfd_MIT15_070JF13_Lec9.pdf#page=3).
+
+Equivalence is stronger: $P\sim Q$ means absolute continuity in both directions. For the density above, this is equivalent to $L>0$ P-almost surely. A nonnegative weight may remove an event of positive P probability; a strictly positive weight cannot do so. Under equivalence the inverse direction uses $dP/dQ=1/L$ Q-almost surely. Always check the direction: the denominator of the derivative identifies the measure used in the weighted expectation.
+
+#### 1.4.3 Why call it a derivative? How does it relate to a PDF?
+
+The notation $dQ=L\,dP$ means the integral identity above. It is not differentiation with respect to time or stock price. For an event A with positive P probability:
+
+$$
+\frac{Q(A)}{P(A)}=E_P[L\mid A].
+$$
+
+An event probability ratio is an average of the local weights within that event. One global number generally cannot reweight every event. For positive continuous densities on the real line, a shrinking interval gives the familiar local picture:
+
+$$
+\lim_{\varepsilon\downarrow0}\frac{Q([x,x+\varepsilon])}{P([x,x+\varepsilon])}=\frac{f_Q(x)}{f_P(x)}.
+$$
+
+If $P(dx)=f_P(x)\,dx$ and $Q(dx)=f_Q(x)\,dx$ on this coordinate space, with $f_Q=0$ almost everywhere on $\{f_P=0\}$, then wherever the denominator is positive:
+
+$$
+\frac{dQ}{dP}(x)=\frac{f_Q(x)}{f_P(x)},\qquad
+\int h(x)f_Q(x)\,dx=\int h(x)\frac{f_Q(x)}{f_P(x)}f_P(x)\,dx.
+$$
+
+A PDF is itself an RN derivative relative to length measure: $f_P=dP/dx$. RN derivatives also cover discrete, mixed, and path distributions where no ordinary PDF relative to length exists. The expectation identity $E_Q[X]=E_P[LX]$ extends from indicators to simple functions by addition, then to nonnegative measurable functions by monotone approximation, and to integrable signed functions by separating positive and negative parts. No change of the function X is involved.
+
+**Endpoint density versus path density.** If X records only an endpoint on a larger path space, its distribution ratio need not equal the full path weight. Writing $P_X,Q_X$ for its laws, the precise relation is:
+
+$$
+\frac{dQ_X}{dP_X}(X)=E_P[L\mid\sigma(X)].
+$$
+
+Here $\sigma(X)$ is the information revealed by X. Averaging away the rest of a path can discard information needed for a path-dependent payoff. The endpoint will be sufficient for the particular constant-drift Brownian change below, but that is a property to verify.
+
+#### 1.4.4 Derive the exponential weight from a Gaussian density ratio
+
+Restart the clock today: $B_v^P=W_{t+v}^P-W_t^P$, $0\le v\le T$. Under P, $B_T^P$ is normal with mean zero and variance T, independently of today's information. To obtain the Q drift in 1.3, seek a weighting under which this same variable has mean $-\lambda T$ and variance T, with $\lambda=(\mu-r)/\sigma$. Denote its two densities by $f_P,f_Q$. Their ratio is:
+
+$$
+\frac{f_Q(x)}{f_P(x)}
+=\frac{\exp(-(x+\lambda T)^2/(2T))}{\exp(-x^2/(2T))}
+=\exp(-\lambda x-\lambda^2T/2).
+$$
+
+Evaluating at the realized Brownian endpoint produces:
+
+$$
+L_T=\exp(-\lambda B_T^P-\lambda^2T/2).
+$$
+
+The second exponent term is the normalization correction. Without it, the average weight would be $e^{\lambda^2T/2}$ rather than one. Using the standard normal exponential moment gives an exact check:
+
+$$
+E_P[L_T\mid\mathcal{F}_t]
+=e^{-\lambda^2T/2}E[e^{-\lambda\sqrt{T}Z}]
+=e^{-\lambda^2T/2}e^{\lambda^2T/2}=1,\qquad Z\sim N(0,1).
+$$
+
+For any finite time partition, the desired independent Brownian increment densities give the product:
+
+$$
+\prod_i\exp(-\lambda\Delta b_i-\lambda^2\Delta v_i/2)
+=\exp(-\lambda b_T-\lambda^2T/2).
+$$
+
+Thus the same endpoint weight implements all these joint increment changes, not just the terminal marginal. This explains why it is also the path density in this constant-coefficient example. A single terminal density calculation alone would not establish this for a general process.
+
+For the teaching parameters $\mu=0.08,r=0.03,\sigma=0.20,T=1$, we have $\lambda=0.25$. At endpoints $B_T^P=1$ and $B_T^P=-1$, the weights are respectively $e^{-0.28125}\approx0.755$ and $e^{0.21875}\approx1.245$. These are values of a density function; each exact Brownian endpoint still has zero probability. When the risk premium is positive, positive shocks receive relatively less Q mass.
+
+#### 1.4.5 Why a terminal derivative becomes a density martingale
+
+Fix Q on the finite horizon by $dQ=L_T\,dP$. Because the conditional average above is one, this construction agrees with P on today's information. At an intermediate elapsed time v, we have seen only part of the path, so the weight visible then is:
+
+$$
+L_v=E_P[L_T\mid\mathcal{F}_{t+v}]
+=\exp(-\lambda B_v^P-\lambda^2v/2),\qquad L_0=1.
+$$
+
+For an event already observable at that time, multiplying by $L_v$ or by $L_T$ gives the same P integral. Therefore $L_v$ is the RN derivative of the restrictions of Q and P to that information set. As information arrives, this conditional expectation changes along the path. Its P-martingale property follows from the tower rule:
+
+$$
+E_P[L_v\mid\mathcal{F}_{t+s}]=L_s,\qquad 0\le s\le v\le T.
+$$
+
+This density martingale is distinct from the Q-martingale of discounted reinvested stock wealth in 1.3. Always name the measure and the process.
+
+For an integrable terminal payoff H, conditional reweighting requires a denominator:
+
+$$
+E_Q[H\mid\mathcal{F}_{t+v}]
+=\frac{E_P[L_TH\mid\mathcal{F}_{t+v}]}{L_v}.
+$$
+
+On a positive-probability information event C, this is ordinary normalization of the remaining Q mass:
+
+$$
+E_Q[H\mid C]=\frac{E_P[L_TH1_C]}{E_P[L_T1_C]}.
+$$
+
+For a general information set, take any event C in that set and integrate the proposed conditional expectation over C under Q. Replacing the Q integral by a P integral with the measurable weight $L_v$ cancels the denominator and gives $E_P[L_TH1_C]=E_Q[H1_C]$. This is the defining test for a conditional expectation. Today's denominator is one, but a later $L_v$ is usually random. Setting $H=1$ immediately detects a missing denominator: the answer must be one. See [Gubinelli, SDE techniques, pp. 1–3](https://mgubi.github.io/store/iam/stochastic-analysis-ss22/sa-ss22-note-2.pdf#page=2) for the conditional formula and its martingale connection.
+
+#### 1.4.6 What does Girsanov add?
+
+RN describes how to change averages once a valid density is available. Girsanov identifies how the stochastic dynamics decompose under the new measure. For this finite-horizon, constant-parameter construction, it gives:
+
+$$
+B_v^Q=B_v^P+\lambda v\quad\text{is Brownian under Q}.
+$$
+
+The objects are different but explicitly related. Under Q, $B_v^P$ has mean $-\lambda v$; adding $\lambda v$ centers it. Under P, $B_v^Q$ has mean $\lambda v$ and is not a standard Brownian motion unless $\lambda=0$. Brownian motion is a property of a process together with its measure and filtration. Zero mean and the correct variance alone do not prove the Brownian property; the joint increment laws, or Girsanov's theorem, supply the missing statement.
+
+Substitute $dW_u^P=dW_u^Q-\lambda\,du$ into the P stock equation:
+
+$$
+\begin{aligned}
+dS_u&=(\mu-q)S_u\,du+\sigma S_u(dW_u^Q-\lambda\,du)\\
+&=(\mu-q-\sigma\lambda)S_u\,du+\sigma S_u\,dW_u^Q\\
+&=(r-q)S_u\,du+\sigma S_u\,dW_u^Q.
+\end{aligned}
+$$
+
+The same stock path satisfies these two representations. Replacing the drift while reusing the very same Brownian increments in a simulation would instead generate a different stock path; that numerical coupling is not the statement of measure change.
+
+<details class="bs-paper-answer">
+<summary>Further conditions: a stochastic risk premium</summary>
+
+For a predictable process $\lambda_v$ with finite integrated square almost surely, the candidate density and shifted Brownian motion are:
+
+$$
+L_v=\exp\left(-\int_0^v\lambda_s\,dB_s^P-\frac12\int_0^v\lambda_s^2\,ds\right),\qquad
+B_v^Q=B_v^P+\int_0^v\lambda_s\,ds.
+$$
+
+The stochastic exponential is a nonnegative local martingale; defining a probability measure on the full horizon needs a true martingale with average one. Novikov gives a sufficient, not necessary, condition:
+
+$$
+E_P\left[\exp\left(\frac12\int_0^T\lambda_s^2\,ds\right)\right]<\infty.
+$$
+
+A constant finite $\lambda$ and finite T satisfy it directly. Do not infer normalization merely from the exponential's form. The statements here are on a fixed finite horizon; equivalence on every finite horizon does not automatically give equivalence on the infinite-horizon path space.
+
+</details>
+
+#### 1.4.7 Which meaning of volatility is preserved?
+
+Adding the smooth function $\lambda v$ does not change quadratic variation. In this model:
+
+$$
+[B^Q]_v=[B^P]_v=v,\qquad [\log S]_{t+v}-[\log S]_t=\sigma^2v.
+$$
+
+Equivalent measures preserve these almost-sure path properties. Two constant-volatility log-price laws with different positive volatilities have different quadratic variations on a fixed positive horizon, so they cannot be equivalent on that full continuous-path space. Their endpoint normal distributions can nevertheless have equivalent positive densities. This is another reason to distinguish endpoint laws from path laws.
+
+**Preserved diffusion coefficient does not imply every variance is unchanged.** Conditional on today's stock value, write a for the ex-dividend price drift and M for the relevant measure. The GBM solution gives:
+
+$$
+\operatorname{Var}_M(S_{t+v}\mid\mathcal{F}_t)
+=S_t^2e^{2av}(e^{\sigma^2v}-1),\qquad
+a=\mu-q\ (M=P),\quad a=r-q\ (M=Q).
+$$
+
+These stock-price variances generally differ. In the constant-coefficient BS model the log-return variances both equal $\sigma^2v$. For a general state-dependent diffusion, changing the weighting can also change the distribution of its instantaneous variance process even though the diffusion coefficient function is retained. Keep the claim tied to its object and assumptions.
+
+#### 1.4.8 Connect the weight back to pricing and test yourself
+
+At today's starting time the same price can be written in either measure:
+
+$$
+V_t=e^{-rT}E_Q[H\mid\mathcal{F}_t]=E_P[e^{-rT}L_TH\mid\mathcal{F}_t].
+$$
+
+Here $e^{-rT}L_T$ is the stochastic discount factor over the current interval. Discounting the raw P expectation omits the state-dependent risk adjustment. The RN factor does not appear in the usual closed-form BS formula because that formula already integrates using Q.
+
+**Paper pause P/Q-2:** At P(Up) = 0.4 and Q(Up) = 0.5, calculate both RN weights and the weighted Call payoff. Then explain why weighting fails if P(Up) = 0. Finally, verify the exponential normalization in 1.4.4 and state which Brownian shock receives less weight when $\mu>r$.
+
+<details class="bs-paper-answer">
+<summary>Pause P/Q-2: calculation and explanation</summary>
+
+The weights are $L(U)=5/4$ and $L(D)=5/6$, so $E_P[L]=1$ and $E_P[LH]=10$, while $E_P[H]=8$. If P(Up) = 0 and Q(Up) = 0.5, absolute continuity fails: a zero P integral cannot produce positive Q mass. In the Gaussian example the moment $e^{\lambda^2T/2}$ cancels the normalization term $e^{-\lambda^2T/2}$. A positive risk premium gives $\lambda>0$, so larger Brownian shocks receive smaller weights.
+
+</details>
+
+<details class="bs-paper-answer">
+<summary>Three transfer checks: identify the error before opening</summary>
+
+1. “L is a probability, so it cannot exceed one.” It is a density relative to P; only nonnegativity and P average one are required.
+2. “A normalized endpoint density ratio always gives the full path density.” It gives the endpoint law. Full-path reweighting needs the joint laws; constant Brownian drift is a special case verified above.
+3. “At an intermediate time, the conditional Q expectation equals the conditional P expectation of the terminal-weighted payoff.” Divide by the current density $L_v$. The test $H=1$ exposes the missing normalization.
+
+Explaining these in your own words, then constructing a new three-state example, checks more than recognizing the displayed formulas. The finite-state experiment is an exact example calculation, not a proof of the general RN or Girsanov theorems.
+
+</details>
+
+#### 1.4.9 Optional connection: diffusion models, conditioning and probability flow
+
+The second study note makes useful connections, but measure change, time reversal, and a deterministic flow require separate statements. Consider a smooth positive density $p_v(x)$ for $dX_v=f(X_v,v)\,dv+g(v)\,dW_v$, with scalar diffusion independent of x. Its score is $s(x,v)=\nabla_x\log p_v(x)$. Under appropriate regularity, the following relations apply; state-dependent diffusion requires extra terms.
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Construction
+
+</th>
+<th>
+
+Object and purpose
+
+</th>
+<th>
+
+What it does not establish
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+RN / Girsanov
+
+</td>
+<td>
+
+Reweight paths with an integrable density; describe the drift change for the same diffusion coefficient
+
+</td>
+<td>
+
+Automatic absolute continuity for arbitrary forward and reversed path laws
+
+</td>
+</tr>
+<tr>
+<td>
+
+Time reversal
+
+</td>
+<td>
+
+Set $Y_s=X_{T-s}$; its drift involves the score and reversed time
+
+</td>
+<td>
+
+That backward integration of a pricing PDE simulates reversed stock paths
+
+</td>
+</tr>
+<tr>
+<td>
+
+Probability flow ODE
+
+</td>
+<td>
+
+Move a random initial sample by a deterministic velocity field, matching the SDE's one-time marginal densities
+
+</td>
+<td>
+
+The same joint path law as the SDE
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+Using an increasing reverse clock $s=T-v$, the reverse SDE has drift:
+
+$$
+dY_s=\left[-f(Y_s,T-s)+g(T-s)^2s(Y_s,T-s)\right]ds+g(T-s)\,d\overline W_s.
+$$
+
+The Fokker–Planck equation can also be written as a continuity equation:
+
+$$
+\partial_v p=-\nabla\cdot(fp)+\frac12g(v)^2\Delta p
+=-\nabla\cdot\left[\left(f-\frac12g(v)^2\nabla\log p\right)p\right].
+$$
+
+Under suitable existence and uniqueness assumptions, its velocity defines the probability flow ODE. The initial state remains random; the ODE trajectories have zero quadratic variation while a nondegenerate SDE has nonzero quadratic variation. Matching their marginal densities therefore cannot justify calling them equivalent path measures. [Song et al., Sections 3–4 and Appendix D](https://arxiv.org/abs/2011.13456) gives the reverse-SDE and probability-flow formulations.
+
+There is also a direct RN interpretation of conditioning. For an event A with positive P probability, define $h_v=P(A\mid\mathcal{F}_v)$. The law $Q_A=P(\cdot\mid A)$ has density process:
+
+$$
+\left.\frac{dQ_A}{dP}\right|_{\mathcal{F}_v}=\frac{h_v}{P(A)}.
+$$
+
+This is a nonnegative P-martingale but, at the terminal time when A is known, its density is zero on the complement of A. Conditioning gives absolute continuity, not generally equivalence. If a Markov process admits a positive, sufficiently smooth backward-harmonic function $h(v,x)$, a Doob h-transform changes its drift by $g(v)^2\nabla_x\log h(v,x)$. Classifier guidance can be connected to conditional scores under corresponding assumptions; an arbitrary guidance scale or approximate classifier is not automatically an exact conditional law. See [Gubinelli, Sections 2–4](https://mgubi.github.io/store/iam/stochastic-analysis-ss22/sa-ss22-note-2.pdf#page=5).
+
+The BS PDE below evolves a payoff's conditional discounted expectation backward from maturity. Fokker–Planck evolves a density forward. They are related through the generator and its adjoint; a time-reversed sampling SDE is a further construction. For the BS pricing route, return to 1.5 with the normalization, direction, and conditional denominator understood.
+
+### 1.5 Integrate under Q to obtain the terminal distribution needed for pricing
+
+Having chosen the probability measure, we now need the terminal stock-price distribution. The pricing integrals below use Q. Given the current $S_t=S$, we omit $\mid\mathcal{F}_t$ for brevity.
+
+To see why the ordinary chain rule is insufficient here, consider the size of a Brownian increment. Over an interval of length $h$, its standard deviation is $\sqrt{h}$, so its square is of order $h$, the same order as the drift. Thus, when applying a Taylor expansion to a random stock price, the second-order terms do not disappear after they are accumulated. Itô calculus summarizes the quadratic-variation rules as:
+
+$$
+du\,du=0,\qquad du\,dW_u^Q=0,\qquad(dW_u^Q)^2=du.
+$$
+
+These are calculation rules in stochastic calculus. Over one finite time increment, the squared Brownian increment is still random; the last equality expresses that summing squared increments over finer and finer partitions gives the interval length. It explains why the second-order term must be kept, without saying that each increment squared equals its time step. See also [Section 2 of EPFL’s stochastic analysis notes on Itô’s formula](https://ipgold.epfl.ch/~leveque/Lecture_Notes/sc2_final.pdf).
+
+The stock equation's drift and volatility both contain $S_u$, so direct integration is inconvenient. Set $X_u=\log S_u$. Its first and second derivatives are $1/S_u$ and $-1/S_u^2$; applying Itô's formula gives:
+
+- The first-order term $dS_u/S_u$ contributes drift $r-q$ and volatility $\sigma\,dW_u^Q$.
+- The second-order term $-(dS_u)^2/(2S_u^2)$ contributes the correction $-\sigma^2\,du/2$.
+
+Combining them gives an equation whose coefficients no longer depend on the stock price:
+
+$$
+dX_u=(r-q-\sigma^2/2)\,du+\sigma\,dW_u^Q.
+$$
+
+Integrating from $t$ to $t_e$, the Brownian increment has distribution $\sqrt{T}Z$, where $Z\sim N(0,1)$:
+
+$$
+S_{t_e}=S\exp((r-q-\sigma^2/2)T+\sigma\sqrt{T}Z).
+$$
+
+The negative correction in the exponent can also be understood through the average. The exponential function is convex, so after exponentiation, symmetric positive and negative perturbations have an average above the unperturbed value. For example, for a nonzero real $\varepsilon$:
+
+$$
+\frac{e^{\varepsilon}+e^{-\varepsilon}}{2}>1.
+$$
+
+So, to keep the Q expected growth rate of the stock at $r-q$, the log drift must first subtract $\sigma^2/2$. Completing the square below gives the exact size of this average increase; use it to check the sign of the correction.
+
+**Paper pause A:** Write down $E_Q[S_{t_e}]$. Hint: multiply $e^{\tau Z}$ by the normal density and complete the square; $\tau=\sigma\sqrt{T}$.
+
+<details class="bs-paper-answer">
+<summary>answer to pause A</summary>
+
+
+$$
+e^{\tau z}\phi(z)=e^{\tau^2/2}\phi(z-\tau),\quad E[e^{\tau Z}]=e^{\tau^2/2}.
+$$
+
+Therefore $E_Q[S_{t_e}]=Se^{(r-q)T}=F$. The $-\sigma^2T/2$ in the terminal value exactly cancels the $+\sigma^2T/2$ arising from the normal exponential moment. Note that $F$ is the forward price for delivery at maturity, not the option price paid today.
+
+
+</details>
+
+## 2. First decompose the payoff, then perform the integration
+
+The Call payoff at maturity is $(S_{t_e}-K)^+=\max(S_{t_e}-K,0)$: it pays the difference only when the terminal stock price is above strike K, and otherwise pays zero. Risk-neutral pricing discounts this payoff to today:
+
+$$
+C=e^{-rT}E_Q[(S_{t_e}-K)^+].
+$$
+
+Substitute the terminal-price expression from Section 1.5 into $S_{t_e}>K$, take logarithms, and rearrange. The exercise condition is $Z>-d_2$. Let $\tau=\sigma\sqrt{T}$ and define:
+
+$$
+d_2=\frac{\log(S/K)+(r-q-\sigma^2/2)T}{\sigma\sqrt{T}},\quad d_1=d_2+\tau.
+$$
+
+On the event $Z>-d_2$, the option payoff is one share minus cash amount $K$; outside it, both contributions are zero. Using an event indicator combines the two cases:
+
+$$
+C=e^{-rT}(E_Q[S_{t_e}\,1_{Z>-d_2}]-K\Pr_Q(Z>-d_2)).
+$$
+
+First consider the cash term. Let $\Phi$ be the standard normal cumulative distribution function. By symmetry of the normal distribution, $\Pr_Q(Z>-d_2)=\Phi(d_2)$.
+
+The stock term is also multiplied by the random terminal stock price, so it cannot be reduced to the event probability alone. Substitute $S_{t_e}=S e^{(r-q)T-\tau^2/2}e^{\tau Z}$ and use the completing-the-square identity from pause A:
+
+$$
+\begin{aligned}
+E_Q[S_{t_e}\,1_{Z>-d_2}]
+&=S e^{(r-q)T-\tau^2/2}\int_{-d_2}^{\infty}e^{\tau z}\phi(z)\,dz\\
+&=F\int_{-d_2}^{\infty}\phi(z-\tau)\,dz.
+\end{aligned}
+$$
+
+Here $F=Se^{(r-q)T}$. Notice that $\tau^2=\sigma^2T$ already includes the time to maturity, so the exponent is $-\tau^2/2$; do not multiply by $T$ again.
+
+Now let $y=z-\tau$, so the lower limit is $-d_2-\tau=-d_1$. By symmetry, the stock term is $F\Phi(d_1)$. Combining stock and cash terms gives:
+
+$$
+C=e^{-rT}(F\Phi(d_1)-K\Phi(d_2))=A\Phi(d_1)-B\Phi(d_2).
+$$
+
+Here $A=Se^{-qT}$ is the prepaid forward value of receiving one share at maturity without collecting dividends in between, and $B=Ke^{-rT}$ is the present value of the strike cash. $\Phi(d_2)$ is the risk-neutral probability of finishing in the money under this model; $\Phi(d_1)$ comes from the asset-weighted integral and has a different weight.
+
+<details class="bs-paper-answer">
+<summary>Supplement: why do some books also call Φ(d₁) a probability?</summary>
+
+If the reinvested-stock wealth process is used as the numeraire, a corresponding new measure allows $\Phi(d_1)$ to be interpreted as the probability of the same maturity event. This changes the measure; it is not the event probability $\Phi(d_2)$ under the money-market measure Q used here. On a first reading, it is enough to remember why the two integrals have different weights.
+
+</details>
+
+### 2.1 Same event: Q probability, P probability, and Delta
+
+Define the event $E=\{S_{t_e}>K\}$. A European Call has positive intrinsic value only if it is in the money at expiration. Let $d_2=d_2^Q$ as defined above. Repeating the log-terminal-value derivation under P yields
+
+$$
+d_2^P=\frac{\log(S/K)+(\mu-q-\sigma^2/2)T}{\sigma\sqrt{T}}=d_2^Q+\frac{(\mu-r)\sqrt{T}}{\sigma}.
+$$
+
+$$
+Q(E)=\Phi(d_2^Q),\quad P(E)=\Phi(d_2^P).
+$$
+
+This calculation is valid only under the current constant-coefficient GBM setup; without additional P-model information such as $\mu$, one cannot directly read off the P probability from the Q probability. The two may be equal, but they need not be, and there is no general conclusion that “Q is always larger than P.”
+
+Using the course’s non-zero rate/dividend ATM parameters: $S=K=100,r=0.03,q=0.01,\sigma=0.20,T=1$. Additionally assume the expected total return including dividends under P is $\mu=0.08$; this 8% is a pedagogical assumption, not estimated from historical data. Thus $d_2^Q=0$, $d_2^P=0.25$, $d_1^Q=0.20$.
+
+<div class="bs-paper-table-scroll">
+<table class="bs-paper-table">
+<thead>
+<tr>
+<th>
+
+Quantity
+
+</th>
+<th>
+
+Value
+
+</th>
+<th>
+
+How to Interpret
+
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+
+$Q(S_{t_e}>100)=\Phi(d_2^Q)$
+
+</td>
+<td>
+
+50.0000%
+
+</td>
+<td>
+
+Probability of being in the money at expiration under the pricing measure
+
+</td>
+</tr>
+<tr>
+<td>
+
+$P(S_{t_e}>100)=\Phi(d_2^P)$
+
+</td>
+<td>
+
+59.8706%
+
+</td>
+<td>
+
+Model-predicted probability of being in the money at expiration assuming $\mu=8\%$
+
+</td>
+</tr>
+<tr>
+<td>
+
+$\Phi(d_1^Q)$
+
+</td>
+<td>
+
+57.9260%
+
+</td>
+<td>
+
+Factor from the asset-weighted integral; not the Q probability of the expiration event above
+
+</td>
+</tr>
+<tr>
+<td>
+
+Call $\Delta=e^{-qT}\Phi(d_1^Q)$
+
+</td>
+<td>
+
+0.573496
+
+</td>
+<td>
+
+Local price sensitivity per unit change in S / replicating share holding
+
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<Figure id="bs-01-figure-0">
+
+<img class="bs-paper-image" src={bsFigure0} alt="P and Q densities and probabilities for the same maturity event" />
+
+<figcaption>P and Q densities and probabilities for the same maturity event</figcaption>
+
+</Figure>
+
+The horizontal axis of the plot is the one-year log price return $\log(S_{t_e}/S)$, excluding dividends received. Both densities have a standard deviation of 0.2; the Q mean is 0, and the P mean is 0.05. The shaded region on the right marks the same event $S_{t_e}>100$; the probabilities of the full right tail are 0.5 and 0.598706, respectively. The plot displays only a finite horizontal axis range, and the title values are calculated using the CDF. The figure demonstrates the above model parameters and is not a market fit.
+
+Chapter 02 will derive the Delta formula. Delta is a derivative; even if its numerical value falls between 0 and 1 in some cases, it should not be directly interpreted as the probability of occurrence under P. Under a continuous, non-degenerate BS distribution, the probability of a Put finishing in the money corresponds to $\Phi(-d_2^Q)$ and $\Phi(-d_2^P)$.
+
+"Finishing in the money," "making a profit after deducting the premium from the option purchase," and "touching the strike price before maturity" are three different events. For example, if the Call premium is paid by borrowing cash, fees are ignored, and the position is held to maturity, the profit condition is $S_{t_e}>K+Ce^{rT}$; one cannot continue to use the probability of $S_{t_e}>K$ to answer. The probability of touching the strike before maturity also requires path information.
+
+**Paper pause P/Q-3:** Let $\mu=r$, how do the two above probabilities of finishing in the money change? Then assume the total return drops to 1%, with other parameters unchanged, calculate $d_2^P$ and the P probability. Finally, if only $\mu$ is changed, does the BS Call price change?
+
+<details class="bs-paper-answer">
+<summary>Pause P/Q-3 Answer</summary>
+
+
+When $\mu=r$, $d_2^P=d_2^Q$; this is not a fact that must hold in all markets. When $\mu=0.01$, $d_2^P=-0.10$, the P probability is approximately 46.0172%, which is lower than the fixed Q probability 50% here. With $S,K,r,q,\sigma,T$ fixed, the Call price remains approximately 8.827321; changing $\mu$ under P does not change the BS replication price.
+
+
+</details>
+
+### 2.2 Paper pause: switch to forward notation
+
+**Paper pause B:** Starting from $d_2$, write $d_1=m/\tau+\tau/2$ in forward notation, where $m=\log(F/K)$. Then verify $d_1-d_2=\tau$.
+
+<details class="bs-paper-answer">
+<summary>Pause B Answer</summary>
+
+
+$m=\log(S/K)+(r-q)T$, therefore $d_2=m/\tau-\tau/2$, $d_1=m/\tau+\tau/2$. Incorporating $r-q$ into the forward $F$ allows multiple formulas to share the same set of intermediate quantities.
+
+
+</details>
+
+## 3. How does the same model yield a PDE?
+
+The previous section found the price using an expectation under Q. Now start from stock and option positions under P and find the equation that the same price must satisfy.
+
+Let the option price be $V(S,u)$, with continuous first partial derivative in time and continuous first and second partial derivatives in the stock price before maturity. Write $V_u$ for the calendar-time derivative and $V_S$, $V_{SS}$ for its first and second stock-price derivatives. Itô's formula gives:
+
+$$
+dV=(V_u+(\mu-q)SV_S+\sigma^2S^2V_{SS}/2)\,du+\sigma SV_S\,dW_u^P.
+$$
+
+For one share, the gain from the price change plus dividends is:
+
+$$
+dS+qS\,du=\mu S\,du+\sigma S\,dW_u^P.
+$$
+
+Compare the random terms: one option has coefficient $\sigma SV_S$, while one share has coefficient $\sigma S$. Holding one option and shorting $\Delta=V_S$ shares therefore cancels the random fluctuation at this instant. The short position also pays the corresponding dividend.
+
+This also gives an early clue to why $\mu$ disappears. The option's first-order stock-price change enters through $V_S\,dS$: both the directional drift of the stock and its Brownian fluctuation are multiplied by the same sensitivity $V_S$. Therefore, subtracting the total return on this stock holding cancels both the Brownian random term and $\mu SV_S$. The remaining second-order term comes from the curvature of the price function; this one linear stock holding cannot eliminate it.
+
+Holding these positions fixed for this instant, the gain is $dV-\Delta(dS+qS\,du)$. First split the price drift into $\mu SV_S-qSV_S$, then subtract the stock's total gain:
+
+$$
+\begin{aligned}
+dV-V_S(dS+qS\,du)
+&=\left(V_u+\mu SV_S-qSV_S+\frac12\sigma^2S^2V_{SS}-\mu SV_S\right)du\\
+&=\left(V_u+\frac12\sigma^2S^2V_{SS}-qSV_S\right)du.
+\end{aligned}
+$$
+
+The $\mu SV_S$ terms cancel, while the dividend term $-qSV_S$ remains. No arbitrage requires this instantaneous risk-free position to earn the risk-free rate $r$ on its net value $V-SV_S$:
+
+$$
+V_u+\sigma^2S^2V_{SS}/2-qSV_S=r(V-SV_S).
+$$
+
+Rearranging gives the Black–Scholes PDE:
+
+$$
+V_u+\frac12\sigma^2S^2V_{SS}+(r-q)SV_S-rV=0.
+$$
+
+If we instead use time remaining to maturity $T$, then $V_u=-V_T$. This gives the sign convention for Theta:
+
+$$
+\Theta+\frac12\sigma^2S^2\Gamma+(r-q)S\Delta-rV=0,\quad \Theta=-V_T.
+$$
+
+This can also be read as an instantaneous balance of returns: the time change, the second-order volatility contribution, and the interest and dividend terms on the stock holding together equal the return earned by the option value at the risk-free rate. Keep every term when interpreting it; writing only “time decay + Gamma gain = interest” omits $(r-q)S\Delta$. The hedged form above records interest on the net value $V-SV_S$.
+
+<details class="bs-paper-answer">
+<summary>Supplement: where does the cash for changing Delta come from?</summary>
+
+At each step above, hold the current Delta fixed while calculating the instantaneous gain of that position. At the next instant Delta changes, and the money needed to buy or sell stock comes from, or is returned to, the money-market account. This is a self-financing rebalance.
+
+Therefore, do not write the gain above directly as $d(V-\Delta S)$. Differentiating a changing position also produces a rebalancing term; record these cash flows together with the money-market account. The no-arbitrage return condition applies to the self-financing portfolio including that account, and gives the same PDE.
+
+Given today's stock price, contract terms, and trading assumptions, changing $\mu$ under P does not change the initial replication price. Future stock prices, Delta holdings, and rebalancing cash flows still vary from path to path; the same amount of cash is not needed at every moment. Continuous dynamic replication means starting from that initial price, funding each rebalance within the portfolio without adding or withdrawing external cash, and ultimately matching the option payoff.
+
+</details>
+
+This PDE contains no $\mu$, giving the replication reason behind risk-neutral pricing. With the same market parameters and trading assumptions, different P forecasts can lead to the same no-arbitrage price; equal prices do not imply equal predictive probabilities.
+
+## 4. Connect the PDE to the diffusion equations you know
+
+Section 2 prices by averaging future payoffs, while Section 3 prices by constraining the instantaneous return on current holdings. This section shows why the two calculations give the same result: after handling drift and discounting, the solution of the PDE is exactly an average of the maturity payoff against a Gaussian density. For the European payoff in this lesson, this is a concrete example of the Feynman–Kac connection; there is no need to simulate many paths, since the integral computes the average directly.
+
+The coefficient of the second derivative in the Black–Scholes equation contains $S^2$. To make it constant, set $x=\log S$ and $v(x,T)=V(e^x,T)$, writing the price as a function of time remaining $T$. The chain rule gives:
+
+$$
+v_x=SV_S,\qquad v_{xx}=SV_S+S^2V_{SS}.
+$$
+
+Thus $S^2V_{SS}=v_{xx}-v_x$. Substitute this into the PDE and replace the calendar-time derivative with the derivative in remaining time:
+
+$$
+v_T=\frac12\sigma^2v_{xx}+(r-q-\sigma^2/2)v_x-rv.
+$$
+
+The coefficients are now constant, but a first-derivative term and a discount term remain. Let $a=r-q-\sigma^2/2$, and combine a shift with discounting in one transformation:
+
+$$
+v(x,T)=e^{-rT}w(x+aT,T).
+$$
+
+This transformation is chosen so the $aw_y$ and $-rw$ terms cancel on opposite sides, leaving the diffusion equation:
+
+$$
+w_T=\frac12\sigma^2w_{yy}.
+$$
+
+At maturity, $T=0$, so neither the shift nor discounting has taken effect. The initial condition is $w(y,0)=(e^y-K)^+$. The solution of the diffusion equation averages this initial condition against a Gaussian density, giving the heat-kernel convolution:
+
+$$
+w(y,T)=\int_{-\infty}^{\infty}(e^{y+\tau z}-K)^+\phi(z)\,dz.
+$$
+
+Substituting $y=x+aT$ and the discount factor gives the risk-neutral integral from Section 2. The probability integral and the PDE transformation therefore compute the same price. For positive remaining time, positive volatility, and positive stock price, the Gaussian kernel smooths the kink in the maturity payoff into a differentiable price curve. Delta is the curve's slope; Gamma is how that slope changes with the stock price, or the second derivative of price.
+
+Here is one way to picture “smoothing”: near the strike, the average includes outcomes with zero payoff and outcomes with positive payoff. As the current stock price changes, the weights on the two sides change continuously, so the sharp turn in the original payoff curve becomes rounded. The PDE's second-derivative term records how local fluctuations affect the average through the curve's curvature. The link between replication, the PDE, and the risk-neutral expectation can also be compared with [NYU continuous-time finance notes, pages 2–3](https://math.nyu.edu/~kohn/cont-time-finance/section1.pdf).
+
+**Paper pause C:** Compute $v_T,v_x,v_{xx}$ to check the sign of the shift. Then write the Call's maturity condition and its two spatial boundaries.
+
+<details class="bs-paper-answer">
+<summary>Pause C Answer</summary>
+
+
+By the chain rule:
+
+$$
+v_T=e^{-rT}(w_T+aw_y-rw),\quad v_x=e^{-rT}w_y,\quad v_{xx}=e^{-rT}w_{yy}.
+$$
+
+Substitute into $v_T=\sigma^2v_{xx}/2+av_x-rv$. The $aw_y$ and $-rw$ terms cancel on both sides, leaving $w_T=\sigma^2w_{yy}/2$.
+
+The Call's maturity condition is $C(S,0)=(S-K)^+$. At fixed maturity, as $S\to0$, its price tends to zero. As $S\to\infty$, $C(S,T)-(Se^{-qT}-Ke^{-rT})\to0$, so the difference between the price and $A-B$ tends to zero. A numerical PDE uses a finite $S_{\max}$ to approximate the latter boundary, introducing truncation boundary error.
+
+
+</details>
+
+## 5. First hand-calculation card
+
+Original assignment, scenario 1: $S=K=100,r=q=0,\sigma=0.2,T=1$. Thus $F=100$, $\tau=0.2$, $d_1=0.1,d_2=-0.1$.
+
+$$
+C=100(\Phi(0.1)-\Phi(-0.1))\approx7.96556746.
+$$
+
+Please explain on paper: since $E_Q[S_{t_e}]=K$, why is the option price still positive? Compare "take the positive part on each path, then average" with "average first, then take the positive part."
+
+You can also try a small experiment first: fix a linear function and add equally sized, equally likely perturbations on either side of a point; compare the average function value before and after. Then repeat with a convex function. Notice that the averaging happens after applying the function. This distinction helps explain why the stock's upward and downward moves can cancel, while the Call's maturity payoff need not cancel.
+
+<details class="bs-paper-answer">
+<summary>Worked steps: why an at-the-money Call still has positive value</summary>
+
+Paths with a terminal stock price above the strike contribute positive payoffs; paths below the strike contribute zero. Upward and downward stock movements can cancel in an average, but the option's nonnegative payoff does not cancel this way. Under the current model with positive volatility and positive time to maturity, both types of paths have positive probability, so:
+
+$$
+E_Q[(S_{t_e}-K)^+]>(E_Q[S_{t_e}]-K)^+=0.
+$$
+
+This compares maturity payoffs. Buying the option still requires paying a premium, so it does not mean the investor cannot lose money.
+
+Near the current point, equal positive and negative perturbations of a linear function cancel in the average. For a smooth strictly convex function, the average of the function values on either side is greater than its value at the center. This is the intuition for the positive local second-order volatility contribution associated with positive Gamma. The Call payoff has a kink at the strike, so a smooth-function second-order expansion should not be applied directly there; the positive-part comparison above still applies. Before maturity, the price has been smoothed, so its curvature can be described by the usual Gamma.
+
+</details>
+
+<Figure id="bs-01-figure-1">
+
+<img class="bs-paper-image" src={bsFigure1} alt="Price, Delta and Gamma shapes" />
+
+<figcaption>Price, Delta and Gamma shapes</figcaption>
+
+</Figure>
+
+The figure uses the parameters from scenario 1 and varies only the current stock price $S$. The left panel shows the Call price one year before maturity; it does not show a payoff line at maturity. The middle panel shows the slope of the price curve, Delta; the right panel shows the slope of the Delta curve, Gamma. Gamma is larger near the money, although its peak need not be exactly at $S=K$. The next article derives these relationships line by line.
+
+## 6. Connecting to the code and the next lesson
+
+The existing `Python_prototype/black_scholes.py::bs_price_call` and C++ `bs_price_call` implement the closed-form price from Section 2. Section 4 explains why a PDE can also compute that same price. In practice, PDE grids, risk-neutral integration, and closed-form formulas have different sources of numerical error, which must be checked separately.
+
+### 6.1 Connected to Jerry's market data and US equity research platform
+
+- Option quotes, interest rates, dividends, and contract information → Calibrate model / IV → Research pricing and implied risk weights under Q. The $\Phi(d_2)$ of BS is the probability of a single constant volatility model; one cannot directly combine the IVs of different strikes into a guaranteed consistent probability distribution.
+- Historical returns, factors, macro, and event samples → Construct predictions under P → Validate using out-of-sample frequencies, probability calibration, and appropriate scoring. The probability under P is the target of real-world research, but historical estimates still carry sampling and model errors.
+- When comparing the two, fix the event definition, horizon, information time, and model specification. Changes in option-implied risk can serve as predictive features, but they contain pricing weights with risk compensation and cannot be interpreted solely as changes in the actual occurrence rate of events.
+
+For example, output columns can be explicitly named `q_prob_terminal_itm_bs` and `p_prob_terminal_itm_model`, while saving parameters, observation times, and model versions; `delta` retains its derivative meaning. This is a data naming suggestion for the research platform; the existing production API does not add new probability interfaces in this update.
+
+The [2014 FEDS Note](https://www.federalreserve.gov/econresdata/notes/feds-notes/2014/forecasting-stock-market-crashes-is-hard-especially-future-ones-20140507.html) by Federal Reserve researchers on option-implied crash probabilities explains how risk aversion affects insurance option prices, and that implied probabilities can serve as predictive information rather than direct real-world occurrence rates. This is a discussion specific to their research sample, not implying that all assets and all events exhibit probability biases in the same direction.
+
+Review: Cover the text and reconstruct P/Q weights → Q terminal distribution → Exercise threshold → Completing the square → Two CDFs → Hedging under P eliminates $\mu$ → The complete chain of the PDE. For a further reference system, see [Oxford Course Syllabus](https://courses.maths.ox.ac.uk/course/info.php?id=6476).
+
+</div>
+
+<BSMaterials lang="en" lesson={1} />

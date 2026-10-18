@@ -62,3 +62,24 @@ export async function checkLesson(dir: string): Promise<string[]> {
     return [`cannot analyse: ${(error as Error).message}`];
   }
 }
+
+/** LLM course pages use the independent English/Simplified-Chinese pair. */
+export async function checkCourseLesson(dir: string): Promise<string[]> {
+  const read = (file: string) => readFileSync(join(dir, file), 'utf8');
+  try {
+    const enSource = read('lesson.en.mdx');
+    const zhSource = read('lesson.zh.mdx');
+    const en = await analyze(enSource);
+    const zh = await analyze(zhSource);
+    const issues: string[] = [];
+    if (en.components.join(' ') !== zh.components.join(' ')) issues.push(`component sequence differs: en=[${en.components.join(' ')}] zh=[${zh.components.join(' ')}]`);
+    if (en.imports.join('\n') !== zh.imports.join('\n')) issues.push('import lines differ');
+    if (en.termIds.join(' ') !== zh.termIds.join(' ')) issues.push(`Term ids differ: en=[${en.termIds.join(' ')}] zh=[${zh.termIds.join(' ')}]`);
+    const enWidgets = [...enSource.matchAll(/<CourseWidget\s+id="([^"]+)"\s*\/>/g)].map((match) => match[1]);
+    const zhWidgets = [...zhSource.matchAll(/<CourseWidget\s+id="([^"]+)"\s*\/>/g)].map((match) => match[1]);
+    if (enWidgets.join(' ') !== zhWidgets.join(' ')) issues.push(`CourseWidget ids differ: en=[${enWidgets.join(' ')}] zh=[${zhWidgets.join(' ')}]`);
+    return issues;
+  } catch (error) {
+    return [`cannot analyse: ${(error as Error).message}`];
+  }
+}

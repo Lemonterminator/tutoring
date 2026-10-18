@@ -1,0 +1,34 @@
+{
+  "subject": "llm",
+  "id": "M0.5.3",
+  "module": "M0.5",
+  "title": {
+    "en": "Markov models, N-grams, smoothing, and causal CNNs",
+    "zh": "马尔可夫模型、N-gram、平滑与因果卷积神经网络"
+  },
+  "prereqs": [
+    "M0.5.2"
+  ],
+  "estimatedHours": 5,
+  "spine": {
+    "en": {
+      "a": "State explicitly what information a recurrent state compresses and compare finite receptive fields with attention.",
+      "b": "Derive count-based conditional probabilities as constrained maximum likelihood and explain smoothing as Bayesian prediction."
+    },
+    "zh": {
+      "a": "明确说明循环状态压缩了哪些信息，并比较有限感受野与注意力机制。",
+      "b": "将基于计数的条件概率推导为约束最大似然估计，并将平滑解释为贝叶斯预测。"
+    }
+  },
+  "derivations": [
+    "D-M0.5.3-01",
+    "D-M0.5.3-02",
+    "D-M0.5.3-03",
+    "D-M0.5.3-04"
+  ],
+  "visualizations": [
+    "V-M0.5-b"
+  ],
+  "assignment": "A-M0.5",
+  "references": []
+}

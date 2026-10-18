@@ -1,0 +1,49 @@
+import { BSCourseContents, BSMaterials } from "../../../framework/quant/BSPaperCourse";
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+
+## Study route and scope
+
+These eight complete chapters come from the Quant_interview paper workbook. They cover the original five-page assignment and extend it to Put, other Greeks and IV. The updated first chapter includes P/Q measures, separating pricing weights from physical forecasts. If you already know introductory BS and diffusion, start with chapter 01; read QUANT-P1 first if floating-point computation is unfamiliar.
+
+This route connects stochastic analysis, calculus and numerical development. It assumes European options, continuous dividends and constant-coefficient BS. Hold the other inputs fixed when taking a partial derivative. The caller handles contract multipliers. Interface conventions at expiry or zero-volatility kinks do not prove that classical derivatives exist there.
+
+<BSCourseContents lang="en" />
+
+## Following with paper and pencil
+
+Every chapter retains its full prose, equations, assignment corrections, numerical tables and curves. At a paper pause, write the intermediate steps before opening the answer. Chapters 01 and 08 take about 90-120 minutes; the others usually take 60-90 minutes. Complete a first pass over four weeks, then revisit assumptions and derivations that caused difficulty.
+
+1. Model and pricing: P/Q → terminal distribution → Gaussian integrals → Delta/Gamma → BS PDE.
+2. Numerical methods: Taylor → forward and central differences → roundoff → complex-step → complex CDF/Hermite/P3.
+3. Sensitivities: Vega, Theta, Rho, dividends → Put-call parity → units and boundaries.
+4. Higher risk: Vanna, Vomma, Speed, Zomma, Charm, Color, Veta, Ultima → Hessian → IV conditioning.
+
+## How do mathematics, numerical code and market interpretation get checked?
+
+Derivations establish mathematical relationships under their assumptions. The 80-digit differentiation comparisons and sample sweeps provide independent numerical evidence, not proofs over the whole domain. Rounding, complex-CDF truncation and parallel execution in production Python/C++ need separate checks. Teaching Put and other Greeks does not imply that the production API implements them.
+
+The P model targets physical forecasting probabilities, which still require estimation and out-of-sample calibration; Q probabilities are pricing weights. Checking a derivation or program cannot establish that a market model actually holds.
+
+## Is Lean worth using?
+
+A small pilot is useful, but it is not a prerequisite for the current learning and development work. Lean checks explicitly stated definitions, assumptions and proofs; it does not automatically turn prose into proved theorems. Give a pilot 4-8 hours, choose one of the following and state its dependencies:
+
+- Chapter 07: the positive-part payoff identity and Put-call parity.
+- Chapters 02/06: the density cancellation identity and the Vega-Gamma relationship.
+- Chapter 04: cancellation in the 45-degree Taylor polynomial. Correct polynomial coefficients still require remainder bounds to establish an error order.
+
+After a small theorem succeeds, extend to Hermite recurrences and derivatives. Formalizing the complete BS chain also requires conditional expectation, Itô, measure changes, stochastic integration and the relevant PDE existence/uniqueness conditions. Treat that as a larger project. Assuming an unproved central result does not verify the complete chain.
+
+A Lean proof about real-valued formulas does not automatically verify the existing NumPy or C++ SIMD execution. Program verification also needs implementation semantics, rounding models, approximate functions and error bounds. The [Lean floating-point reference](https://lean-lang.org/doc/reference/latest/Basic-Types/Floating-Point-Numbers/) explains the logical model; the [Brownian-motion formalization paper](https://arxiv.org/abs/2511.20118) illustrates the foundational work for stochastic processes. The scope and timebox above are this course's recommendations.
+
+**Current Lean status: not started; 0 formally checked theorems.**
+
+## Numerical development route
+
+Start by fixing interfaces and independent references in Python, move to NumPy batches, and then investigate C++ parallelism and SIMD. Record accuracy, convergence order, tail/degenerate behavior, throughput and parallel efficiency separately. Analytic Greeks are the first choice for ordinary BS; numerical methods help check formulas and prepare for models without closed forms.
+
+This series supplements the existing four courses in numerical computation, BS pricing, IV and C++ numerical engineering. It preserves the production implementation boundaries while providing the mathematical foundation for further development.
+
+Further reading: in pricing and risk, GPs are often used as surrogate models (nested Monte Carlo for XVA, calibration, curve building). The correspondence between covariance and kernel matrices is practised in <a href={quantLessonHref('GAME-GP-FINANCE')}>Gaussian processes and portfolios: bridge games</a>.
+
+<BSMaterials lang="en" />

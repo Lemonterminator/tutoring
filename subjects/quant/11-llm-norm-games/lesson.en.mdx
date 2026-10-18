@@ -1,0 +1,18 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { normCards } from '../../../framework/games/llm-foundations-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+
+## Start practicing
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to game library</a>
+
+Center inputs, assemble normalization derivatives, and compare mean directions, radial directions and affine parameters. Covers D-M0.1-03 and D-M0.1-04, retaining the real effect of ε>0.
+
+<PracticeGame generate={normCards} lang="en" />
+
+## Limits and source lesson
+
+Supplied scales or local values support mental arithmetic rather than replacing general derivations. With ε>0 radial residuals are generally nonzero; LayerNorm still exactly removes the constant-shift direction.
+
+<SourceLessonLink source="llm:M0.1" lang="en" />

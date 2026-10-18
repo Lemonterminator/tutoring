@@ -1,0 +1,41 @@
+{
+  "subject": "llm",
+  "id": "M7.3",
+  "module": "M7",
+  "title": {
+    "en": "Energy and variational view — attention as retrieval and regression",
+    "zh": "能量与变分视角——注意力作为检索与回归"
+  },
+  "prereqs": [
+    "M7.2",
+    "M4.6",
+    "M5.2"
+  ],
+  "estimatedHours": 8,
+  "spine": {
+    "en": {
+      "a": "Softmax retrieval is the entropy-regularized optimizer on a simplex; modern Hopfield retrieval is an MM/CCCP step for an associative energy.",
+      "b": "Linear attention and Gated DeltaNet can be read as online regressors with different write rules. The correspondence is exact for the stated state updates, not a claim that every attention layer is one optimizer."
+    },
+    "zh": {
+      "a": "Softmax 检索是单纯形上的熵正则化优化器；现代 Hopfield 检索是关联能量的 MM/CCCP 步骤。",
+      "b": "Linear attention 和 Gated DeltaNet 可被视为具有不同写入规则的在线回归器。该对应关系对于所述状态更新是精确的，并非声称每个注意力层都是一个优化器。"
+    }
+  },
+  "derivations": [
+    "D-M7.3-01",
+    "D-M7.3-02",
+    "D-M7.3-03"
+  ],
+  "visualizations": [
+    "V-M7-c",
+    "V-M7-d"
+  ],
+  "assignment": "A-M7",
+  "references": [
+    "blondel2020",
+    "ramsauer2020",
+    "wang2025",
+    "yang2024"
+  ]
+}

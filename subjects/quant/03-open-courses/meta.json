@@ -1,0 +1,10 @@
+{
+  "id": "QUANT-3", "subject": "quant", "module": "University mathematics course materials",
+  "title": { "en": "University mathematics: complete course materials", "zh": "大学数学公开课：整包材料与星图专题" },
+  "prereqs": ["QUANT-1"],
+  "spine": {
+    "en": { "a": "Review foundations through selected problems, then deepen probability and statistics.", "b": "Trace course topics to the original lecture files and distinguish coverage from prerequisites." },
+    "zh": { "a": "用精选题目检查基础，再深入概率与统计理论。", "b": "从课程专题定位原课件，区分课程覆盖与先修关系。" }
+  },
+  "references": ["MIT OpenCourseWare: 18.06SC, 18.02SC, 6.041SC, 18.650, 18.065", "Aalto: Lasse Leskelä, Probability Theory, 2024-10-21"]
+}

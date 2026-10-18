@@ -1,0 +1,315 @@
+## 1. Motivation
+
+M3.2 showed that RoPE rotates each pair of coordinates at a frequency. At positions longer than training, the phase range and attention distribution move out of the regime seen during training. A longer KV cache alone does not solve this defect.
+
+M4.5 separates five fixes. Wavelength accounting tells us which planes are high or low frequency. Position interpolation and NTK-aware scaling change the phase schedule. YaRN ramps between them and changes attention temperature. Sliding windows and sinks change which positions receive mass. A sparse indexer selects a smaller key set before exact attention.
+
+## 2. Forward definition
+
+For even rotary dimension $d_R\in\mathbb{N}$ and base $\theta_{\mathrm{base}}>1$, RoPE plane $i$ has angular frequency
+
+$$
+\theta_i=\theta_{\mathrm{base}}^{-2i/d_R}>0,
+\qquad
+\theta_i\in\mathbb{R},
+\qquad
+i=0,\ldots,d_R/2-1.
+$$
+
+Its wavelength is
+
+$$
+\lambda_i=\frac{2\pi}{\theta_i}\in\mathbb{R}_{>0}.
+$$
+
+Position interpolation with extension scale $s>0$ maps a position $p\in\mathbb{R}$ to
+
+$$
+p'=\frac{p}{s}\in\mathbb{R}.
+$$
+
+For YaRN, let $L_{\mathrm{train}}\in\mathbb{R}_{>0}$ be the original pretrained context length and $L_{\mathrm{target}}\in\mathbb{R}_{>0}$ the target length. The extension scale is
+
+$$
+s=\frac{L_{\mathrm{target}}}{L_{\mathrm{train}}}>0,
+\qquad
+r_i=\frac{L_{\mathrm{train}}}{\lambda_i}.
+$$
+
+With thresholds $\alpha=1,\beta=32$, define
+
+$$
+\gamma(r_i)=
+\operatorname{clip}\left(\frac{r_i-\alpha}{\beta-\alpha},0,1\right)\in[0,1],
+$$
+
+$$
+\theta'_i=(1-\gamma(r_i))\frac{\theta_i}{s}
++\gamma(r_i)\theta_i\in\mathbb{R}.
+$$
+
+The YaRN temperature curve is an empirical fit:
+
+$$
+a=0.1\ln s+1,
+\qquad
+t=\frac{1}{a^2}.
+$$
+
+The factor $a$ is applied to each query and key vector. Therefore the logit $q^\top k$ is multiplied by $a^2=1/t$.
+
+**Sources.** RoPE is Su et al., [RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864). YaRN is Peng et al., [YaRN: Efficient Context Window Extension of Large Language Models](https://arxiv.org/abs/2309.00071). Attention sinks are Xiao et al., [Efficient Streaming Language Models with Attention Sinks](https://arxiv.org/abs/2309.17453). The DSA model-specific description is DeepSeek-AI, [DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models](https://arxiv.org/abs/2512.02556).
+
+## 3. Derivations
+
+### D-M4.5-01 · Wavelengths, position interpolation, and NTK-aware scaling
+
+**Theorem, scoped to the RoPE formula.** The wavelength of plane $i$ is $2\pi/\theta_i$. Position interpolation divides positions by $s$, while a common NTK-aware convention changes the base; neither operation by itself proves task-level extrapolation.
+
+**Steps.**
+
+1. A RoPE plane rotates a two-vector by angle $p\theta_i$. One full cycle has angle $2\pi$. Set $p\theta_i=2\pi$ and solve for $p$:
+   $$
+   \lambda_i\theta_i=2\pi,
+   \qquad
+   \lambda_i=\frac{2\pi}{\theta_i}.
+   $$
+   The wavelength is a scalar in $\mathbb{R}_{>0}$.
+2. For $\theta_i=\theta_{\mathrm{base}}^{-2i/d_R}$, substitute:
+   $$
+   \lambda_i
+   =2\pi\theta_{\mathrm{base}}^{2i/d_R}.
+   $$
+   Higher plane index has a longer wavelength under this convention.
+3. Position interpolation maps $p$ to $p'=p/s$. The new phase is
+   $$
+   p'\theta_i=\frac{p\theta_i}{s}.
+   $$
+   Thus every phase is slowed by the same factor, keeping the target position range closer to the original phase range. This is an algebraic phase transformation, not a proof that the model preserves all long-range behavior.
+4. A common NTK-aware base-change convention is
+   $$
+   \theta_{\mathrm{base}}'
+   =\theta_{\mathrm{base}}s^{d_R/(d_R-2)},
+   \qquad
+   \theta_{\mathrm{base}}>1,\ s>0,\ d_R>2.
+   $$
+   The exponent and implementation variants are a heuristic/engineering convention. The check only verifies that this convention increases the base for $s>1$.
+5. The check evaluates $\lambda_i$, positions $[0,4,8]$ under $s=4$, and the base change at $d_R=8$. It obtains wavelengths $[6.283185307179586,62.83185307179586,628.3185307179587,6283.185307179586]$ for the four planes in the fixture.
+
+**Check.** checks/M4/D-M4.5-01.py verifies the wavelength identity, position interpolation, and the stated NTK-aware convention; it prints passed: True.
+
+**Approximation, labeled.** NTK-aware scaling is a family of heuristics, not a theorem of positional generalization. Its exact exponent and base schedule must be attributed to the chosen implementation.
+
+### D-M4.5-02 · YaRN bands and attention temperature
+
+**Claim, sourced and scoped.** YaRN uses the original pretrained length in $r_i=L_{\mathrm{train}}/\lambda_i$. Low-frequency dimensions receive full position interpolation, high-frequency dimensions remain unchanged, and intermediate dimensions use a smooth ramp. The physical explanation is the paper's interpretation, not a proven theorem.
+
+**Steps.**
+
+1. Start with the wavelength from D-M4.5-01 and define
+   $$
+   r_i=\frac{L_{\mathrm{train}}}{\lambda_i}.
+   $$
+   $r_i$ counts how many wavelengths fit into the original training context up to a $2\pi$ convention. Crucially, the numerator is $L_{\mathrm{train}}$, not $L_{\mathrm{target}}$.
+2. Define the ramp:
+   $$
+   \gamma(r_i)=
+   \begin{cases}
+   0,&r_i<\alpha,\\
+   (r_i-\alpha)/(\beta-\alpha),&\alpha\le r_i\le\beta,\\
+   1,&r_i>\beta.
+   \end{cases}
+   $$
+   For LLaMA-tuned values $\alpha=1,\beta=32$, the compact clip expression in Section 2 gives the same three cases.
+3. Interpolate the frequency:
+   $$
+   \theta'_i
+   =(1-\gamma(r_i))\frac{\theta_i}{s}
+   +\gamma(r_i)\theta_i.
+   $$
+   If $r_i<\alpha$, $\gamma=0$ and $\theta'_i=\theta_i/s$. If $r_i>\beta$, $\gamma=1$ and $\theta'_i=\theta_i$. Between them, the two frequencies mix continuously.
+4. Using $L_{\mathrm{target}}$ in the ratio would instead give
+   $$
+   r_i^{\mathrm{wrong}}
+   =\frac{L_{\mathrm{target}}}{\lambda_i}
+   =s\frac{L_{\mathrm{train}}}{\lambda_i}
+   =sr_i.
+   $$
+   Therefore the thresholds are effectively shifted to $\alpha/s$ and $\beta/s$, misclassifying the bands. This is the version-independent implementation trap.
+5. The paper's physical motivation is that high-frequency dimensions complete many rotations in the training context and mainly encode relative position, while low-frequency dimensions have not completed a full rotation and mainly encode absolute position. The lesson labels this as an interpretation, not a theorem.
+6. YaRN defines an empirical curve
+   $$
+   a=0.1\ln s+1.
+   $$
+   The factor $a$ is applied separately:
+   $$
+   q'=aq,\qquad k'=ak,
+   \qquad
+   q,k,q',k'\in\mathbb{R}^{d}.
+   $$
+   Therefore
+   $$
+   (q')^\top k'
+   =(aq)^\top(ak)
+   =a^2q^\top k.
+   $$
+7. Define $t=1/a^2$. Dividing logits by $t$ is equivalent:
+   $$
+   \frac{(q')^\top k'}{\sqrt d}
+   =\frac{q^\top k}{t\sqrt d}.
+   $$
+   For $s>1$, $a>1$, so $t<1$ and the softmax sharpens. It does not soften. The paper's entropy motivation is empirical/qualitative; later analyses may give different explanations, but no theorem is claimed here.
+8. There is a version trap. YaRN arXiv v1 used the reciprocal convention for its $t$ compared with the v2/ICLR convention. The symbols look contradictory unless the version is recorded. This lesson uses $t=1/(0.1\ln s+1)^2$ and states that convention explicitly.
+9. The check uses $L_{\mathrm{train}}=2\pi$, frequencies $[0.5,2,64]$, and $s=4$. It obtains ratios $[0.5,2,64]$, ramp values $[0,1/31,1]$, $a=1.138629436111989$, logit factor $a^2=1.2964769927807063$, and $t=0.7713210535693215$.
+
+**Check.** checks/M4/D-M4.5-02.py verifies the original-length ratio, low/ramp/high bands, and the squared temperature factor; it prints passed: True.
+
+**Approximation, labeled.** YaRN's band interpretation and temperature curve are empirical design choices. The interpolation algebra and the $a^2$ logit factor are exact once the convention is selected.
+
+### D-M4.5-03 · Sliding-window attention
+
+**Definition.** With causal window width $w\in\mathbb{N}$, query position $i$ can attend to
+
+$$
+\mathcal{W}(i)
+=\{\max(0,i-w+1),\ldots,i\}\subseteq\{0,\ldots,n-1\}.
+$$
+
+The per-layer attention work is $O(nwd)$ rather than $O(n^2d)$.
+
+**Steps.**
+
+1. Causality excludes positions $j>i$. A width-$w$ window also excludes positions $j<i-w+1$. Intersecting both conditions gives $\mathcal{W}(i)$.
+2. For interior positions, the set contains $w$ keys. Across $n$ queries, there are $O(nw)$ score pairs. Each score/value operation has width $d$, so the leading arithmetic is
+   $$
+   F_{\mathrm{window}}=O(nwd).
+   $$
+3. A token can move information through at most $w$ earlier positions per layer. In a coarse no-skip model, a dependency can grow by $w$ per layer, giving receptive-field scale $O(Lw)$ after $L$ layers.
+4. Interleaving a full-attention layer changes this bound qualitatively: the full layer supplies a global path. The exact receptive field then depends on layer placement, not only on $Lw$.
+5. The check obtains window indices $[2,3,4,5]$ for query 5 and width 4, a three-layer coarse field of 12, and an unbounded marker when a full layer is interleaved in the fixture.
+
+**Check.** checks/M4/D-M4.5-03.py verifies the causal window and the stated receptive-field accounting; it prints passed: True.
+
+**Approximation, labeled.** $O(Lw)$ is a path-length estimate. It does not prove that every task dependency is preserved or that a full layer always yields useful information.
+
+### D-M4.5-04 · Attention sinks
+
+**Theorem, scoped to softmax normalization.** If a softmax has no null option, its probability mass must be assigned to one of the available keys. Adding a learned sink logit gives the denominator an explicit placeholder option whose mass can later be dropped from the value output.
+
+**Steps.**
+
+1. For token scores $s\in\mathbb{R}^{n}$, ordinary softmax is
+   $$
+   p_j=\frac{e^{s_j}}{\sum_{r=1}^{n}e^{s_r}},
+   \qquad
+   p\in\mathbb{R}^{n},
+   \qquad
+   \sum_{j=1}^{n}p_j=1.
+   $$
+   There is no coordinate for “attend nowhere.” Even a semantically useless early token must receive some mass.
+2. Add a scalar sink logit $s_{\mathrm{sink}}\in\mathbb{R}$ to form
+   $$
+   \widetilde s=[s_1,\ldots,s_n,s_{\mathrm{sink}}]\in\mathbb{R}^{n+1}.
+   $$
+   Its softmax has token probabilities $\widetilde p_{1:n}\in\mathbb{R}^{n}$ and sink mass $\widetilde p_{\mathrm{sink}}\in\mathbb{R}$ satisfying
+   $$
+   \sum_{j=1}^{n}\widetilde p_j+\widetilde p_{\mathrm{sink}}=1.
+   $$
+3. The value output uses only token values $V\in\mathbb{R}^{n\times d_v}$:
+   $$
+   y=\sum_{j=1}^{n}\widetilde p_jv_j\in\mathbb{R}^{d_v}.
+   $$
+   The sink has no value row; its mass is deliberately discarded after normalization.
+4. With two equal token scores $[-100,-100]$ and sink logit $4$, the check obtains sink mass $1.0$ to float64 display precision and remaining token mass $1.3627113643090597\times10^{-45}$. Without an explicit sink, equal token scores split mass $[0.5,0.5]$.
+5. StreamingLLM reports the empirical attention-sink phenomenon and uses initial tokens or a dedicated sink to stabilize a finite cache. The observation and deployment method are sourced claims; the normalization algebra above is exact.
+
+**Check.** checks/M4/D-M4.5-04.py verifies no-null softmax mass and the explicit sink denominator; it prints passed: True.
+
+**Claim, sourced and scoped.** A sink is a learned or designated mass-absorbing option. It is not evidence that the sink token is semantically important; its role is to make the normalization have a place for otherwise unusable mass.
+
+### D-M4.5-05 · Sparse attention with an indexer
+
+**Definition, scoped to DSA-style selection.** A cheap indexer scores keys, selects top-$k$ indices, and runs exact attention on the selected set. If $q\in\mathbb{R}^{d}$, keys $K\in\mathbb{R}^{n\times d}$, values $V\in\mathbb{R}^{n\times d_v}$, and $W_I\in\mathbb{R}^{d_I\times d}$, a simple index score is
+
+$$
+\sigma_j=(W_Iq)^\top(W_Ik_j)\in\mathbb{R}.
+$$
+
+Selecting $k$ keys changes the score/value work to $O(nkd)$ for the selected attention path.
+
+**Steps.**
+
+1. Project the query and keys into the cheap indexer space:
+   $$
+   q_I=W_Iq\in\mathbb{R}^{d_I},
+   \qquad
+   K_I=KW_I^\top\in\mathbb{R}^{n\times d_I}.
+   $$
+2. Compute index scores:
+   $$
+   \sigma=K_Iq_I\in\mathbb{R}^{n}.
+   $$
+   Let $J(q)$ be the indices of the $k$ largest coordinates. The top-k operation is discrete:
+   $$
+   J(q)\subseteq\{1,\ldots,n\},
+   \qquad
+   |J(q)|=k.
+   $$
+3. Run exact attention on selected keys and values:
+   $$
+   s_J=K_{J(q)}q\in\mathbb{R}^{k},
+   \qquad
+   \alpha_J=\operatorname{softmax}(s_J)\in\mathbb{R}^{k},
+   $$
+   $$
+   y=\alpha_J^\top V_{J(q)}\in\mathbb{R}^{d_v}.
+   $$
+4. Conditional on a fixed $J(q)$, the selected attention calculation is differentiable in $q,K,V$. The index selection itself is not differentiable through the top-k boundary. The indexer scores can be trained only through a surrogate, straight-through rule, auxiliary objective, or another explicitly chosen estimator; no such estimator is silently assumed.
+5. The check selects keys $[0,2]$, obtains normalized selected weights $[0.5498339973124778,0.4501660026875221]$, and verifies that a small query perturbation changes the conditional attention output while the discrete selected mask remains fixed.
+6. DeepSeek-V3.2's DSA description is a model-specific source claim. The widget and check implement a minimal indexer abstraction to make the differentiability boundary visible; they do not claim to reproduce the complete production DSA system.
+
+**Check.** checks/M4/D-M4.5-05.py verifies top-k selection and the distinction between a fixed-mask differentiable path and a discrete selection path; it prints passed: True.
+
+**Claim, sourced and scoped.** Sparse attention reduces work only if the selected set is small and the indexer overhead is cheaper than dense attention. The selection mechanism can lose keys; performance and quality must be measured, not inferred from the asymptotic expression alone.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M4.5-01 | wavelength, interpolation, and NTK base checks; new base $63496.04207872797$ | pass |
+| D-M4.5-02 | YaRN ratios $[0.5,2,64]$; $\gamma=[0,1/31,1]$; $a^2=1.2964769927807063$; $t=0.7713210535693215$ | pass |
+| D-M4.5-03 | window at query 5: $[2,3,4,5]$; coarse field 12 | pass |
+| D-M4.5-04 | sink mass $1.0$; remaining token mass $1.3627113643090597\times10^{-45}$ | pass |
+| D-M4.5-05 | selected keys $[0,2]$; weights $[0.5498339973124778,0.4501660026875221]$ | pass |
+
+Run python checks/M4/D-M4.5-01.py through python checks/M4/D-M4.5-05.py from course/. V-M4-e uses the same YaRN band and temperature formulas.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M4-e" />
+
+**V-M4-e — YaRN frequency ramp.** The specification is viz/specs/V-M4-e.yaml and the pure compute module is viz/compute/yarn.ts. Adjust dimension, base, original training length, target length, and thresholds. The widget plots $r_i$, $\gamma(r_i)$, and $\theta'_i$, and displays $a$, $a^2$, and $t$ together so the square cannot be hidden.
+
+The equation is D-M4.5-02. The visible insight must say that the bands use the ORIGINAL training length and that the logit factor is $a^2$, not $a$. The existing frontend can render frequency-plane lines in SVG or Canvas2D using the pure output.
+
+## 6. Closing
+
+**Counterintuitive question.** Why does increasing the target context length make YaRN's attention temperature smaller, even though the per-vector factor $a$ becomes larger?
+
+**Worked answer.** D-M4.5-02 defines $a=0.1\ln s+1$. YaRN applies $a$ to both query and key:
+
+$$
+q'=aq,\qquad k'=ak.
+$$
+
+The logit contains their dot product:
+
+$$
+(q')^\top k'=a^2q^\top k.
+$$
+
+Writing the same operation as attention temperature gives $t=1/a^2$. For $s>1$, $a>1$ and $t<1$, so the softmax sharpens. Saying “the logits multiply by $a$” drops one of the two vector factors and reverses the quantitative conclusion.
+
+**Assignment A-M4.** Add position interpolation, the chosen NTK-aware convention, YaRN with the original-length threshold, sliding windows, explicit sinks, and a minimal sparse indexer. Export V-M4-e data for at least one target extension and record which paths are exact identities, empirical curves, or discrete approximations.
+
+**Spine check.** Architecturally, the model still predicts the next token from a prefix. Long-context methods change phase, accessible keys, or normalization mass; each therefore changes the computational representation of the same conditional prediction problem with a distinct approximation boundary.

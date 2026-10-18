@@ -1,0 +1,264 @@
+## 1. 动机
+
+后续课程将跨时间或位置对雅可比矩阵进行乘法运算。因此，本模块中任何关于转置、形状或有限差分法的错误，都会污染后续所有关于梯度消失、加法记忆、注意力机制或状态空间递归的结论。本课程旨在规范符号表示，并构建 float64 测试框架，将每个导数转化为可运行的数值断言。
+
+## 2. 前向定义
+
+向量是列。向量 $x\in\mathbb{R}^{d}$ 的形状为 $(d,)$，矩阵 $W\in\mathbb{R}^{o\times i}$ 的形状为 $(o,i)$，标量损失 $L\in\mathbb{R}$ 的形状为 $()$。对于 $y=f(x)$，雅可比矩阵为
+
+$$
+J=\frac{\partial y}{\partial x}\in\mathbb{R}^{|y|\times |x|},
+\qquad
+\nabla_x L=J^\top\nabla_y L.
+$$
+
+共享测试框架评估标量函数 $f(\mathrm{params})\in\mathbb{R}$，并将解析梯度与中心差分进行比较：
+
+$$
+\frac{\partial f}{\partial p_r}
+\approx
+\frac{f(p+\varepsilon e_r)-f(p-\varepsilon e_r)}{2\varepsilon},
+\qquad \varepsilon=10^{-6}.
+$$
+
+所有检查输入和扰动均使用 float64。该框架报告最大绝对误差、最大相对误差、最差索引、每参数表格以及布尔通过结果。
+
+## 3. 推导过程
+
+### D-M0.1-01 · Softmax 雅可比矩阵
+
+**命题。** 对于 $z\in\mathbb{R}^{d}$ 和 $p=\operatorname{softmax}(z)\in\mathbb{R}^{d}$，雅可比矩阵 $J\in\mathbb{R}^{d\times d}$ 为
+
+$$
+J=\operatorname{diag}(p)-pp^\top.
+$$
+
+**步骤。**
+
+1. 定义 $a_i=\exp(z_i)$ 和 $Z=\sum_{k=1}^{d}a_k$，使得 $p_i=a_i/Z$。（在应用商法则之前，先命名分子和公共分母。）
+2. 对分子求导：$\partial a_i/\partial z_j=\delta_{ij}a_i$。（克罗内克 delta 函数记录了受扰动的坐标是否为分子坐标。）
+3. 对分母求导：$\partial Z/\partial z_j=a_j$。（只有第 $j$ 个指数项随 $z_j$ 变化。）
+4. 应用商法则：
+   $$
+   \frac{\partial p_i}{\partial z_j}
+   =\frac{\delta_{ij}a_iZ-a_i a_j}{Z^2}.
+   $$
+   （第一项对分子求导，第二项对分母求导。）
+5. 代入 $a_i/Z=p_i$ 和 $a_j/Z=p_j$：
+   $$
+   \frac{\partial p_i}{\partial z_j}=\delta_{ij}p_i-p_i p_j.
+   $$
+   （这用输出概率表示了每一项。）
+6. 将各项收集为矩阵：$J=\operatorname{diag}(p)-pp^\top$。（对角项包含 $\delta_{ij}p_i$，外积项包含 $p_i p_j$。）
+7. $J$ 是对称的，因为 $\operatorname{diag}(p)$ 和 $pp^\top$ 都是对称的。（对称性在每一项中都很明显。）
+8. $J\mathbf{1}=p-p(p^\top\mathbf{1})=p-p=0$。（概率之和为 1，因此全一向量位于零空间中，且每一行的和为零。）
+
+**验证。** `checks/M0/D-M0.1-01.py` — `max_abs_err = 6.399e-10`, `max_rel_err = 1.939e-08`, `passed = True`。
+
+**直观理解。** 增加一个 logit 会提高其概率，并从其他条目中移除概率。外积项是耦合所有坐标的归一化反馈。
+
+### D-M0.1-02 · Softmax 加交叉熵梯度
+
+**命题。** 对于目标索引 $y\in\{1,\ldots,d\}$ 和 $L=-\log p_y$，logit 梯度为
+
+$$
+\nabla_z L=p-e_y\in\mathbb{R}^{d}.
+$$
+
+**通过 D-M0.1-01 的推导。**
+
+1. 概率梯度的条目为 $\partial L/\partial p_i=-\delta_{iy}/p_y$。（只有目标概率出现在 $-\log p_y$ 中。）
+2. 应用转置雅可比链式法则：
+   $$
+   \nabla_zL=J^\top\nabla_pL.
+   $$
+   （雅可比矩阵将 logit 扰动映射为概率扰动，因此反向模式使用其转置。）
+3. 代入 $J_{ij}=\delta_{ij}p_i-p_i p_j$ 并对 $i$ 求和：
+   $$
+   \frac{\partial L}{\partial z_j}
+   =\sum_i\left(-\frac{\delta_{iy}}{p_y}\right)(\delta_{ij}p_i-p_i p_j).
+   $$
+   （这写出了完整的反向模式收缩。）
+4. 只有 $i=y$ 在 delta 因子下幸存，因此
+   $$
+   \frac{\partial L}{\partial z_j}
+   =-\frac{1}{p_y}(\delta_{yj}p_y-p_y p_j)=p_j-\delta_{yj}.
+   $$
+   （目标概率在两项中抵消。）
+5. 因此 $\nabla_zL=p-e_y$。（向量形式收集了坐标结果。）
+
+**直接推导。**
+
+1. 使用 Softmax 商重写损失：
+   $$
+   L=-\log\frac{\exp(z_y)}{\sum_k\exp(z_k)}
+   =\log\sum_k\exp(z_k)-z_y.
+   $$
+   （取对数将商转化为差。）
+2. 对 log-sum-exp 项求导：
+   $$
+   \frac{\partial}{\partial z_j}\log\sum_k\exp(z_k)
+   =\frac{\exp(z_j)}{\sum_k\exp(z_k)}=p_j.
+   $$
+   （该商恰好是 Softmax 坐标。）
+3. 对 $-z_y$ 求导：$\partial(-z_y)/\partial z_j=-\delta_{yj}$。（目标坐标贡献一个直接项。）
+4. 将两项相加得到 $\partial L/\partial z_j=p_j-\delta_{yj}$。（两种推导产生相同的向量。）
+
+**验证。** `checks/M0/D-M0.1-02.py` — `max_abs_err = 1.561e-10`, `max_rel_err = 8.760e-10`, `passed = True`。
+
+**直观理解。** 梯度要求模型将概率质量移向目标：每个非目标坐标接收其当前概率，而目标接收该概率减一。
+
+### D-M0.1-03 · LayerNorm 雅可比矩阵
+
+**命题。** 对于 $x\in\mathbb{R}^{d}$, $\varepsilon>0$, $\mu=\frac1d\mathbf{1}^\top x$, $\sigma=\sqrt{\frac1d\|x-\mu\mathbf{1}\|^2+\varepsilon}$ 和 $\hat{x}=(x-\mu\mathbf{1})/\sigma$，
+
+$$
+\frac{\partial\hat{x}}{\partial x}
+=\frac1\sigma\left(I-\frac1d\mathbf{1}\mathbf{1}^\top-\frac1d\hat{x}\hat{x}^\top\right)\in\mathbb{R}^{d\times d}.
+$$
+
+对于 $y=\gamma\odot\hat{x}+\beta$ 且 $\gamma,\beta,y\in\mathbb{R}^{d}$，
+
+$$
+\frac{\partial y}{\partial x}=\operatorname{diag}(\gamma)\frac{\partial\hat{x}}{\partial x},
+\quad
+\frac{\partial y}{\partial\gamma}=\operatorname{diag}(\hat{x}),
+\quad
+\frac{\partial y}{\partial\beta}=I.
+$$
+
+**步骤。**
+
+1. 令 $u=x-\mu\mathbf{1}$ 和 $P=I-\frac1d\mathbf{1}\mathbf{1}^\top$。则 $u=Px$。（减去均值是一个线性投影。）
+2. 对 $u$ 求导：$du=P\,dx$。（矩阵 $P$ 相对于 $x$ 是常数。）
+3. 写出 $\sigma=(u^\top u/d+\varepsilon)^{1/2}$。（这是带有稳定化 epsilon 的给定标准差。）
+4. 对平方根求导：
+   $$
+   d\sigma=\frac{1}{2\sigma}\frac{2u^\top du}{d}=\frac{u^\top P\,dx}{d\sigma}.
+   $$
+   （链式法则先对二次项求导，再对平方根求导。）
+5. 由于 $P$ 是对称的且 $Pu=u$，则 $u^\top P=u^\top$。（中心化向量已经位于零均值子空间中。）
+6. 对 $\hat{x}=u/\sigma$ 求导：
+   $$
+   d\hat{x}=\frac{du}{\sigma}-\frac{u}{\sigma^2}d\sigma
+   =\left(\frac{P}{\sigma}-\frac{uu^\top}{d\sigma^3}\right)dx.
+   $$
+   （第一项对分子求导，第二项对倒数尺度求导。）
+7. 因为 $\hat{x}=u/\sigma$，所以 $uu^\top/\sigma^2=\hat{x}\hat{x}^\top$。因此
+   $$
+   \frac{\partial\hat{x}}{\partial x}
+   =\frac1\sigma\left(I-\frac1d\mathbf{1}\mathbf{1}^\top-\frac1d\hat{x}\hat{x}^\top\right).
+   $$
+   （代入将中心化向量项转换为归一化向量项。）
+8. 逐坐标对 $y=\gamma\odot\hat{x}+\beta$ 求导以得到显示的三个雅可比矩阵。（当一个因子固定时，逐元素乘法是一个对角线性映射。）
+
+**验证。** `checks/M0/D-M0.1-03.py` — 归一化向量雅可比矩阵 `max_abs_err = 1.446e-10`，完整仿射损失梯度 `max_abs_err = 2.450e-10`，两者均为 `passed = True`。
+
+**直观理解。** LayerNorm 去除均值方向并重新缩放中心化方向。仿射参数随后恢复学习到的逐坐标尺度和偏移。
+
+### D-M0.1-04 · RMSNorm 雅可比矩阵
+
+**命题。** 对于 $x\in\mathbb{R}^{d}$, $r=\sqrt{\frac1d x^\top x+\varepsilon}$ 和 $y=x/r\in\mathbb{R}^{d}$，
+
+$$
+\frac{\partial y}{\partial x}
+=\frac1r\left(I-\frac1d yy^\top\right)\in\mathbb{R}^{d\times d}.
+$$
+
+**步骤。**
+
+1. 写出 $r=(x^\top x/d+\varepsilon)^{1/2}$。（这揭示了控制归一化的标量。）
+2. 对 $r$ 求导：
+   $$
+     dr=\frac{1}{2r}\frac{2x^\top dx}{d}=\frac{x^\top dx}{d\,r}.
+   $$
+   （二次微分是 $2x^\top dx$。）
+3. 对 $y=x/r$ 求导：
+   $$
+     dy=\frac{dx}{r}-\frac{x}{r^2}dr
+     =\left(\frac{I}{r}-\frac{xx^\top}{d\,r^3}\right)dx.
+   $$
+   （商法则将直接向量路径与尺度路径分开。）
+4. 由于 $y=x/r$，则 $xx^\top/r^2=yy^\top$。因此
+   $$
+   \frac{\partial y}{\partial x}=\frac1r\left(I-\frac1d yy^\top\right).
+   $$
+   （代入用归一化输出表示雅可比矩阵。）
+
+**验证。** `checks/M0/D-M0.1-04.py` — 归一化向量雅可比矩阵 `max_abs_err = 1.396e-10`，标量损失梯度 `max_abs_err = 3.356e-10`，两者均为 `passed = True`。
+
+**直观理解。** RMSNorm 去除径向尺度但保留均值分量。这使得它即使在使用相同的 epsilon 约定时，也与 LayerNorm 成为不同的投影。
+
+### D-M0.1-05 · 四节点图上的反向模式链式法则
+
+**命题。** 对于标量损失和具有子节点 $c$ 的图节点 $v$，反向模式累积
+
+$$
+\nabla_v L=\sum_{c\in\operatorname{children}(v)}
+\left(\frac{\partial c}{\partial v}\right)^\top\nabla_c L.
+$$
+
+使用标量图
+
+$$
+u=ab,\qquad v=\tanh(u+c),\qquad w=v^2,\qquad L=w+\sin(v),
+$$
+
+其中 $a,b,c,u,v,w,L\in\mathbb{R}$。
+
+**步骤。**
+
+1. 损失从 $v$ 有两条子路径：$w=v^2$ 和 $\sin(v)$。（图必须求和两个下游贡献。）
+2. 反向种子是 $\bar{L}=\partial L/\partial L=1$。（标量损失接收单位上游灵敏度。）
+3. 由于 $L=w+\sin(v)$，则 $\bar{w}=\partial L/\partial w=1$。（$w$ 的系数为 1。）
+4. 在 $v$ 处累积：
+   $$
+   \bar{v}=\left(\frac{\partial w}{\partial v}\right)^\top\bar{w}
+   +\frac{\partial\sin(v)}{\partial v}\bar{L}
+   =2v+\cos(v).
+   $$
+   （求和是合并节点处的反向模式规则。）
+5. 对 $v=\tanh(u+c)$ 求导：$\partial v/\partial u=1-v^2$ 和 $\partial v/\partial c=1-v^2$。（tanh 在其预激活处的导数是 $1-\tanh^2$。）
+6. 传播到 $u$ 和 $c$：
+   $$
+   \bar{u}=\bar{v}(1-v^2),\qquad \bar{c}=\bar{v}(1-v^2).
+   $$
+   （两条边都从 $v$ 出发，具有相同的局部导数。）
+7. 对 $u=ab$ 求导：$\partial u/\partial a=b$ 和 $\partial u/\partial b=a$。（乘积法则给出两个局部边雅可比矩阵。）
+8. 传播到叶子节点：
+   $$
+   \bar{a}=\bar{u}b,\qquad \bar{b}=\bar{u}a.
+   $$
+   （每个叶子接收上游伴随量乘以其局部导数。）
+
+**验证。** `checks/M0/D-M0.1-05.py` — 所有三个叶子梯度通过；`max_abs_err = 2.848e-11`, `passed = True`。
+
+**直观理解。** 反向模式不会选择图的一条路径。它沿着每条边向后发送伴随量，并在路径合并时相加贡献。
+
+## 4. 数值验证
+
+这五个可执行检查使用固定的 float64 输入和中心差分法。它们当前的报告如下：
+
+| 推导 | 最大绝对误差 | 最大相对误差 | 结果 |
+| --- | ---: | ---: | --- |
+| D-M0.1-01 | $6.399\times10^{-10}$ | $1.939\times10^{-8}$ | pass |
+| D-M0.1-02 | $1.561\times10^{-10}$ | $8.760\times10^{-10}$ | pass |
+| D-M0.1-03 | $2.450\times10^{-10}$ | $1.672\times10^{-8}$ | pass |
+| D-M0.1-04 | $3.356\times10^{-10}$ | $3.741\times10^{-9}$ | pass |
+| D-M0.1-05 | $2.848\times10^{-11}$ | $2.394\times10^{-10}$ | pass |
+
+从仓库父目录运行 `python -m pytest course/tests` 以执行所有设置和课程检查。浏览器不会执行这些 Python 检查；本课程仅显示其静态输出。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M0-a" />
+
+**V-M0-a —— 计算图梯度查看器。** 读者选择 `rnn_cell`、`lstm_cell` 或 `attention_head`，选中一个节点，并提供或重置确定性上游梯度。该组件的状态包含 `seed: 0`、选定的图和选定的节点。它输出局部雅可比矩阵、传入的上游梯度、传出的梯度以及幅值颜色标度。其核心洞见在于：局部雅可比矩阵通过转置乘法进行组合，而合并操作则累加梯度贡献。纯计算契约位于 `viz/specs/V-M0-a.yaml` 和 `viz/compute/gradient_viewer.ts`；渲染部分属于现有的 Preact `Figure` 集成。
+
+## 6。结束
+
+**反直觉的问题。** 如果雅可比矩阵是对称的，反向模式是否可以跳过转置？**解答：** 即使对称性使得数值矩阵等于原矩阵，转置仍然是链式法则陈述的一部分。D-M0.1-01 恰好具有对称的 softmax 雅可比矩阵，但 D-M0.1-05 包含通用的局部雅可比矩阵，需要转置以符合声明的 $(|y|,|x|)$ 约定。安全的规则是每次都写出转置，仅在证明对称性后再进行简化。
+
+**作业 A-M0。** 仅通过经过测试且与框架无关的 API 扩展 `code/common/gradcheck.py`；为每个推导添加一个可执行的检查；确保所有检查都是确定性的、float64 且不修改状态；并使 `python -m pytest course/tests` 通过。作业合同位于 `code/common/README.md`。
+
+**核心检查。** 从架构角度看，本课修正了雅可比矩阵的方向和反向模式累积，这决定了信息和梯度如何随时间或位置传播。从概率角度看，它修正了在训练和验证自回归条件时使用的标量损失约定。

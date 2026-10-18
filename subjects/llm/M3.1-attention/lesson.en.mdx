@@ -1,0 +1,331 @@
+## 1. Motivation
+
+M2 attention read one encoder state sequence at a time. A Transformer performs the same normalized read for every position in parallel: queries decide which keys matter, and values are mixed by the resulting weights. The operation is not a fixed matrix because the weights depend on the current input. A decoder-only Transformer adds a causal mask so position $i$ can use positions $j\le i$ but cannot use future tokens.
+
+This lesson derives the complete single-head backward pass, explains why logits are divided by $\sqrt{d_k}$, and separates serial dependency depth from arithmetic work. Multi-head attention then runs several lower-width heads and mixes their outputs with one output projection.
+
+## 2. Forward definition
+
+Let $X\in\mathbb{R}^{n\times d}$ be a sequence of $n$ residual-stream vectors. For one head, let
+
+$$
+W_Q\in\mathbb{R}^{d\times d_k},\qquad
+W_K\in\mathbb{R}^{d\times d_k},\qquad
+W_V\in\mathbb{R}^{d\times d_v}.
+$$
+
+The projections, scores, causal mask, weights, and output are
+
+$$
+Q=XW_Q\in\mathbb{R}^{n\times d_k},\qquad
+K=XW_K\in\mathbb{R}^{n\times d_k},\qquad
+V=XW_V\in\mathbb{R}^{n\times d_v},
+$$
+
+$$
+S=\frac{QK^\top}{\sqrt{d_k}}\in\mathbb{R}^{n\times n},
+$$
+
+$$
+\widetilde S_{ij}=
+\begin{cases}
+S_{ij},&j\le i,\\
+-\infty,&j>i,
+\end{cases}
+\qquad
+A=\operatorname{softmax}_{\mathrm{rows}}(\widetilde S)\in\mathbb{R}^{n\times n},
+$$
+
+$$
+Y=AV\in\mathbb{R}^{n\times d_v}.
+$$
+
+The mask is applied before the row softmax. A multi-head layer with $h$ heads and model width $d$ uses $d_h=d/h$ and concatenates $Y^{(1)},\ldots,Y^{(h)}\in\mathbb{R}^{n\times d_h}$:
+
+$$
+\operatorname{MHA}(X)=
+\operatorname{Concat}(Y^{(1)},\ldots,Y^{(h)})W_O\in\mathbb{R}^{n\times d},
+\qquad
+W_O\in\mathbb{R}^{d\times d}.
+$$
+
+The row-stochastic matrix $A$ is an internal computation. The target probability remains the causal conditional emitted by the later output head.
+
+**Source note.** The scaled dot-product, masking, multi-head definition, and complexity comparison follow Vaswani et al., “Attention Is All You Need” (https://papers.neurips.cc/paper/7181-attention-is-all-you-need and https://arxiv.org/abs/1706.03762).
+
+## 3. Derivations
+
+### D-M3.1-01 · Why divide by $\sqrt{d_k}$
+
+**Theorem.** If $q,k\in\mathbb{R}^{d_k}$ have independent, zero-mean, unit-variance components and the corresponding components are independent, then
+
+$$
+\operatorname{Var}(q^\top k)=d_k,\qquad
+\operatorname{Var}\left(\frac{q^\top k}{\sqrt{d_k}}\right)=1.
+$$
+
+**Steps.**
+
+1. Expand the dot product:
+   $$
+   q^\top k=\sum_{\ell=1}^{d_k}q_\ell k_\ell\in\mathbb{R}.
+   $$
+   Each product has mean $\mathbb{E}[q_\ell k_\ell]=\mathbb{E}[q_\ell]\mathbb{E}[k_\ell]=0$.
+2. Its second moment is
+   $$
+   \mathbb{E}[(q_\ell k_\ell)^2]
+   =\mathbb{E}[q_\ell^2]\mathbb{E}[k_\ell^2]
+   =1.
+   $$
+   Since the product mean is zero, $\operatorname{Var}(q_\ell k_\ell)=1$.
+3. Independence across coordinates makes cross-covariances vanish:
+   $$
+   \operatorname{Var}\left(\sum_{\ell=1}^{d_k}q_\ell k_\ell\right)
+   =\sum_{\ell=1}^{d_k}\operatorname{Var}(q_\ell k_\ell)
+   =d_k.
+   $$
+4. For a scalar constant $a$, $\operatorname{Var}(aZ)=a^2\operatorname{Var}(Z)$. Set $a=d_k^{-1/2}$:
+   $$
+   \operatorname{Var}\left(\frac{q^\top k}{\sqrt{d_k}}\right)
+   =\frac{1}{d_k}d_k=1.
+   $$
+5. Without the scale, increasing $d_k$ spreads the score distribution. For a row vector $s\in\mathbb{R}^{n}$, the softmax Jacobian from D-M0.1-01 is
+   $$
+   J_{\mathrm{softmax}}(a)=\operatorname{diag}(a)-aa^\top\in\mathbb{R}^{n\times n}.
+   $$
+   If one logit dominates, $a$ approaches a one-hot vector and every entry of this Jacobian approaches zero. Thus the larger unscaled variance can saturate the row softmax and kill its local gradient.
+6. The numerical check samples dimensions $d_k\in\{4,16,64,256\}$, estimates both variances, and compares entropy with and without scaling. It obtains relative variance errors below $0.016$ and higher entropy for the scaled $d_k=256$ row.
+
+**Check.** checks/M3/D-M3.1-01.py reports the empirical variance and entropy table and prints passed = True.
+
+**Intuition.** The square-root factor keeps the typical score gap at an activation scale that does not grow with head width. It does not force every trained logit to have variance one; it controls the initialization-scale mechanism in this theorem.
+
+### D-M3.1-02 · Full gradient through attention
+
+**Theorem.** For an unprojected head $Y=AV$ and upstream $G=\nabla_YL\in\mathbb{R}^{n\times d_v}$,
+
+$$
+\nabla_VL=A^\top G\in\mathbb{R}^{n\times d_v},
+\qquad
+\nabla_AL=GV^\top\in\mathbb{R}^{n\times n}.
+$$
+
+For each row $i$, with $a_i=A_{i,:}^\top$ and $g_{A,i}=(\nabla_AL)_{i,:}^\top$,
+
+$$
+g_{S,i}=
+\left(\operatorname{diag}(a_i)-a_ia_i^\top\right)g_{A,i}\in\mathbb{R}^{n}.
+$$
+
+Stacking rows and applying $S=QK^\top/\sqrt{d_k}$ gives
+
+$$
+\nabla_QL=\frac{\nabla_SL\,K}{\sqrt{d_k}}\in\mathbb{R}^{n\times d_k},
+\qquad
+\nabla_KL=\frac{(\nabla_SL)^\top Q}{\sqrt{d_k}}\in\mathbb{R}^{n\times d_k}.
+$$
+
+The projection gradients are
+
+$$
+\nabla_{W_Q}L=X^\top\nabla_QL\in\mathbb{R}^{d\times d_k},\quad
+\nabla_{W_K}L=X^\top\nabla_KL\in\mathbb{R}^{d\times d_k},\quad
+\nabla_{W_V}L=X^\top\nabla_VL\in\mathbb{R}^{d\times d_v}.
+$$
+
+At a masked position, the score gradient is exactly zero.
+
+**Steps.**
+
+1. Write the output differential:
+   $$
+   dY=dA\,V+A\,dV\in\mathbb{R}^{n\times d_v}.
+   $$
+   The scalar loss differential is
+   $$
+   dL=\langle G,dY\rangle_F
+   =\langle G,dA\,V\rangle_F+\langle G,A\,dV\rangle_F.
+   $$
+2. Use the Frobenius trace identity on the second term:
+   $$
+   \langle G,A\,dV\rangle_F
+   =\operatorname{tr}(G^\top A\,dV)
+   =\operatorname{tr}((A^\top G)^\top dV).
+   $$
+   Therefore $\nabla_VL=A^\top G$.
+3. Apply the same identity to the first term:
+   $$
+   \langle G,dA\,V\rangle_F
+   =\operatorname{tr}(G^\top dA\,V)
+   =\operatorname{tr}((GV^\top)^\top dA).
+   $$
+   Therefore $\nabla_AL=GV^\top$.
+4. Row $i$ uses $a_i=\operatorname{softmax}(\widetilde s_i)$. Its differential is $da_i=J_i\,d\widetilde s_i$, where
+   $$
+   J_i=\operatorname{diag}(a_i)-a_ia_i^\top\in\mathbb{R}^{n\times n}.
+   $$
+   Its scalar contribution is $g_{A,i}^\top da_i=(J_i^\top g_{A,i})^\top d\widetilde s_i$. The Jacobian is symmetric, giving the displayed row formula.
+5. A masked coordinate is a constant $-\infty$ input to the softmax. It has no differential, so $d\widetilde s_{ij}=0$ there and $(\nabla_SL)_{ij}=0$. This is why the implementation explicitly zeroes masked score gradients after the row-Jacobian multiplication.
+6. For $S=QK^\top/\sqrt{d_k}$,
+   $$
+   dS=\frac{dQ\,K^\top+Q\,dK^\top}{\sqrt{d_k}}.
+   $$
+   The first term identifies $\nabla_QL=(\nabla_SL)K/\sqrt{d_k}$; transposing the second identifies $\nabla_KL=(\nabla_SL)^\top Q/\sqrt{d_k}$.
+7. Finally, $Q=XW_Q$, $K=XW_K$, and $V=XW_V$. Apply the same matrix differential identity to obtain the three projection gradients and add their contributions to $\nabla_XL$.
+8. The check uses $n=4,d=d_k=d_v=3$ and the scalar objective $\sum_{ij}Y_{ij}G_{ij}$. The common float64 harness reports maximum absolute error $9.472506112828682\times10^{-12}$ over $X,W_Q,W_K,W_V$. If PyTorch is installed, the same check compares these arrays to torch.float64 autograd; the current minimal environment reports torch_autograd = unavailable rather than inventing an autograd result.
+
+**Check.** checks/M3/D-M3.1-02.py verifies all hand-written gradients, masked score gradients, and the optional autograd comparison; passed = True.
+
+**Intuition.** The backward pass follows the forward dataflow in reverse: values, then row competition, then query/key geometry, then the three input projections. Causal masking removes a path rather than merely making it small.
+
+### D-M3.1-03 · Attention as Nadaraya--Watson kernel regression
+
+**Theorem.** Define
+
+$$
+\kappa(q_i,k_j)=\exp\left(\frac{q_i^\top k_j}{\sqrt{d_k}}\right)>0.
+$$
+
+Then the attention row is the normalized kernel
+
+$$
+A_{ij}=\frac{\kappa(q_i,k_j)}{\sum_{r=1}^{n}\kappa(q_i,k_r)},
+$$
+
+and the output is
+
+$$
+y_i=\sum_{j=1}^{n}A_{ij}v_j
+=\frac{\sum_{j=1}^{n}\kappa(q_i,k_j)v_j}{\sum_{j=1}^{n}\kappa(q_i,k_j)}
+\in\mathbb{R}^{d_v}.
+$$
+
+**Steps.**
+
+1. Start with the unmasked score $s_{ij}=q_i^\top k_j/\sqrt{d_k}\in\mathbb{R}$.
+2. Exponentiating gives the positive kernel $\kappa(q_i,k_j)=e^{s_{ij}}$.
+3. Row softmax divides each kernel value by the row sum, producing the displayed $A_{ij}$ and $\sum_jA_{ij}=1$.
+4. Multiply the normalized weights by the value vectors and sum. The resulting expression is exactly the Nadaraya--Watson estimator, a differentiable dictionary lookup in which the query chooses the interpolation weights.
+5. For fixed $Q,K$, $V\mapsto AV$ is linear. But $A$ changes with the input-derived $Q,K$, so the entire attention layer is a data-dependent linear map rather than one fixed MLP matrix.
+6. The numerical check evaluates both forms on the same random arrays and verifies the linearity in $V$ at fixed weights to below $3\times10^{-17}$.
+
+**Check.** checks/M3/D-M3.1-03 compares the kernel quotient to the attention output and prints passed = True.
+
+**Analogy, labeled.** Calling attention a “soft dictionary lookup” is an analogy for the normalized kernel computation. The exact theorem is the equality to the Nadaraya--Watson quotient above.
+
+### D-M3.1-04 · Causal masking before versus after softmax
+
+**Theorem.** For a row with valid index set $\mathcal{V}$, adding $-\infty$ to invalid logits before softmax gives the same row as softmaxing all logits, setting invalid weights to zero, and renormalizing over $\mathcal{V}$:
+
+$$
+\frac{\exp(\widetilde s_j)}{\sum_{r\in\mathcal{V}}\exp(\widetilde s_r)}
+=\frac{\exp(s_j)}{\sum_{r\in\mathcal{V}}\exp(s_r)}
+\quad(j\in\mathcal{V}),
+$$
+
+with both sides zero for $j\notin\mathcal{V}$.
+
+**Steps.**
+
+1. For $j\in\mathcal{V}$, the pre-mask value is $\widetilde s_j=s_j$; for $j\notin\mathcal{V}$, $\exp(\widetilde s_j)=\exp(-\infty)=0$.
+2. Therefore the denominator of the pre-masked softmax is
+   $$
+   \sum_{r=1}^{n}\exp(\widetilde s_r)
+   =\sum_{r\in\mathcal{V}}\exp(s_r).
+   $$
+3. The valid numerator and denominator match the post-softmax-renormalized expression. Invalid coordinates are zero in both constructions.
+4. Implementations use the pre-softmax form because one stable row-softmax pass preserves normalization and the mask contributes zero gradient automatically. A fully masked row is a separate empty-set edge case, not a normal causal row.
+5. The check compares both algorithms on five random rows with an upper-triangular causal mask; the maximum difference is $1.1102230246251565\times10^{-16}$.
+
+**Check.** checks/M3/D-M3.1-04 verifies equivalence, valid-row sums, and prints passed = True.
+
+**Intuition.** The two procedures differ in when they remove invalid support, not in the final normalized distribution. Pre-softmax masking makes the intended support part of the softmax operation itself.
+
+### D-M3.1-05 · Multi-head parameters, FLOPs, and dependency paths
+
+**Claim.** With model width $d$, $h$ heads, and $d_h=d/h$, the four dense projection matrices $W_Q,W_K,W_V,W_O\in\mathbb{R}^{d\times d}$ contain
+
+$$
+4d^2
+$$
+
+parameters, ignoring biases. For sequence length $n$, the leading per-layer FLOP estimate in the course convention is
+
+$$
+8nd^2\quad\text{(Q/K/V/O projections)}
+$$
+
+plus
+
+$$
+4n^2d\quad\text{(score products and value products)}
+$$
+
+plus
+
+$$
+16nd^2\quad\text{(a $d\to4d\to d$ FFN)},
+$$
+
+so
+
+$$
+\operatorname{FLOPs}_{\mathrm{layer}}\approx24nd^2+4n^2d.
+$$
+
+**Steps.**
+
+1. Each of Q, K, V maps $\mathbb{R}^{d}$ to $\mathbb{R}^{d}$ after concatenating head widths, so each contains $d^2$ entries. The output mixing matrix adds a fourth $d^2$ block.
+2. A dense sequence projection uses $n d^2$ multiply-accumulates. Counting a multiply and an add as two FLOPs gives $2nd^2$ per projection and $8nd^2$ for four projections.
+3. Across all heads, the score products and value products each cost approximately $2n^2d$ FLOPs in the same convention. Together they contribute $4n^2d$.
+4. The FFN first expands $d$ to $4d$, then contracts $4d$ to $d$. The two matrix products contain $4d^2+4d^2=8d^2$ MACs per token, or $16nd^2$ FLOPs.
+5. Add the three terms to obtain $24nd^2+4n^2d$. The check uses $d=12,n=5$ and obtains $4d^2=576$ and the stated expression.
+6. The dependency table distinguishes three notions:
+
+| Layer | Sequential operations | Longest path | Per-layer work |
+| --- | --- | --- | --- |
+| Self-attention | $O(1)$ during training | $O(1)$ | $O(n^2d+nd^2)$ |
+| RNN | $O(n)$ | $O(n)$ | $O(nd^2)$ |
+| Convolution of width $k$ | $O(\log_k n)$ with a tree schedule | $O(\log_k n)$ | $O(knd^2)$ |
+
+   Self-attention has quadratic pairwise work but constant training-time dependency depth; an RNN has linear dependency depth but no pairwise $n^2$ score matrix.
+
+**Check.** checks/M3/D-M3.1-05 verifies the $4d^2$ count, FLOP decomposition, output shapes, and the complexity table; passed = True.
+
+**Source note.** The sequential-operation and path-length comparison is the table-level comparison in Vaswani et al. 2017; the FLOP accounting above states the simplifying $4d$ FFN and multiply/add convention used by this course.
+
+**Intuition.** Multi-head attention trades one wide similarity space for several narrower views. The model gains parallel, short paths at the price of an $n^2$ interaction term; later M4 will derive ways to reduce the memory traffic or cache cost.
+
+## 4. Numerical verification
+
+The five checks use deterministic float64 NumPy computations and the shared finite-difference harness. D-M3.1-02 also has an optional torch.float64 autograd comparison; because the current environment has no PyTorch package, its output records torch_autograd = unavailable and the hand-written check remains the authoritative executable result here.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M3.1-01 | variance relative errors below $0.016$; scaled high-width entropy exceeds unscaled entropy | pass |
+| D-M3.1-02 | all $X,W_Q,W_K,W_V$ gradients; maximum absolute error $9.472506112828682\times10^{-12}$; masked score gradient zero | pass |
+| D-M3.1-03 | kernel-output error $0$; fixed-weight linearity error $2.7755575615628914\times10^{-17}$ | pass |
+| D-M3.1-04 | pre/post mask maximum difference $1.1102230246251565\times10^{-16}$ | pass |
+| D-M3.1-05 | parameters $4d^2=576$ at $d=12$; output shapes and cost table pass | pass |
+
+Run python -m pytest course/tests from the repository parent. The reader displays these static numerical summaries; CI runs the checks.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M3-a" />
+
+<CourseWidget id="V-M3-b" />
+
+**V-M3-a — Attention explorer.** The widget specification is viz/specs/V-M3-a.yaml and the pure compute module is viz/compute/attention_explorer.ts. The reader can choose a sentence, layer, and head, then inspect the selected attention matrix together with QK score and OV value summaries. A-M3 exports the small GPT's real attention data.
+
+**V-M3-b — $1/\sqrt{d_k}$ scale slider.** The widget specification is viz/specs/V-M3-b.yaml and the pure compute module is viz/compute/attention_scale.ts. Change $d_k$ and toggle scaling to see logit variance, entropy, and the softmax-Jacobian norm. The insight sentence is that unscaled high-width logits collapse entropy and gradient.
+
+The modules return plain typed arrays/records. The existing frontend's Canvas2D layer can render the matrix and line summaries without replacing the reader.
+
+## 6. Closing
+
+**Counterintuitive question.** Why does self-attention have a shorter dependency path than an RNN even though it may do more arithmetic? **Worked answer:** D-M3.1-05 separates path length from work. During training, every position can form its query-key scores and value mix in parallel, so an information path from one position to another crosses one attention matrix. The matrix has $n^2$ pairwise entries, however, while an RNN performs $n$ sequential state transitions with $O(nd^2)$ work. A shorter path is a dependency statement, not a claim of lower total FLOPs or lower memory traffic.
+
+**Assignment A-M3.** Implement the config-driven nanoGPT baseline in code/minilm/, keep attention gradients hand-written and checked, train on the tiny-Shakespeare character fixture and a BPE-tokenized small corpus, sample with the decoding rules from M0.5, and export V-M3-a attention data. The next M3 lessons add position, normalization, residuals, FFN, and training/inference details.
+
+**Spine check.** Architecture-wise, attention replaces recurrent state transfer between positions with a masked, data-dependent matrix of reads. Probability-wise, the causal mask makes every row depend only on the prefix, so the same autoregressive factorization remains valid while the computational graph gains parallel training paths.

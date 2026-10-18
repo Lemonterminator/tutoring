@@ -1,0 +1,25 @@
+.practice-game h3 { scroll-margin-top: 5rem; }
+.practice-game__prompt, .practice-game__lines li { overflow-wrap: anywhere; }
+.practice-game__math--display { display: block; max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+.practice-game__prompt .katex-display { margin: .35em 0; }
+.practice-game__lines { padding-left: 1.4rem; line-height: 1.9; font-variant-numeric: tabular-nums; }
+.practice-game__format { color: var(--muted); font-size: .85rem; }
+.practice-game__format code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .95em; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 0 .25em; }
+.practice-game__formula { line-height: 2.2; }
+.practice-game .dot-game__tokens button { max-width: 100%; overflow-wrap: anywhere; padding: .45rem .65rem; }
+.practice-game .dot-game__slot { min-width: 3rem; max-width: 100%; padding: .25rem .5rem; }
+.practice-game .dot-game__number { overflow-wrap: anywhere; }
+.practice-game .dot-game__number input { width: 7rem; max-width: 100%; }
+.practice-game__bound { border: 1px solid var(--border); padding: .75rem; border-radius: 10px; }
+.practice-game__bound-rail { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: .5rem; margin-top: .7rem; }
+.practice-game__bound-rail button { display: grid; gap: .35rem; min-height: 4rem; background: var(--surface); color: inherit; border: 1px dashed var(--accent); border-radius: 8px; cursor: pointer; padding: .6rem; }
+.practice-game__bound-rail button span { font-size: .8rem; }
+.practice-game__marker { touch-action: none; position: relative; z-index: 1; cursor: grab; }
+.practice-game__marker:active { cursor: grabbing; }
+@media (max-width: 600px) { .practice-game .dot-game__formula { font-size: 1rem; } }
+.fig2d { margin: .8rem 0; }
+.fig2d svg { display: block; width: 100%; max-width: 440px; height: auto; }
+.fig2d figcaption { color: var(--muted); font-size: .85rem; margin-top: .3rem; }
+.fig2d--compact { margin: 0 0 .4rem; }
+.fig2d--compact svg { max-width: 170px; }
+.practice-game .martingale-game__choice { text-align: left; }

@@ -1,0 +1,281 @@
+## 1. 动机
+
+M0.5.3 将条件概率显式化为计数表。下一个缺陷是将“输出分布”视为一种表面选择。Bernoulli 和 Categorical 头产生离散似然，固定方差的高斯（Gaussian）头产生均值导向的平方误差目标，而混合（mixture）头可以表示多个合理的结果。本课将推导这些损失函数以及计算它们所需的稳定数值方法。
+
+## 2. 前向定义
+
+对于标量 logit $z\in\mathbb{R}$，定义 $\sigma(z)=1/(1+e^{-z})\in(0,1)$。对于分类 logit 向量 $z\in\mathbb{R}^{V}$，令 $p=\operatorname{softmax}(z)\in\Delta^{V-1}$。它们针对二元目标 $y\in\{0,1\}$ 和分类目标 $y\in\{1,\ldots,V\}$ 的负对数似然为
+
+$$
+\mathrm{BCE}(z,y)=-y\log\sigma(z)-(1-y)\log(1-\sigma(z))\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{CE}(z,y)=-\log p_y\in\mathbb{R}_{\ge0}.
+$$
+
+对于标量目标 $x\in\mathbb{R}$，高斯头（Gaussian head）使用均值 $\mu\in\mathbb{R}$ 和固定尺度 $\sigma>0$：
+
+$$
+p(x\mid\mu,\sigma)=\mathcal{N}(x;\mu,\sigma^2)\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{NLL}(x;\mu,\sigma)=\frac12\log(2\pi\sigma^2)+\frac{(x-\mu)^2}{2\sigma^2}\in\mathbb{R}.
+$$
+
+对于具有 $K$ 个分量的混合模型，$x,\mu_k\in\mathbb{R}$、$z_\pi, z_\sigma\in\mathbb{R}^{K}$ 和 $\pi\in\Delta^{K-1}$。在 D-M0.5.4-03 中，我们采用由规范固定的符号约定 $\pi=\operatorname{softmax}(-z_\pi)$，因此所请求的 logit 梯度为 $\gamma-\pi$：
+
+$$
+p(x)=\sum_{k=1}^{K}\pi_k\mathcal{N}(x;\mu_k,\sigma_k^2)\in\mathbb{R}_{\ge0},
+\qquad
+\mathrm{NLL}(x)=-\log p(x)\in\mathbb{R}.
+$$
+
+## 3. 推导过程
+
+### D-M0.5.4-01 · Bernoulli BCE 与 Categorical CE
+
+**断言。** Bernoulli logit 梯度为 $\partial\mathrm{BCE}/\partial z=\sigma(z)-y\in\mathbb{R}$，而 Categorical logit 梯度为 $\nabla_z\mathrm{CE}=p-e_y\in\mathbb{R}^{V}$。
+
+**步骤。**
+
+1. 将 Bernoulli 概率写为 $q=\sigma(z)\in(0,1)$，损失函数写为
+   $$
+   L(q,y)=-y\log q-(1-y)\log(1-q)\in\mathbb{R}_{\ge0}.
+   $$
+   （这两项分别选取观测到的二元结果的似然。）
+2. 对 $q$ 求导：
+   $$
+   \frac{\partial L}{\partial q}=-\frac{y}{q}+\frac{1-y}{1-q}\in\mathbb{R}.
+   $$
+   （$-\log(1-q)$ 的导数贡献了正倒数项。）
+3. 对 sigmoid 函数求导：
+   $$
+   \frac{\partial q}{\partial z}=q(1-q)\in\mathbb{R}.
+   $$
+   （对 $q=(1+e^{-z})^{-1}$ 求导，并利用 $q$ 重写结果。）
+4. 应用标量链式法则并化简：
+   $$
+   \frac{\partial L}{\partial z}=\left(-\frac{y}{q}+\frac{1-y}{1-q}\right)q(1-q)=q-y=\sigma(z)-y\in\mathbb{R}.
+   $$
+   （因子 $q$ 和 $1-q$ 抵消了两个分母。）
+5. 对于 Categorical 目标，使用来自 D-M0.1-02 的 Softmax 交叉熵：
+   $$
+   L(z,y)=-\log\operatorname{softmax}(z)_y\in\mathbb{R}_{\ge0}.
+   $$
+   （Categorical 输出层为 $V$ 个结果中的每一个分配一个概率。）
+6. 直接应用 D-M0.1-02：
+   $$
+   \nabla_zL=p-e_y\in\mathbb{R}^{V}.
+   $$
+   （先前的推导已包含 Softmax Jacobian 和目标坐标。）
+
+**检查。** `checks/M0.5/D-M0.5.4-01.py` — BCE 最大绝对误差 `1.218e-10`，CE 最大绝对误差 `1.560e-10`，`passed = True`。
+
+**直觉。** BCE 和 CE 并非损失函数的随意命名。它们是负对数似然，其简单的 logit 梯度源于相应的输出分布。
+
+### D-M0.5.4-02 · 固定方差高斯 NLL 等价于 MSE（相差常数）
+
+**断言。** 对于固定的 $\sigma>0$，在 $\mu$ 上最小化高斯 NLL 等价于最小化平方误差，且单个高斯分布预测的是条件均值。在对称双峰目标上，该均值位于两个峰之间。
+
+**步骤。**
+
+1. 从标量高斯密度出发并取其负对数：
+   $$
+   -\log p(x\mid\mu,\sigma)=\frac12\log(2\pi\sigma^2)+\frac{(x-\mu)^2}{2\sigma^2}\in\mathbb{R}.
+   $$
+   （取负对数将似然训练中使用的密度乘积转换为加性损失。）
+2. 对于固定的 $\sigma$，定义常数 $C_\sigma=\frac12\log(2\pi\sigma^2)\in\mathbb{R}$：
+   $$
+   \mathrm{NLL}(x;\mu,\sigma)=C_\sigma+\frac{1}{2\sigma^2}(x-\mu)^2\in\mathbb{R}.
+   $$
+   （第一项不依赖于预测均值。）
+3. 在数据 $x_1,\ldots,x_N\in\mathbb{R}$ 上对损失取平均：
+   $$
+   \overline{\mathrm{NLL}}(\mu)=C_\sigma+\frac{1}{2\sigma^2}\frac1N\sum_{i=1}^{N}(x_i-\mu)^2\in\mathbb{R}.
+   $$
+   （取平均保留了相同的加性常数和正比例系数。）
+4. 对 $\mu$ 求导：
+   $$
+   \frac{d\overline{\mathrm{NLL}}}{d\mu}=\frac{1}{N\sigma^2}\sum_{i=1}^{N}(\mu-x_i)\in\mathbb{R}.
+   $$
+   （$(x_i-\mu)^2$ 的导数是 $2(\mu-x_i)$。）
+5. 令导数为零：
+   $$
+   0=N\mu-\sum_ix_i\quad\Longrightarrow\quad\hat\mu=\frac1N\sum_{i=1}^{N}x_i\in\mathbb{R}.
+   $$
+   （唯一的二次极小值是样本均值。）
+6. 对于质量相等的双峰目标 $x\in\{-1,+1\}$，有 $\hat\mu=0\in\mathbb{R}$。（均值位于两个峰之间的低密度间隙中。）
+7. 因此，固定方差的单个高斯分布具有与 MSE 相同的优化器，并会模糊该双峰目标，而混合模型可以在两个峰附近分别放置质量。（决定这种不确定性行为的是输出族，而不仅仅是隐藏表示。）
+
+**检查。** `checks/M0.5/D-M0.5.4-02.py` — 均值 `0.0`，MSE `1.0`，NLL/MSE 等价误差 `0.0`，`passed = True`。
+
+**直觉。** 对于单个平方误差碗，预测均值是最优的。当目标有两个有效答案时，该碗将其最优解置于两者之间。
+
+### D-M0.5.4-03 · 混合密度 NLL 与后验责任度
+
+**断言。** 设 $\gamma_k$ 为分量 $k$ 的后验责任度。在 D-M0.5.4 规范的符号约定 $\pi=\operatorname{softmax}(-z_\pi)$ 下，
+
+$$
+\frac{\partial\mathrm{NLL}}{\partial\mu_k}=-\gamma_k\frac{x-\mu_k}{\sigma_k^2},
+\qquad
+\frac{\partial\mathrm{NLL}}{\partial\log\sigma_k}=-\gamma_k\left(\frac{(x-\mu_k)^2}{\sigma_k^2}-1\right),
+\qquad
+\nabla_{z_\pi}\mathrm{NLL}=\gamma-\pi\in\mathbb{R}^{K}.
+$$
+
+**步骤。**
+
+1. 定义分量密度和混合密度：
+   $$
+   q_k=\mathcal{N}(x;\mu_k,\sigma_k^2)\in\mathbb{R}_{>0},
+   \qquad
+   S=\sum_{j=1}^{K}\pi_jq_j\in\mathbb{R}_{>0},
+   \qquad
+   \mathrm{NLL}=-\log S\in\mathbb{R}.
+   $$
+   （正混合密度是加权正分量密度的总和。）
+2. 定义后验责任度：
+   $$
+   \gamma_k=\frac{\pi_kq_k}{S}\in[0,1],
+   \qquad
+   \sum_{k=1}^{K}\gamma_k=1.
+   $$
+   （贝叶斯规则针对观测到的 $x$ 对分量贡献进行归一化。）
+3. 对高斯对数密度关于其均值求导：
+   $$
+   \frac{\partial\log q_k}{\partial\mu_k}=\frac{x-\mu_k}{\sigma_k^2}\in\mathbb{R}.
+   $$
+   （仅平方残差依赖于 $\mu_k$。）
+4. 通过 $S$ 对混合 NLL 求导：
+   $$
+   \frac{\partial\mathrm{NLL}}{\partial\mu_k}=-\frac{1}{S}\pi_k\frac{\partial q_k}{\partial\mu_k}
+   =-\frac{\pi_kq_k}{S}\frac{\partial\log q_k}{\partial\mu_k}
+   =-\gamma_k\frac{x-\mu_k}{\sigma_k^2}.
+   $$
+   （当分量导数除以完整的混合密度时，责任度出现。）
+5. 设 $r_k=\log\sigma_k\in\mathbb{R}$，则 $\sigma_k=e^{r_k}\in\mathbb{R}_{>0}$。求导：
+   $$
+   \frac{\partial\log q_k}{\partial r_k}=\frac{(x-\mu_k)^2}{\sigma_k^2}-1\in\mathbb{R}.
+   $$
+   （对数尺度贡献了一个归一化项和一个残差尺度项。）
+6. 应用相同的混合加权：
+   $$
+   \frac{\partial\mathrm{NLL}}{\partial r_k}=-\gamma_k\left(\frac{(x-\mu_k)^2}{\sigma_k^2}-1\right)\in\mathbb{R}.
+   $$
+   （责任度对分量的尺度证据进行加权。）
+7. 使用 $\pi=\operatorname{softmax}(-z_\pi)$ 和 $\partial\log S/\partial\log\pi_k=\gamma_k$：
+   $$
+   \frac{\partial\mathrm{NLL}}{\partial z_{\pi,k}}=\gamma_k-\pi_k\in\mathbb{R}.
+   $$
+   （所选参数化中的负号贡献了所需的符号。）
+8. 将三个坐标族收集为显示的梯度。（这是 EM 的责任度计算与梯度下降的参数更新交汇之处。）
+
+**检查。** `checks/M0.5/D-M0.5.4-03.py` — 联合参数梯度最大绝对误差 `1.866e-10`；责任度 `[0.2381187835, 0.5459244470, 0.2159567700]`；`passed = True`。
+
+**直觉。** 每个观测值将责任度分配给各个分量。一个分量根据其责任度移动其均值和尺度，而混合 logit 通过归一化的责任度向量进行竞争。
+
+### D-M0.5.4-04 · 稳定的 Log-Sum-Exp 与输出重参数化
+
+**断言。** 对于 $a\in\mathbb{R}^{K}$，Log-Sum-Exp 恒等式
+
+$$
+\operatorname{lse}(a)=\log\sum_{k=1}^{K}e^{a_k}=m+\log\sum_{k=1}^{K}e^{a_k-m},\qquad m=\max_k a_k\in\mathbb{R}
+$$
+
+是精确的，且没有指数项超过 $1$。重参数化 $\sigma=e^{z_\sigma}$ 和 $\pi=\operatorname{softmax}(z_\pi)$ 具有标量导数 $\partial\sigma/\partial z_\sigma=\sigma$ 和 Jacobian $\operatorname{diag}(\pi)-\pi\pi^\top\in\mathbb{R}^{K\times K}$。
+
+**步骤。**
+
+1. 从正和中提取因子 $e^m$：
+   $$
+   \sum_ke^{a_k}=\sum_ke^{m}e^{a_k-m}=e^m\sum_ke^{a_k-m}\in\mathbb{R}_{>0}.
+   $$
+   （相同的标量因子 $e^m$ 乘以每一项。）
+2. 取对数：
+   $$
+   \log\sum_ke^{a_k}=\log e^m+\log\sum_ke^{a_k-m}=m+\log\sum_ke^{a_k-m}\in\mathbb{R}.
+   $$
+   （对数将提取的乘积转换为和。）
+3. 由于 $m=\max_k a_k$，每个移位后的指数满足 $a_k-m\le0$：
+   $$
+   0<e^{a_k-m}\le1\in\mathbb{R}.
+   $$
+   （移位后，单个指数不会溢出。）
+4. 对于正尺度重参数化 $\sigma=e^{z_\sigma}$：
+   $$
+   \frac{\partial\sigma}{\partial z_\sigma}=e^{z_\sigma}=\sigma\in\mathbb{R}_{>0}.
+   $$
+   （指数导数保持正性。）
+5. 对于 $\pi=\operatorname{softmax}(z_\pi)\in\Delta^{K-1}$，D-M0.1-01 给出
+   $$
+   \frac{\partial\pi}{\partial z_\pi}=\operatorname{diag}(\pi)-\pi\pi^\top\in\mathbb{R}^{K\times K}.
+   $$
+   （归一化耦合了所有 Categorical 坐标。）
+6. 因此，稳定的 Log-Sum-Exp 在代数上是精确的但在数值上更安全，而指数和 Softmax 映射强制了输出约束。（稳定性改变了求值路径，而非所表示的实值表达式。）
+
+**检查。** `checks/M0.5/D-M0.5.4-04.py` — 稳定 Log-Sum-Exp 误差 `0.0`，Softmax 和 `1.0`，Jacobian 对称性误差 `0.0`，`passed = True`。
+
+**直觉。** 减去最大值并不是对 Log-Sum-Exp 的近似。它改变了运算顺序，使得浮点指数保持在安全范围内。
+
+### D-M0.5.4-05 · 基于分箱的离散化 Logistic 混合模型
+
+**断言。** 对于均值为 $\mu\in\mathbb{R}$ 且对数尺度为 $r\in\mathbb{R}$ 的 Logistic 分量，分箱 $[\ell,u]\subset\mathbb{R}$ 的概率是 CDF 差值
+
+$$
+P(\ell\le X\le u)=\operatorname{sigmoid}\left(\frac{u-\mu}{e^r}\right)-\operatorname{sigmoid}\left(\frac{\ell-\mu}{e^r}\right)\in[0,1].
+$$
+
+混合模型使用权重 $\pi_k$ 对这些分箱质量求和，因此 Categorical 分箱和连续混合密度输出是同一似然框架的两个端点。
+
+**步骤。**
+
+1. 定义标量 $z\in\mathbb{R}$ 的 Logistic CDF：
+   $$
+   F(z;\mu,r)=\operatorname{sigmoid}\left(\frac{z-\mu}{e^r}\right)\in(0,1).
+   $$
+   （正尺度为 $e^r$，Sigmoid 将标准化坐标映射到 CDF 值。）
+2. 通过在端点评估 CDF 对分箱内的密度进行积分：
+   $$
+   P(\ell\le X\le u)=F(u;\mu,r)-F(\ell;\mu,r)\in[0,1].
+   $$
+   （微积分基本定理将密度积分转换为 CDF 差值。）
+3. 对于 $K$ 个分量，加权并相加分量分箱概率：
+   $$
+   P(\ell\le X\le u)=\sum_{k=1}^{K}\pi_k\left[F(u;\mu_k,r_k)-F(\ell;\mu_k,r_k)\right]\in[0,1].
+   $$
+   （混合概率是分量概率的加权和。）
+4. 如果输出分箱构成完整的离散字母表，则这些分箱质量形成 Categorical 分布。（连续密度已转换为有限分箱概率。）
+5. 如果分箱很细且混合参数保持连续，则同一表达式近似于连续密度似然。（分箱宽度控制离散化程度，而非改变混合原理。）
+6. 术语说明：Larochelle 和 Murray 提出的原始 NADE (2011) 是一个具有权重共享隐藏单元的二值数据模型；讲座中的混合密度循环模型更接近 RNADE/MDN-RNN。（这些名称标识了不同的输出构造，不应混淆。）
+
+主要术语来源：[NADE](https://proceedings.mlr.press/v15/larochelle11a.html)、[RNADE](https://arxiv.org/abs/1306.0186) 和 [PixelCNN++](https://arxiv.org/abs/1701.05517)。
+
+**检查。** `checks/M0.5/D-M0.5.4-05.py` — 最小分箱概率非负；覆盖质量 `0.999...`；`passed = True`。
+
+**直觉。** Categorical 输出头直接将质量分配给分箱。Logistic 混合输出头通过对相同分箱积分平滑分量来分配质量，因此这两个输出头在参数化和分辨率上有所不同，而非在概率记账上。
+
+## 4。数值验证
+
+这五项检查使用确定性的 float64 输入。它们涵盖了 BCE/CE 梯度、高斯/MSE 等价性、所有请求的 MDN 梯度、稳定的 log-sum-exp 以及离散化逻辑二项积分。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M0.5.4-01 | BCE 误差 `1.218e-10`；CE 误差 `1.560e-10` | pass |
+| D-M0.5.4-02 | 均值 `0.0`；MSE `1.0`；等价性误差 `0.0` | pass |
+| D-M0.5.4-03 | 梯度误差 `1.866e-10`；责任度之和为 `1` | pass |
+| D-M0.5.4-04 | 稳定 LSE 误差 `0.0`；softmax 和 `1.0` | pass |
+| D-M0.5.4-05 | 覆盖质量 `0.999...`；二项概率非负 | pass |
+
+从仓库父目录运行 `python -m pytest course/tests`。高斯与混合模型小部件拥有独立的 Node 测试，用于验证其纯计算契约。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M0.5-c" />
+
+**V-M0.5-c —— 单高斯与混合模型对比。** 读者可选择分量数量 $K$ 以及确定性的单峰或双峰数据形态。纯计算模块返回数据、MSE 最优高斯均值、混合模型参数及固定步长损失轨迹。其核心洞见在于：MSE 预测的是均值并会模糊双峰目标，而混合模型可将概率质量置于两个峰值附近；规范为 `viz/specs/V-M0.5-c.yaml`，经测试的计算为 `viz/compute/gaussian_mixture_trainer.ts`。
+
+## 6。结语
+
+**反直觉的问题。** 为什么更优的隐藏表示仍可能产生模糊的预测？**解答：** D-M0.5.4-02 表明，固定方差的单高斯分布优化的是均方误差（MSE），因此它预测的是条件均值。即使隐藏状态包含有用信息，输出族也会丢弃多模态特性。D-M0.5.4-03 展示了混合模型如何通过责任系数恢复多个模式。
+
+**作业 A-M0.5。** 在双峰玩具数据集上比较单高斯与混合似然，并导出 V-M0.5-c 所使用的确定性轨迹。作业合同位于 `code/common/A-M0.5-README.md`。
+
+**核心检查。** 从架构角度看，输出头是模型归纳偏置的一部分：它决定了不确定性是伯努利分布、类别分布、单峰连续分布还是多峰连续分布。从概率角度看，每个熟悉的损失函数都是带有可验证梯度的负对数似然。

@@ -1,0 +1,25 @@
+{
+  "id": "NVIDIA-0",
+  "subject": "nvidia",
+  "module": "20-hour interview sprint",
+  "title": {
+    "en": "NVIDIA Graduate Program interview graph",
+    "zh": "NVIDIA Graduate Program 面试知识图谱"
+  },
+  "prereqs": [],
+  "estimatedHours": 20,
+  "spine": {
+    "en": {
+      "a": "Cover 21 core concept and case units with checks and cross-layer reasoning.",
+      "b": "Use the graph for orientation; use the study flow for the 20-hour sprint."
+    },
+    "zh": {
+      "a": "用检查和跨层推理覆盖 21 个核心概念与案例单元。",
+      "b": "图谱用于定位，连续学习流用于 20 小时冲刺。"
+    }
+  },
+  "derivations": ["Obsidian graph schema"],
+  "visualizations": ["NVIDIA interview graph"],
+  "assignment": "Complete each core check, then trace one GEMM question across five layers",
+  "references": ["User-provided NVIDIA interview synthesis"]
+}

@@ -1,0 +1,122 @@
+/* The graph reuses the shared theme; these additional tokens identify courses. */
+.concept-graph {
+  container-type: inline-size;
+  --graph-SP: #e4572e;
+  --graph-OPT: #2f9e73;
+  --graph-STAT: #b58a00;
+  --graph-BM: #9d66c1;
+  --graph-EN: #16a2c9;
+  --graph-RL: #e0449a;
+  --graph-CVX: #5974e8;
+  --graph-LA: #c76835;
+  --graph-CALC: #327cbb;
+  --graph-PROB: #268873;
+  --graph-INF: #ac5b9e;
+  --graph-MEAS: #6b76ba;
+  --graph-MAT: #b78d36;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+/* Colour tokens: no data-theme (or "system") follows the page theme set by the site-wide switch.
+   An explicit light/dark graph override reuses the shared token lists in framework/theme/index.css. */
+@supports selector(.page:has(.concept-graph)) {
+  .page:has(.concept-graph) {
+    width: min(120rem, 100%);
+    margin-inline: auto;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}
+.concept-graph p { margin: 0.5rem 0; }
+.concept-graph h2 { margin: 0 0 0.5rem; padding: 0; border: 0; font-size: 1.25rem; line-height: 1.35; overflow-wrap: anywhere; }
+.concept-graph h3 { margin: 0 0 0.5rem; font-size: 0.93rem; }
+.concept-graph code { font-size: 0.77rem; overflow-wrap: anywhere; }
+.concept-graph input[type="search"], .concept-graph select {
+  display: block; width: 100%; min-width: 0; min-height: 2.5rem;
+  font: inherit; padding: 0.45rem 0.65rem; background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px;
+}
+.concept-graph label { font-size: 0.8rem; }
+.concept-graph__heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.8rem; }
+.concept-graph__heading > p { color: var(--muted); }
+.concept-graph__heading > label { min-width: 7rem; flex-shrink: 0; }
+.concept-graph__controls { display: flex; flex-wrap: wrap; align-items: end; gap: 0.75rem; }
+.concept-graph__search { flex: 1 1 13rem; }
+.concept-graph__selector { flex: 1 1 16rem; }
+.concept-graph__controls > .seg { align-self: center; }
+.concept-graph__controls > .check { align-self: center; }
+.concept-graph__courses { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.8rem 0; }
+.concept-graph__chip {
+  display: inline-flex; gap: 0.4rem; align-items: center; min-height: 2.5rem;
+  font: inherit; font-size: 0.75rem; padding: 0.35rem 0.55rem;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 99px; cursor: pointer;
+}
+.concept-graph__chip[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.concept-graph__chip[aria-pressed="false"] { text-decoration: line-through; opacity: 0.65; }
+.concept-graph__dot { display: inline-block; flex-shrink: 0; width: 0.6rem; height: 0.6rem; border-radius: 50%; }
+.concept-graph__stats { color: var(--muted); font-variant-numeric: tabular-nums; }
+.concept-graph__results { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.7rem; }
+.concept-graph__results > span { align-self: center; color: var(--muted); font-size: 0.8rem; }
+.concept-graph__workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 23rem); gap: 1rem; align-items: start; }
+.concept-graph__map { min-width: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.concept-canvas { position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; height: clamp(24rem, 65vh, 48rem); }
+.concept-canvas canvas { display: block; min-height: 0; min-width: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.concept-canvas canvas:active { cursor: grabbing; }
+.concept-canvas__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; background: var(--surface); border-top: 1px solid var(--border); padding: 0.4rem 0.5rem; font-size: 0.7rem; }
+.concept-canvas__tools .btn { font-size: 0.75rem; min-width: 2rem; min-height: 2rem; padding-inline: 0.5rem; }
+.concept-canvas__tools > span { padding-inline: 0.3rem; }
+.concept-canvas__empty { position: absolute; top: 35%; left: 1rem; right: 1rem; text-align: center; color: var(--muted); }
+.concept-graph__hint { padding: 0.5rem 0.75rem; color: var(--muted); font-size: 0.74rem; border-top: 1px solid var(--border); }
+.concept-graph__sidebar { min-width: 0; max-height: 72vh; overflow: auto; overscroll-behavior: contain; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-wrap: anywhere; }
+.concept-graph__detail-head { display: flex; align-items: start; gap: 0.6rem; justify-content: space-between; }
+.concept-graph__detail-head .btn { flex-shrink: 0; font-size: 0.7rem; }
+.concept-graph__muted { color: var(--muted); font-size: 0.76rem; }
+.concept-graph__source-link { color: var(--accent); text-underline-offset: 0.18em; overflow-wrap: anywhere; }
+.concept-graph__source-missing, .concept-graph__source-note { color: var(--muted); font-size: 0.76rem; }
+.concept-graph__source-note { margin-top: 0.35rem; }
+.concept-graph__tags { display: inline-flex; gap: 0.25rem; flex-wrap: wrap; vertical-align: middle; }
+.concept-graph__tags > span { display: inline-block; border: 1px solid; border-radius: 99px; padding: 0.03rem 0.3rem; font-size: 0.65rem; color: var(--text); }
+.concept-graph__badge { display: inline-block; padding: 0.05rem 0.4rem; margin: 0.2rem; font-size: 0.66rem; border: 1px dashed var(--warn); color: var(--text); border-radius: 5px; }
+.concept-graph__notice { padding: 0.45rem; background: var(--grid); border-radius: 5px; font-size: 0.75rem; }
+.concept-graph__section { margin-top: 1.1rem; border-top: 1px solid var(--border); padding-top: 0.75rem; }
+.concept-graph__section ul, .concept-graph__section ol { margin: 0; padding-left: 1.1rem; }
+.concept-graph__section li { margin: 0.3rem 0; padding-bottom: 0.5rem; }
+.concept-graph__section li + li { border-top: 1px solid var(--border); padding-top: 0.4rem; }
+.concept-graph__node-link { font: inherit; font-size: 0.83rem; padding: 0.1rem 0; color: var(--accent); border: 0; background: transparent; cursor: pointer; text-align: left; text-decoration: underline; text-underline-offset: 0.2rem; }
+.concept-graph__evidence summary { font-size: 0.75rem; }
+.concept-graph__quote { padding: 0.5rem 0 0.5rem 0.5rem; margin-top: 0.5rem; border-left: 2px solid var(--border); font-size: 0.76rem; }
+.concept-graph__legend { list-style: none; padding: 0; font-size: 0.75rem; }
+.concept-graph__legend li { margin-bottom: 0.5rem; }
+.concept-graph__legend .concept-graph__dot { margin-right: 0.35rem; }
+.concept-graph__limits { margin-top: 1rem; color: var(--muted); font-size: 0.8rem; }
+.concept-graph__error { padding: 1rem; border: 1px solid var(--warn); border-radius: var(--radius); }
+@container (max-width: 1100px) {
+  .concept-graph__workspace { grid-template-columns: minmax(0, 1fr); }
+  .concept-graph__sidebar { max-height: 34rem; }
+}
+.concept-graph input:focus-visible, .concept-graph select:focus-visible, .concept-graph button:focus-visible,
+.concept-graph canvas:focus-visible, .concept-graph summary:focus-visible, .concept-graph a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 1200px) {
+  .concept-graph__workspace { grid-template-columns: minmax(0, 1fr); }
+  .concept-graph__sidebar { max-height: 34rem; }
+}
+@media (max-width: 900px) {
+  @supports selector(.page:has(.concept-graph)) {
+    .page:has(.concept-graph) { grid-template-columns: minmax(0, 1fr); }
+  }
+}
+@media (max-width: 600px) {
+  .concept-graph { padding: 0.65rem; }
+  .concept-graph__heading { align-items: start; }
+  .concept-graph__heading > p { margin-top: 0; }
+  .concept-graph__controls > label { flex-basis: 100%; }
+  .concept-canvas { height: 24rem; }
+  .concept-graph__sidebar { padding: 0.75rem; }
+}
+
+.concept-graph__study-order { color: var(--muted); font-size: 0.85rem; line-height: 1.6; margin: 0.8rem 0 0.4rem; }

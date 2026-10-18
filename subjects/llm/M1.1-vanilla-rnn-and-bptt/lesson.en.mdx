@@ -1,0 +1,440 @@
+## 1. Motivation
+
+M0.5 fixed the probability factorization. The remaining defect is architectural: a vanilla RNN stores the prefix in a recursively updated hidden state, so a gradient must cross a product of recurrent Jacobians. This lesson unrolls that graph, derives every shared parameter gradient, and separates three effects that are often conflated: saturation, truncation, and gradient clipping.
+
+## 2. Forward definition
+
+Let $x_t\in\mathbb{R}^{D}$, $h_t\in\mathbb{R}^{H}$, $z_t\in\mathbb{R}^{V}$, and $p_t\in\Delta^{V-1}\subset\mathbb{R}^{V}$. Let
+
+$$
+W_h\in\mathbb{R}^{H\times H},\quad
+W_x\in\mathbb{R}^{H\times D},\quad
+b\in\mathbb{R}^{H},\quad
+W_y\in\mathbb{R}^{V\times H},\quad
+c\in\mathbb{R}^{V}.
+$$
+
+With $h_0=0\in\mathbb{R}^{H}$, the recurrence and output are
+
+$$
+a_t=W_hh_{t-1}+W_xx_t+b\in\mathbb{R}^{H},
+\qquad
+h_t=\tanh(a_t)\in\mathbb{R}^{H},
+$$
+
+$$
+z_t=W_yh_t+c\in\mathbb{R}^{V},
+\qquad
+p_t=\operatorname{softmax}(z_t)\in\Delta^{V-1}.
+$$
+
+For next-token teacher forcing, the target $x_{t+1}$ is represented by an index in $\{1,\ldots,V\}$ and $e_{x_{t+1}}\in\mathbb{R}^{V}$ is its one-hot vector. The scalar loss and sequence loss are
+
+$$
+\ell_t=-\log p_t[x_{t+1}]\in\mathbb{R},
+\qquad
+L=\sum_{t=1}^{T}\ell_t\in\mathbb{R}.
+$$
+
+The RNN is sequential in $h_t$ even when all teacher-forced inputs are known before the forward pass.
+
+## 3. Derivations
+
+### D-M1.1-01 · Per-step output gradient
+
+**Theorem.** For $\ell_t=-\log p_t[x_{t+1}]$ with $p_t=\operatorname{softmax}(z_t)$,
+
+$$
+\frac{\partial\ell_t}{\partial z_t}=p_t-e_{x_{t+1}}\in\mathbb{R}^{V},
+\qquad
+\nabla_{W_y}\ell_t=(p_t-e_{x_{t+1}})h_t^\top\in\mathbb{R}^{V\times H}.
+$$
+
+**Steps.**
+
+1. For $p_i=\exp(z_i)/\sum_j\exp(z_j)$, differentiate coordinate $i$ with respect to logit $z_j$:
+   $$
+   \frac{\partial p_i}{\partial z_j}=p_i(\mathbf{1}_{i=j}-p_j)\in\mathbb{R}.
+   $$
+   (The quotient rule gives one direct numerator term and one shared-denominator term.)
+2. The loss derivative with respect to probability coordinate $p_i$ is
+   $$
+   \frac{\partial\ell_t}{\partial p_i}
+   =-\frac{\mathbf{1}_{i=x_{t+1}}}{p_{x_{t+1}}}\in\mathbb{R}.
+   $$
+   (Only the target coordinate appears in the negative log.)
+3. Apply the scalar chain rule for logit coordinate $z_j$:
+   $$
+   \frac{\partial\ell_t}{\partial z_j}
+   =\sum_i\frac{\partial\ell_t}{\partial p_i}
+   \frac{\partial p_i}{\partial z_j}
+   =-\frac{p_{x_{t+1}}(\mathbf{1}_{x_{t+1}=j}-p_j)}{p_{x_{t+1}}}
+   =p_j-\mathbf{1}_{j=x_{t+1}}.
+   $$
+   (The target probability cancels.)
+4. Collect the $V$ scalar coordinates:
+   $$
+   \nabla_{z_t}\ell_t=p_t-e_{x_{t+1}}\in\mathbb{R}^{V}.
+   $$
+   (This is the same softmax-cross-entropy result checked in D-M0.1-02.)
+5. For $z_t=W_yh_t+c$, a perturbation of $W_y$ gives
+   $$
+   dz_t=(dW_y)h_t\in\mathbb{R}^{V}.
+   $$
+   The scalar differential is
+   $$
+   d\ell_t=(p_t-e_{x_{t+1}})^\top(dW_y)h_t
+   =\operatorname{tr}\left(\left[(p_t-e_{x_{t+1}})h_t^\top\right]^\top dW_y\right).
+   $$
+   (The trace form identifies the matrix gradient under the Frobenius inner product.)
+6. Therefore
+   $$
+   \nabla_{W_y}\ell_t=(p_t-e_{x_{t+1}})h_t^\top\in\mathbb{R}^{V\times H}.
+   $$
+   (Each output row receives the scalar logit error multiplied by the hidden activation.)
+
+**Check.** checks/M1/D-M1.1-01.py compares the logit gradient with float64 central differences and checks the outer-product matrix form; passed = True.
+
+**Intuition.** The output layer sees an error vector in vocabulary space. The matrix gradient maps that vector back onto the hidden activation that caused the prediction.
+
+### D-M1.1-02 · Backward recursion in the hidden state
+
+**Theorem.** Define $\delta_t=\nabla_{h_t}L\in\mathbb{R}^{H}$. With $\delta_{T+1}=0\in\mathbb{R}^{H}$,
+
+$$
+\delta_t
+=W_y^\top(p_t-e_{x_{t+1}})
++W_h^\top\left(\delta_{t+1}\odot(1-h_{t+1}^{\odot2})\right)
+\in\mathbb{R}^{H}.
+$$
+
+The first term is the direct output path at time $t$; the second is the indirect path through $h_{t+1}$.
+
+In one line, the recursion is $\delta_t = W_y^\top(p_t-e_{x_{t+1}})+W_h^\top(\delta_{t+1}\odot(1-h_{t+1}^{\odot2}))$ with every term in $\mathbb{R}^{H}$.
+
+**Steps.**
+
+1. The direct path through $z_t=W_yh_t+c$ contributes
+   $$
+   \left.\nabla_{h_t}\ell_t\right|_{\mathrm{direct}}
+   =W_y^\top\nabla_{z_t}\ell_t
+   =W_y^\top(p_t-e_{x_{t+1}})\in\mathbb{R}^{H}.
+   $$
+   (Transpose the linear map from hidden space to vocabulary space.)
+2. The next hidden state is
+   $$
+   h_{t+1}=\tanh(W_hh_t+W_xx_{t+1}+b)\in\mathbb{R}^{H}.
+   $$
+   Its local Jacobian is
+   $$
+   \frac{\partial h_{t+1}}{\partial h_t}
+   =\operatorname{diag}(1-h_{t+1}^{\odot2})W_h\in\mathbb{R}^{H\times H}.
+   $$
+   (The derivative of tanh is applied coordinatewise.)
+3. The indirect path applies the transpose Jacobian to the upstream state gradient:
+   $$
+   \left.\nabla_{h_t}L\right|_{\mathrm{indirect}}
+   =\left(\frac{\partial h_{t+1}}{\partial h_t}\right)^\top\delta_{t+1}
+   =W_h^\top\left(\delta_{t+1}\odot(1-h_{t+1}^{\odot2})\right)\in\mathbb{R}^{H}.
+   $$
+   (Reverse mode transposes the forward Jacobian.)
+4. Add the two paths:
+   $$
+   \delta_t
+   =\left.\nabla_{h_t}\ell_t\right|_{\mathrm{direct}}
+   +\left.\nabla_{h_t}L\right|_{\mathrm{indirect}}.
+   $$
+   (The total loss contains the local output and all later outputs.)
+5. At the final prediction there is no later recurrent state, so $\delta_{T+1}=0\in\mathbb{R}^{H}$. This makes the recursion terminate at $t=T$.
+6. For the numerical fixture, independently perturb $h_0\in\mathbb{R}^{H}$, rerun the forward loss, and compare the finite-difference gradient with the recursively propagated $\nabla_{h_0}L$. (The check tests the complete chain, not only a symbolic substitution.)
+
+**Check.** checks/M1/D-M1.1-02.py reports a finite-difference maximum absolute error below 8e-10 and a recursion identity error of 0.0; passed = True.
+
+**Intuition.** Every time step contributes a direct error, and every later time step sends an additional error backward through the recurrent edge. BPTT is the sum of these paths.
+
+### D-M1.1-03 · Parameter gradients and weight sharing
+
+**Theorem.** Let
+
+$$
+\eta_t=\delta_t\odot(1-h_t^{\odot2})\in\mathbb{R}^{H}
+$$
+
+be the pre-activation gradient. Then
+
+$$
+\nabla_{W_h}L=\sum_{t=1}^{T}\eta_t h_{t-1}^\top\in\mathbb{R}^{H\times H},
+\qquad
+\nabla_{W_x}L=\sum_{t=1}^{T}\eta_t x_t^\top\in\mathbb{R}^{H\times D},
+$$
+
+$$
+\nabla_bL=\sum_{t=1}^{T}\eta_t\in\mathbb{R}^{H},
+\qquad
+\nabla_{W_y}L=\sum_{t=1}^{T}(p_t-e_{x_{t+1}})h_t^\top\in\mathbb{R}^{V\times H},
+\qquad
+\nabla_cL=\sum_{t=1}^{T}(p_t-e_{x_{t+1}})\in\mathbb{R}^{V}.
+$$
+
+**Steps.**
+
+1. From $h_t=\tanh(a_t)$, the coordinatewise derivative gives
+   $$
+   da_t=\eta_t\in\mathbb{R}^{H},
+   \qquad
+   \eta_t=\delta_t\odot(1-h_t^{\odot2}).
+   $$
+   (This is the local reverse-mode derivative through tanh.)
+2. For $a_t=W_hh_{t-1}+W_xx_t+b$, perturbing $W_h$ gives $da_t=(dW_h)h_{t-1}$. Thus
+   $$
+   dL=\eta_t^\top(dW_h)h_{t-1}
+   =\operatorname{tr}\left((\eta_t h_{t-1}^\top)^\top dW_h\right),
+   $$
+   so the time-$t$ contribution is $\eta_t h_{t-1}^\top\in\mathbb{R}^{H\times H}$.
+3. Perturbing $W_x$ gives $da_t=(dW_x)x_t$, hence the time-$t$ contribution is
+   $$
+   \eta_t x_t^\top\in\mathbb{R}^{H\times D}.
+   $$
+   (The input and hidden vectors occupy different right-hand spaces.)
+4. Perturbing $b$ gives $da_t=db$, so the time-$t$ contribution is
+   $$
+   \nabla_b\ell_t=\eta_t\in\mathbb{R}^{H}.
+   $$
+   (A shared bias receives one vector contribution per time.)
+5. Add the contributions across time because the same $W_h$, $W_x$, and $b$ are reused:
+   $$
+   \nabla_{W_h}L=\sum_t\eta_th_{t-1}^\top,\qquad
+   \nabla_{W_x}L=\sum_t\eta_tx_t^\top,\qquad
+   \nabla_bL=\sum_t\eta_t.
+   $$
+   (This sum is the mathematical signature of weight sharing.)
+6. D-M1.1-01 gives the output-layer contributions, and summing them over time yields $\nabla_{W_y}L$ and $\nabla_cL$. (The output parameters are shared in exactly the same additive way.)
+7. The check uses $H=8$, $D=5$, $V=5$, and $T=6$, then compares all five parameter arrays with float64 finite differences. (Every reported shape is checked by the harness.)
+
+**Check.** checks/M1/D-M1.1-03.py checks $W_h$, $W_x$, $b$, $W_y$, and $c$ at rtol = 1e-5; maximum absolute error is 1.786e-09; passed = True.
+
+**Intuition.** A single parameter participates in every unrolled copy of the cell. Backpropagation adds the gradient from all copies instead of creating separate parameters for each time.
+
+### D-M1.1-04 · The unrolled Jacobian product
+
+**Theorem.** For a lag $k\ge1$, the Jacobian from $h_{t-k}\in\mathbb{R}^{H}$ to $h_t\in\mathbb{R}^{H}$ is
+
+$$
+\frac{\partial h_t}{\partial h_{t-k}}
+=J_tJ_{t-1}\cdots J_{t-k+1}
+=\prod_{s=t-k+1}^{t}{}^{\leftarrow}
+\left[\operatorname{diag}(1-h_s^{\odot2})W_h\right]
+\in\mathbb{R}^{H\times H},
+$$
+
+where $J_s=\operatorname{diag}(1-h_s^{\odot2})W_h$ and the left arrow states that larger time indices multiply on the left. The product order is not interchangeable for matrices.
+
+**Steps.**
+
+1. For one recurrent edge,
+   $$
+   \frac{\partial h_s}{\partial h_{s-1}}
+   =J_s=\operatorname{diag}(1-h_s^{\odot2})W_h\in\mathbb{R}^{H\times H}.
+   $$
+   (This is the local Jacobian already used in D-M1.1-02.)
+2. For $k=2$, the multivariable chain rule gives
+   $$
+   \frac{\partial h_t}{\partial h_{t-2}}
+   =\frac{\partial h_t}{\partial h_{t-1}}
+    \frac{\partial h_{t-1}}{\partial h_{t-2}}
+   =J_tJ_{t-1}\in\mathbb{R}^{H\times H}.
+   $$
+   (The later map is applied after the earlier map, so it is the left factor.)
+3. Repeating the chain rule for $k$ edges gives
+   $$
+   \frac{\partial h_t}{\partial h_{t-k}}
+   =J_tJ_{t-1}\cdots J_{t-k+1}.
+   $$
+   (Each extra edge contributes one Jacobian on the left.)
+4. The numerical check fixes the inputs and varies only $h_{t-k}\in\mathbb{R}^{H}$. It compares the product above with the complete vector Jacobian computed by central differences. (The test uses $H=3$, $k=4$, and smooth tanh states.)
+
+**Check.** checks/M1/D-M1.1-04.py reports maximum Jacobian absolute error 1.345e-11; passed = True.
+
+**Intuition.** A long-range gradient is not one number. It is a matrix product whose factors depend on both the recurrent weights and the saturated hidden states.
+
+### D-M1.1-05 · A norm bound and the one-dimensional case
+
+**Theorem.** For the spectral norm,
+
+$$
+\left\|\frac{\partial h_t}{\partial h_{t-k}}\right\|_2
+\le\prod_{s=t-k+1}^{t}\left\|\operatorname{diag}(1-h_s^{\odot2})W_h\right\|_2
+\le\left(\gamma\,\sigma_{\max}(W_h)\right)^k,
+\qquad
+\gamma=\sup_u|\tanh'(u)|=1.
+$$
+
+Therefore $\sigma_{\max}(W_h)<1$ is sufficient for vanishing in this upper bound. $\sigma_{\max}(W_h)>1$ is necessary, not sufficient, for exploding gradients: saturation can still contract factors.
+
+**Steps.**
+
+1. Apply submultiplicativity to the product from D-M1.1-04:
+   $$
+   \left\|J_tJ_{t-1}\cdots J_{t-k+1}\right\|_2
+   \le\prod_{s=t-k+1}^{t}\|J_s\|_2.
+   $$
+   (The induced spectral norm bounds a product by the product of norms.)
+2. Since $|\tanh'(u)|=1-\tanh^2(u)\le1$, the diagonal derivative matrix obeys
+   $$
+   \left\|\operatorname{diag}(1-h_s^{\odot2})\right\|_2\le1=\gamma.
+   $$
+   (For a diagonal matrix, the spectral norm is the largest absolute diagonal entry.)
+3. Apply the matrix norm product inequality:
+   $$
+   \|J_s\|_2
+   \le\left\|\operatorname{diag}(1-h_s^{\odot2})\right\|_2\|W_h\|_2
+   \le\gamma\sigma_{\max}(W_h).
+   $$
+   (The spectral norm of $W_h$ is its largest singular value.)
+4. Multiply the $k$ identical upper bounds:
+   $$
+   \left\|\frac{\partial h_t}{\partial h_{t-k}}\right\|_2
+   \le(\gamma\sigma_{\max}(W_h))^k.
+   $$
+   (This is an upper bound, not an equality for a nonlinear saturated trajectory.)
+5. If $\sigma_{\max}(W_h)<1$ and $\gamma=1$, the right side decays geometrically with $k$. (This gives a sufficient condition for the bound to vanish.)
+6. If a product explodes asymptotically, the upper-bound base cannot be below one, so $\sigma_{\max}(W_h)>1$ is necessary for this mechanism. It is not sufficient because diagonal tanh derivatives can be much smaller than one. (A norm bound cannot certify growth from above.)
+7. In one dimension, $h_t=\tanh(wh_{t-1})$ has the exact derivative
+   $$
+   \frac{\partial h_t}{\partial h_{t-k}}
+   =\prod_{s=t-k+1}^{t}w(1-h_s^2).
+   $$
+   If the recurrence is linear, $h_t=\phi h_{t-1}$, the factors become $\phi$ and the result is $\phi^k$, matching D-M0.5.2-02. (The nonlinear case adds the saturation factors.)
+8. The check samples 100 random $W_h$ matrices and 2,100 products, computes each singular norm, and verifies the bound numerically. (The random seed is fixed and all arrays are float64.)
+
+**Check.** checks/M1/D-M1.1-05.py reports products_checked = 2100, worst bound ratio 0.9944786301903756, and passed = True.
+
+**Source note.** The norm-bound framing follows Pascanu, Mikolov, and Bengio, “On the difficulty of training recurrent neural networks,” [PMLR 28 (2013)](https://proceedings.mlr.press/v28/pascanu13.html).
+
+**Intuition.** Orthogonal or unit-spectral-radius weights remove one source of contraction, but tanh still multiplies the path by derivatives below one. The additive memory path introduced in M2 addresses that defect.
+
+### D-M1.1-06 · Truncated BPTT and global-norm clipping
+
+**Approximation.** Truncated BPTT is a biased gradient estimator because it drops recurrent paths older than a chosen window. Global-norm clipping is a direction-preserving update transformation that bounds the gradient norm; it does not repair the dropped paths.
+
+**Steps.**
+
+1. The full hidden gradient expands the recursion:
+   $$
+   \delta_t
+   =\sum_{j=t}^{T}
+   \left(\frac{\partial h_j}{\partial h_t}\right)^\top
+   W_y^\top(p_j-e_{x_{j+1}})
+   \in\mathbb{R}^{H}.
+   $$
+   (Each later output sends a path back to $h_t$.)
+2. With a recurrent window $K\in\mathbb{N}_0$, truncated BPTT keeps only terms with $j-t\le K$:
+   $$
+   \delta_t^{(K)}
+   =\sum_{j=t}^{\min(T,t+K)}
+   \left(\frac{\partial h_j}{\partial h_t}\right)^\top
+   W_y^\top(p_j-e_{x_{j+1}})\in\mathbb{R}^{H}.
+   $$
+   (Terms from outputs more than $K$ transitions away are set to zero.)
+3. The truncated parameter gradient is therefore
+   $$
+   g^{(K)}=\sum_{t=1}^{T}\text{local contribution from }\delta_t^{(K)},
+   $$
+   where $g^{(K)}$ has the same parameter shapes as the full gradient. (The omission depends on the data and current parameters, so it is generally biased.)
+4. Let the concatenated full gradient be $g\in\mathbb{R}^{P}$ and choose a threshold $c>0$. Define
+   $$
+   \widetilde g=g\min\left(1,\frac{c}{\|g\|_2}\right)\in\mathbb{R}^{P}.
+   $$
+   (The scalar factor is one below the threshold and scales down the whole vector above it.)
+5. If $\|g\|_2>c$, then
+   $$
+   \|\widetilde g\|_2
+   =\|g\|_2\frac{c}{\|g\|_2}=c.
+   $$
+   If $\|g\|_2\le c$, then $\widetilde g=g$. (Thus the norm is bounded by $c$.)
+6. The scalar multiplier is positive, so for $g\ne0$,
+   $$
+   \frac{\widetilde g}{\|\widetilde g\|_2}
+   =\frac{g}{\|g\|_2}.
+   $$
+   (Clipping preserves direction and changes only magnitude.)
+7. The check compares full and $K=2$ gradients, then verifies the clipped norm and cosine direction. (A nonzero full-versus-truncated difference is the numerical signature of bias.)
+
+**Check.** checks/M1/D-M1.1-06.py reports full-versus-truncated difference 0.020061110848026618, clipped norm 0.5, and cosine 1.0000000000000002; passed = True.
+
+**Intuition.** Truncation forgets old causes; clipping limits the size of whatever gradient remains. They solve different numerical problems and should not be described as the same operation.
+
+### D-M1.1-07 · Teacher forcing in the RNN
+
+**Claim.** The RNN recursion above is a teacher-forced training graph: $x_t$ and the target $x_{t+1}$ are supplied by the data sequence. At inference, the next input is sampled from the model's previous output, so the prefix distribution changes as in D-M0.5.6-01.
+
+**Steps.**
+
+1. In the training graph, the known input sequence is
+   $$
+   (x_1,\ldots,x_T)\in(\mathbb{R}^{D})^T,
+   $$
+   and each $h_t$ uses the observed $x_t$. (The forward pass does not feed its own prediction back into the next input.)
+2. The loss target at time $t$ is the observed next token:
+   $$
+   \ell_t=-\log p_\theta(x_{t+1}\mid x_{\le t})\in\mathbb{R}.
+   $$
+   (This is the RNN form of the autoregressive conditional loss.)
+3. In a rollout, generate $\widehat{x}_{t+1}$ from $p_\theta(\cdot\mid\widehat{x}_{\le t})$ and feed that generated vector into the next recurrence:
+   $$
+   \widehat{x}_{t+1}\sim p_\theta(\cdot\mid\widehat{x}_{\le t}),
+   \qquad
+   h_{t+1}=F_\theta(h_t,\widehat{x}_{t+1})\in\mathbb{R}^{H}.
+   $$
+   (The model now supplies the prefix that it must learn to handle.)
+4. Therefore training averages costs under data prefixes, while rollout averages them under model prefixes:
+   $$
+   \mathbb{E}_{x_{<t}\sim p_{\mathrm{data}}}[\ell_\theta(x_t\mid x_{<t})]
+   \quad\text{versus}\quad
+   \mathbb{E}_{x_{<t}\sim p_\theta}[\ell_\theta(x_t\mid x_{<t})].
+   $$
+   (The local recurrent computation is unchanged; the measure over prefixes is not.)
+5. Teacher forcing makes all target conditionals available in one training example, but it does not make the hidden recurrence parallel: $h_t$ still depends on $h_{t-1}$. (The causal Transformer will obtain a different parallelism pattern from masked matrix operations in M3.)
+6. The check runs the same initial input through teacher forcing and greedy rollout, then verifies that later prefixes differ while the teacher-forced loss remains a finite scalar. (This is a concrete finite-horizon instance of exposure bias.)
+
+**Check.** checks/M1/D-M1.1-07.py reports teacher-forced loss 7.011017626955435, a nonzero later-prefix difference 6.0, and finite hidden-gradient shapes; passed = True.
+
+**Intuition.** Teacher forcing gives BPTT a clean supervised path through the observed sequence. Deployment removes that support, so the cell must operate on its own history.
+
+## 4. Numerical verification
+
+All seven derivation checks use deterministic float64 NumPy computations. D-M1.1-03 checks every shared parameter gradient with the common finite-difference harness. D-M1.1-05 checks the norm bound over 100 random recurrent matrices. The remaining checks cover the local output gradient, hidden recursion, matrix Jacobian product, truncation/clipping behavior, and teacher-forced prefix shift.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M1.1-01 | logit and output-matrix gradient checks pass | pass |
+| D-M1.1-02 | finite-difference hidden-state error below 8e-10; recursion error 0.0 | pass |
+| D-M1.1-03 | all five parameter arrays; maximum absolute error 1.786e-09 | pass |
+| D-M1.1-04 | Jacobian maximum absolute error 1.345e-11 | pass |
+| D-M1.1-05 | 2,100 products; worst bound ratio 0.9944786301903756 | pass |
+| D-M1.1-06 | truncation difference 0.020061110848026618; clipped norm 0.5 | pass |
+| D-M1.1-07 | teacher-forced loss finite; prefix difference 6.0 | pass |
+
+Run python -m pytest course/tests from the repository parent. The page can display these static outputs because the current reader has no Python runtime.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M1-a" />
+
+<CourseWidget id="V-M1-b" />
+
+<CourseWidget id="V-M1-c" />
+
+**V-M1-a — Unrolled RNN gradient heatmap.** The spec is viz/specs/V-M1-a.yaml and the pure compute module is viz/compute/rnn_gradient_heatmap.ts. Adjust spectral radius, hidden size, and seed to inspect the lag-by-time gradient band. It visualizes the product from D-M1.1-04 and the contraction mechanism from D-M1.1-05.
+
+**V-M1-b — Spectral radius versus gradient norm.** The spec is viz/specs/V-M1-b.yaml and the pure compute module is viz/compute/spectral_gradient.ts. The chart overlays actual saturated-path curves with the $\sigma_{\max}(W_h)^k$ bound from D-M1.1-05. The dashed bound can be tight in a linear regime and loose after tanh saturation.
+
+**V-M1-c — Copy-after-delay RNN trainer.** The spec is viz/specs/V-M1-c.yaml and the pure compute module is viz/compute/copy_delay_trainer.ts. It supplies deterministic synthetic trajectories for delays from 2 to 40, with a fixed step budget and reset state. When browser-side Python training is unavailable, viz/data/V-M1-c-copy-delay.json supplies a compact precomputed trajectory.
+
+## 6. Closing
+
+**Counterintuitive question.** Why does orthogonal initialization of $W_h$ with spectral radius exactly one not solve the long-range-gradient problem? **Worked answer:** D-M1.1-05 shows that the recurrent product also contains $\operatorname{diag}(1-h_t^{\odot2})$. Tanh derivatives are below one away from zero, so the product can contract even when $\sigma_{\max}(W_h)=1$. The additive state path in M2 changes that recurrence.
+
+**Assignment A-M1.** Implement code/numpy_rnn/rnn.py with forward propagation, full BPTT, global-norm clipping, and truncated windows. Reproduce the seven checks, export V-M1-b data, and run the synthetic copy-after-delay trajectory in the assignment README.
+
+**Spine check.** Architecture-wise, a vanilla RNN compresses the prefix into $h_t$ and reuses the same $W_h$ at every step. Probability-wise, the output remains a causal conditional trained by teacher forcing; the main failure is the product of recurrent Jacobians and the resulting mismatch between observed and generated prefixes.

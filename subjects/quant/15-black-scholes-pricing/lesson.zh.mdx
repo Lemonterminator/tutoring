@@ -1,0 +1,67 @@
+import { quantLessonHref } from "../../../framework/quant/learning-resources";
+
+## 在定价路线中的位置
+
+四门课中的第 2 门：把数值计算问题接到模型上。目标是推导并解释带连续股息率 $q$ 的欧式 call/put，再用恒等式检查实现，避免两个相同公式的代码互相“证明”正确。除讨论极限外，本课假设 $S,K>0$、$T,\sigma>0$，且 $r,q,\sigma$ 为常数。
+
+完整的逐步推导、纸笔停顿、原作业修正与误差曲线已接入 <a href={quantLessonHref("QUANT-BS0")}>BS 与 Greeks 八篇纸笔课程</a>。第 01 篇先讲 P/Q 测度，第 03-05 篇连接有限差分、complex-step、Hermite 与 P3，第 06-08 篇扩展 Put 与高阶风险。
+
+## 远期记号与无套利平价
+
+记 $D=e^{-rT}$、$F=S e^{(r-q)T}$、$A=S e^{-qT}=DF$，则
+
+$$d_1=\frac{\log(F/K)+\tfrac12\sigma^2T}{\sigma\sqrt T},\qquad d_2=d_1-\sigma\sqrt T.$$
+
+Call 和 put 的价格为
+
+$$C=D\{F\Phi(d_1)-K\Phi(d_2)\},\qquad P=D\{K\Phi(-d_2)-F\Phi(-d_1)\}.$$
+
+到期时 $(S_T-K)^+-(K-S_T)^+=S_T-K$，因此一份 call 减一份 put 复制一份预付股票减去折现执行价，得到 $C-P=A-KD$。这是与 $S_T$ 的具体概率分布无关的**无套利恒等式**。对固定 $K,r,q,T$ 的 spot 求导，得到 $\Delta_P=\Delta_C-e^{-qT}$、$\Gamma_P=\Gamma_C$ 与 $\mathrm{Vega}_P=\mathrm{Vega}_C$。
+
+远期形式把未来标的水平 $F$ 和折现因子 $D$ 分开，也让 IV 价格界更自然：有限正波动率下 $\max(A-KD,0)\le C<A$、$\max(KD-A,0)\le P<KD$。当 $r$ 或 $q$ 非零时，不能用现货内在价值替代下界。
+
+## 到达同一价格的两条路线
+
+**复制与 PDE。** 有连续股息时，对 $V$ 使用 Itô 引理，再用 Delta 对冲消去布朗运动项。无套利给出
+
+$$V_t+\tfrac12\sigma^2S^2V_{SS}+(r-q)SV_S-rV=0,$$
+
+终值为 $(S-K)^+$ 或 $(K-S)^+$。终值和合适的增长条件决定解。即使不手算热方程，也应能讲清对冲组合和 $(r-q)$ 项从哪里来。
+
+**风险中性期望。** 测度变换使折现收益成为鞅；在风险中性测度下，$dS_t=(r-q)S_tdt+\sigma S_tdW_t^{\mathbb Q}$。因此 $V_0=e^{-rT}\mathbb E^{\mathbb Q}[\text{payoff}(S_T)]$。$S_T$ 的对数正态分布产生公式中的两个 $\Phi$。Girsanov 在其条件下解释布朗运动漂移的变换，并不意味着真实世界的预期股票收益就是 $r-q$。
+
+## Greeks 与单位约定
+
+令 $\phi$ 为标准正态 PDF，$B=K e^{-rT}$。Delta、Gamma 和 Vega 为
+
+$$\Delta_C=e^{-qT}\Phi(d_1),\quad \Delta_P=-e^{-qT}\Phi(-d_1),$$
+
+$$\Gamma_C=\Gamma_P=\frac{e^{-qT}\phi(d_1)}{S\sigma\sqrt T},\qquad \mathrm{Vega}_C=\mathrm{Vega}_P=S e^{-qT}\phi(d_1)\sqrt T.$$
+
+这里 Vega 是波动率变化 $1.00$ 时的价格导数，不是每变动一个百分点的报价。两式相除得到 $\mathrm{Vega}=\sigma S^2T\Gamma$。沿远期 ATM 靠近到期时，$\phi(d_1)$ 接近 $\phi(0)$，而 $\sigma\sqrt T$ 缩小，Gamma 约按 $1/(S\sigma\sqrt T)$ 增长；远离 ATM 时 PDF 反而可能衰减到零。
+
+定义日历时间 Theta 为 $\Theta=\partial V/\partial t=-\partial V/\partial T$，求导时固定其他模型参数。于是
+
+$$\Theta_C=-\frac{S e^{-qT}\phi(d_1)\sigma}{2\sqrt T}-rB\Phi(d_2)+qS e^{-qT}\Phi(d_1),$$
+
+$$\Theta_P=-\frac{S e^{-qT}\phi(d_1)\sigma}{2\sqrt T}+rB\Phi(-d_2)-qS e^{-qT}\Phi(-d_1).$$
+
+连续复利利率每变化 $1.00$ 的 Rho 是 $\rho_C=KT e^{-rT}\Phi(d_2)$、$\rho_P=-KT e^{-rT}\Phi(-d_2)$。在固定 $S,K,r,q,\sigma,T$ 下，可用 PDE 检查 $\Theta+\tfrac12\sigma^2S^2\Gamma+(r-q)S\Delta-rV=0$。按此日历时间约定，Theta 的 $q$ 项对 call 为正，对 put 为负。
+
+## 边界与导数含义
+
+当 $\sigma\sqrt T\to0$，**价格**趋向折现远期内在价值：$C\to\max(A-B,0)$、$P\to\max(B-A,0)$。导数要另行处理：在折点 $A=B$，极限 payoff 没有经典导数；规定 Gamma $=0$ 或 Delta $=\tfrac12e^{-qT}$ 是 API 约定，不是到期时的精确导数。$T$ 和 $\sigma$ 以不同路径趋零，还可能得到不同的 Delta 极限。
+
+若 $S=0$ 或 $K\le0$，先明确公开 API 是否接受。一个 `bs_terms` 内核应向标量、向量、并行和 Python 入口报告输入有效性与退化状态；调用方不应靠 NaN 猜测。只修 Gamma 守卫并不能定义全部价格与 Greeks 的行为。
+
+## 与仓库绑定的练习
+
+1. 从终值 payoff 推出平价关系，再在计划中的 $(K/S,\sigma,T)$ 网格上检查平价及 Delta/Gamma/Vega 推论。加入非零 $r$、$q$。
+2. 从 $d_1,d_2$ 推导 call Delta，并证明 $S e^{-qT}\phi(d_1)=K e^{-rT}\phi(d_2)$。用它化简 Vega 和 Gamma。
+3. 对作业两个场景，画 Delta、Gamma、Vega 随 $S/K$ 变化的图。解释临近到期 ATM 的 Gamma 尖峰，并找出哪些尾部下溢是无害的。
+
+## 阅读顺序
+
+1. John C. Hull，*Options, Futures, and Other Derivatives*，第 11 版 Global Edition，Pearson，2021/2022，[出版社目录](https://www.pearson.com/en-gb/subject-catalog/p/options-futures-and-other-derivatives-global-edition/P200000004519/9781292410654)。读目录中的 “Properties of Stock Options”、“Wiener Processes and Itô’s Lemma”、“The Black–Scholes–Merton Model”、“The Greek Letters”。付费。
+2. Steven E. Shreve，*Stochastic Calculus for Finance II: Continuous-Time Models*，Springer，2004，[出版社](https://link.springer.com/book/9780387401010)。读 Black–Scholes–Merton 方程、风险中性定价与 Girsanov；小节编号按手头版次核对。付费。
+3. Scott Sheffield，MIT 18.440，*Probability and Random Variables*，Lecture 36（2014），[免费风险中性/Black–Scholes 讲义](https://ocw.mit.edu/courses/18-440-probability-and-random-variables-spring-2014/resources/mit18_440s14_lecture36/)。可在 Shreve 之前作简短衔接。

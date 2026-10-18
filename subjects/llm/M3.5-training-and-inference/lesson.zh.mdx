@@ -1,0 +1,323 @@
+## 1. 动机
+
+只有当架构的训练更新路径和推理路径明确时，该架构才具有实用价值。AdamW 改变了权重衰减进入更新的方式，标签平滑（label smoothing）改变了目标分布和 logits 梯度，权重共享（weight tying）使输入和输出嵌入共享同一个矩阵，KV 缓存以内存容量换取解码工作，而解码规则则将 logits 转换为 token。
+
+本课将推导上述每个接口。公式与实现估算保持分离：优化器和损失恒等式是精确的，FLOP 和内存数值说明了其计数约定，而解码启发式方法被标记为策略而非定理。
+
+## 2. 前向定义
+
+对于参数 $\theta_t$、梯度 $g_t=\nabla_\theta L_t$、一阶矩 $m_t$ 和二阶原始矩 $v_t$，AdamW 使用
+
+$$
+m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
+\qquad
+v_t=\beta_2v_{t-1}+(1-\beta_2)g_t\odot g_t,
+$$
+
+$$
+\widehat m_t=\frac{m_t}{1-\beta_1^t},
+\qquad
+\widehat v_t=\frac{v_t}{1-\beta_2^t},
+$$
+
+$$
+\theta_t=(1-\eta_t\lambda)\theta_{t-1}
+-\eta_t\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
+$$
+
+衰减因子位于自适应梯度步之外。线性预热后接余弦衰减可表示为
+
+$$
+\eta_t=
+\begin{cases}
+\eta_{\max}t/T_w,&t\le T_w,\\
+\eta_{\min}+\frac{\eta_{\max}-\eta_{\min}}{2}
+\left(1+\cos\left(\pi\frac{t-T_w}{T-T_w}\right)\right),
+&T_w<t\le T.
+\end{cases}
+$$
+
+逆平方根调度使用
+
+$$
+\eta_t=\eta_{\max}\min\left(\frac{t}{T_w},\sqrt{\frac{T_w}{t}}\right).
+$$
+
+对于大小为 $V$ 的词汇表、目标 token $y$ 和平滑量 $\varepsilon$，标签平滑使用
+
+$$
+q=(1-\varepsilon)e_y+\varepsilon u,
+\qquad
+u_i=\frac{1}{V}.
+$$
+
+对于隐藏状态 $h\in\mathbb{R}^{d}$ 和输入嵌入矩阵 $E\in\mathbb{R}^{V\times d}$，共享输出 logits 为
+
+$$
+z=hE^\top+b\in\mathbb{R}^{V}.
+$$
+
+在具有 $L$ 层、上下文长度 $n$、$h_{\mathrm{kv}}$ 个键/值头、头维度 $d_h$ 以及每个元素 $b_e$ 字节的配置下，存储键和值的成本为
+
+$$
+\operatorname{bytes}_{\mathrm{KV}}
+=2Lnh_{\mathrm{kv}}d_hb_e.
+$$
+
+温度和截断将 logits 转换为采样分布：
+
+$$
+p_i(T)=\frac{\exp(z_i/T)}{\sum_j\exp(z_j/T)},\qquad T>0.
+$$
+
+Top-$k$ 保留 $k$ 个最大概率并重新归一化。Top-$p$ 对概率进行排序，并保留累积质量至少为 $p$ 的最小前缀。束搜索（Beam search）保留多个部分序列并比较长度归一化的对数分数。
+
+**来源。** AdamW 来自 Loshchilov 和 Hutter (https://arxiv.org/abs/1711.05101)。标签平滑遵循 Szegedy 等人 (https://arxiv.org/abs/1512.00567)。权重共享遵循 Press 和 Wolf (https://arxiv.org/abs/1608.05859)。核采样（Nucleus sampling）来自 Holtzman 等人 (https://arxiv.org/abs/1904.09751)。
+
+## 3。推导过程
+
+### D-M3.5-01 · AdamW、预热与调度策略
+
+**定理。** 给定 $m_0=v_0=0$，AdamW 的单步更新为
+
+$$
+\theta_t=(1-\eta_t\lambda)\theta_{t-1}
+-\eta_t\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon},
+$$
+
+其中因子 $(1-\eta_t\lambda)$ 与自适应梯度解耦。若将 $\lambda\theta$ 折叠进 $g_t$，则会产生不同的自适应更新。
+
+**步骤。**
+
+1. 指数移动平均递推式为
+   $$
+   m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
+   \qquad
+   v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
+   $$
+   从 $m_0=0$ 展开第一个递推式得到
+   $$
+   m_t=(1-\beta_1)\sum_{r=1}^{t}\beta_1^{t-r}g_r.
+   $$
+   因子 $1-\beta_1^t$ 是初始化时缺失的总权重；除以该因子即得 $\widehat m_t$。同样的展开过程为 $1-\beta_2^t$ 提供了修正项 $v_t$。
+2. 自适应方向为
+   $$
+   d_t=\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
+   $$
+   对该方向应用梯度步得到 $\theta_{t-1}-\eta_td_t$。
+3. 解耦权重衰减独立地将旧参数乘以 $1-\eta_t\lambda$：
+   $$
+   \theta_t=(1-\eta_t\lambda)\theta_{t-1}-\eta_td_t.
+   $$
+4. 而耦合的 L2 实现则在矩递推之前形成 $g_t+\lambda\theta_{t-1}$。由于自适应分母随后依赖于 $\theta_{t-1}$，这两种操作在代数上并不等价。
+5. 预热将 $\eta_t$ 在第零步设为零，并线性增加直至 $T_w$。这限制了早期对 $v_t$ 的噪声估计以及大初始梯度的影响。D-M3.3-02 为 Post-LN 提供了另一个关于初始化梯度的谨慎理由；这两项观察均不能证明预热是适用于所有优化器和架构的定理。
+6. 预热结束后，余弦衰减遵循从 $\eta_{\max}$ 到 $\eta_{\min}$ 的显示余弦曲线。逆平方根衰减在 $T_w$ 处达到峰值，随后按 $t^{-1/2}$ 下降。
+7. 该检查评估了首次 AdamW 更新，将其与耦合 L2 进行对比，并验证了调度端点。其结果为
+   $$
+   \theta_1=[1.4885000005,-1.98800000025],
+   $$
+   而耦合 L2 为 $[1.4900000002857143,-1.9900000001666667]$，余弦采样值为 $[0,0.5,1.0,0.1]$。
+
+**检查。** checks/M3/D-M3.5-01.py 验证了偏差修正、解耦、线性预热、余弦端点以及逆平方根行为；输出 passed = True。
+
+**正确限定范围的断言。** 预热是一种由梯度和矩估计尺度驱动的优化策略；AdamW 的代数推导并不能证明特定任务必须使用预热。
+
+**直觉。** Adam 根据矩估计选择坐标级步长，而 AdamW 将参数收缩作为一个独立操作执行。预热为这两个操作提供了时间，使其进入所选学习率旨在运行的尺度范围。
+
+### D-M3.5-02 · 标签平滑与 logits 梯度
+
+**定理。** 给定 $q=(1-\varepsilon)e_y+\varepsilon u$ 和概率 $p=\operatorname{softmax}(z)$，
+
+$$
+\operatorname{CE}(p,q)
+=-\sum_{i=1}^{V}q_i\log p_i
+=(1-\varepsilon)\operatorname{CE}(p,e_y)
++\varepsilon\operatorname{CE}(p,u).
+$$
+
+关于 logits 的梯度为
+
+$$
+\boxed{\nabla_z\operatorname{CE}(p,q)=p-q}.
+$$
+
+**步骤。**
+
+1. 代入平滑后的目标：
+   $$
+   -\sum_i\left((1-\varepsilon)(e_y)_i+\varepsilon u_i\right)\log p_i.
+   $$
+2. 分配求和项：
+   $$
+   -(1-\varepsilon)\sum_i(e_y)_i\log p_i
+   -\varepsilon\sum_i u_i\log p_i.
+   $$
+   第一项为 $(1-\varepsilon)\operatorname{CE}(p,e_y)$，第二项为 $\varepsilon\operatorname{CE}(p,u)$。
+3. 令 $\ell(z)=-\sum_iq_i\log p_i$ 且 $p_i=e^{z_i}/\sum_j e^{z_j}$。对单个坐标求导：
+   $$
+   \frac{\partial\ell}{\partial z_j}
+   =-\sum_iq_i\frac{\partial\log p_i}{\partial z_j}.
+   $$
+4. 由于
+   $$
+   \log p_i=z_i-\log\sum_r e^{z_r},
+   $$
+   其导数为
+   $$
+   \frac{\partial\log p_i}{\partial z_j}
+   =\mathbf{1}_{i=j}-p_j.
+   $$
+   因此
+   $$
+   \frac{\partial\ell}{\partial z_j}
+   =-\sum_iq_i(\mathbf{1}_{i=j}-p_j)
+   =-q_j+p_j\sum_iq_i.
+   $$
+5. 平滑后的目标之和为 1，故 $\sum_iq_i=1$ 且
+   $$
+   \nabla_z\ell=p-q.
+   $$
+6. 该检查将梯度与 float64 有限差分进行比较，并将平滑损失与凸分解进行比较。其得到分解误差 $1.1102230246251565\times10^{-16}$ 和梯度之和 $-1.0755285551056204\times10^{-16}$。
+
+**检查。** checks/M3/D-M3.5-02.py 使用共享测试框架验证了完整的 logits 梯度和损失恒等式；输出 passed = True。
+
+**直觉。** 平滑将少量目标质量从观测到的 token 转移到词汇表中的每一项。因此，梯度推动模型向 $p$ 匹配软化后的目标，而非 one-hot 尖峰。
+
+### D-M3.5-03 · 权重绑定与 GPT 参数量
+
+**定理。** 在输入/输出嵌入绑定的情况下，$E\in\mathbb{R}^{V\times d}$ 既用于查找 token 向量，也用于形成输出 logits $z=hE^\top+b$。忽略微小的偏置和归一化参数，一个具有标准 FFN 的 $L$ 层、宽度为 $d$ 的 GPT 模型拥有
+
+$$
+\boxed{N_{\mathrm{tied}}=12Ld^2+Vd}.
+$$
+
+若不进行绑定，独立的输出投影将额外增加 $Vd$：
+
+$$
+N_{\mathrm{untied}}=12Ld^2+2Vd.
+$$
+
+**步骤。**
+
+1. 根据 M3.1，Q/K/V/O 投影每层包含 $4d^2$ 个参数。
+2. 标准的 $d\to4d\to d$ FFN 每层包含 $4d^2+4d^2=8d^2$ 个参数。加上注意力机制和 FFN，每层共计 $12d^2$。
+3. 输入嵌入贡献了 $Vd$。如果输出 logits 使用 $E^\top$，则不存在第二个词汇表乘宽度的矩阵，因此
+   $$
+   N_{\mathrm{tied}}=12Ld^2+Vd.
+   $$
+4. 如果输出投影是独立的，它将额外贡献 $Vd$，从而得到未绑定的表达式。
+5. 对于单个绑定输出行，$z=hE^\top+b$。给定 $\delta_z=\nabla_zL$，微分结果为
+   $$
+   dL=\delta_z(dh\,E^\top+h\,dE^\top)^\top.
+   $$
+   收集系数得到
+   $$
+   \nabla_hL=\delta_zE,\qquad
+   \nabla_EL=\delta_z^\top h.
+   $$
+   相同的 $E$ 接收来自输入 token 查找的任何额外梯度，因此绑定在训练过程中耦合了这两种用途。
+6. 在 $L=12,d=16,V=100$ 处，检查得到 $N_{\mathrm{tied}}=38464$、$N_{\mathrm{untied}}=40064$，并通过有限差分验证了绑定输出的梯度。
+
+**检查。** checks/M3/D-M3.5-03.py 使用共享测试框架验证了参数量以及绑定输出的标量损失梯度；输出 passed = True。
+
+**正确限定范围的断言。** 绑定节省了一个词汇表大小的矩阵并耦合了输入/输出表示；它并不声称绑定和未绑定的优化器遵循相同的路径。
+
+### D-M3.5-04 · KV 缓存与解码成本
+
+**定理。** 对于每一层、每个位置、每个 KV head 以及每个 head 坐标，解码器存储一个 key 和一个 value。因此
+
+$$
+\boxed{
+\operatorname{bytes}_{\mathrm{KV}}
+=2Lnh_{\mathrm{kv}}d_hb_e
+}.
+$$
+
+给定参数量 $N$，单 token 解码的常见领先估计为 $2N$ FLOPs（用于参数乘加运算）加上注意力项。在本课程约定中，查询到缓存的分数积和值积贡献约为
+
+$$
+4Lnhd_h
+$$
+
+FLOPs，对应 $h$ 个查询 head 和上下文长度 $n$。
+
+**步骤。**
+
+1. 一个缓存的 key 张量形状为 $L\times n\times h_{\mathrm{kv}}\times d_h$，因此包含 $Lnh_{\mathrm{kv}}d_h$ 个元素。Value 具有相同的形状。
+2. 两个张量且每个元素占用 $b_e$ 字节，结果为
+   $$
+   2\cdot Lnh_{\mathrm{kv}}d_h\cdot b_e.
+   $$
+3. 在新 token 处，模型读取缓存的 key 以形成查询-key 分数。每个分数是一个点积，约需 $2d_h$ FLOPs，加权值求和贡献另外约 $2d_h$ FLOPs。跨越 $L$、$h$ 和 $n$，这大约为 $4Lnhd_h$。
+4. 参数路径每个参数执行约一次乘法和一次加法，产生 $2N$ 个主导 FLOPs。总数是一个估计值，而非与硬件无关的运行时间定理。
+5. 缓存内存随上下文长度和 KV head 数量线性增长。分组查询注意力（Grouped-query attention）减少了 $h_{\mathrm{kv}}$，同时保留了更多的查询 head，因此它在保留查询 head 分数工作的同时减少了缓存字节数。
+6. 对于 $L=32,n=2048,h_{\mathrm{kv}}=8,d_h=128$ 和 fp16，检查得到 $268435456$ 字节，即 $0.25$ GiB。将 $n$ 加倍会使缓存加倍。
+
+**检查。** checks/M3/D-M3.5-04.py 验证了字节公式、$2N$ 加注意力 FLOP 分解以及上下文长度缩放；输出 passed = True。
+
+**已标记的近似。** “解码受内存带宽限制”是一个系统诊断：缓存的 K/V 必须在每一步通过内存层次结构移动，而小批量每 token 的算术强度较低。显示的 FLOP 公式并不能证明每种实现的硬件屋顶线（roofline）。
+
+### D-M3.5-05 · 温度、截断与束搜索解码
+
+**断言。** 温度、top-$k$、top-$p$、贪婪解码和束搜索是将条件分布转换为序列的策略；它们并非对训练好的下一 token 目标的更改。
+
+**步骤。**
+
+1. 温度重新缩放 logits：
+   $$
+   p_i(T)=\frac{e^{z_i/T}}{\sum_j e^{z_j/T}}.
+   $$
+   对于 $T<1$，logit 差异被放大；对于 $T>1$，它们被压缩。归一化确保结果仍为概率向量。
+2. Top-$k$ 找到 $k$ 个最大概率，将所有其他坐标设为零，并将保留的坐标除以其总和。这产生了一个稀疏的条件分布。
+3. Top-$p$ 对概率 $p_{(1)}\ge\cdots\ge p_{(V)}$ 进行排序，并选择满足
+   $K$
+   的最小 $$
+   \sum_{r=1}^{K}p_{(r)}\ge p.
+   $$。它保留这些 $K$ 个 token 并重新归一化。
+4. 贪婪解码选择
+   $$
+   y_t=\arg\max_i p(i\mid y_{<t},x).
+   $$
+   它是确定性的，但可能会丢弃一个后续条件概率会产生更好延续的序列。
+5. 束搜索保留 $B$ 个部分序列。如果序列的 token 对数概率为 $\ell_1,\ldots,\ell_T$，则长度归一化得分为
+   $$
+   \operatorname{score}(y_{1:T})
+   =\frac{\sum_{t=1}^{T}\ell_t}{T^\alpha}.
+   $$
+   在每一步，它扩展当前束中的所有候选项，按此得分排名，并保留最佳的 $B$。
+6. 采样则从保留的概率分布中抽取。检查验证了温度排序、top-$k$/top-$p$ 后的支持集、确定性贪婪输出、固定种子下的可重复性以及两步长度归一化的束搜索结果。
+7. Spine B 区分了这些策略：贪婪和束搜索选择高分路径，而温度/top-$k$/top-$p$ 采样保留了来自条件分布的受控随机性。没有任何策略改变模型学习到的分解。
+
+**检查。** checks/M3/D-M3.5-05.py 测试了解码策略并输出 passed = True。
+
+**已标记的类比。** 温度是一个“锐度旋钮”，top-$p$ 是一个“概率质量门”。这些短语描述了面向用户的行为；确切的操作是上述方程和重新归一化过程。
+
+## 4. 数值验证
+
+这五个确定性检查使用 float64 算术：
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M3.5-01 | AdamW $[1.4885000005,-1.98800000025]$ 与耦合 L2 $[1.4900000002857143,-1.9900000001666667]$；余弦采样 $[0,0.5,1.0,0.1]$ | pass |
+| D-M3.5-02 | 标签平滑分解误差 $1.1102230246251565\times10^{-16}$；梯度求和 $-1.0755285551056204\times10^{-16}$ | pass |
+| D-M3.5-03 | 绑定 $38464$，未绑定 $40064$；共享夹具梯度通过 | pass |
+| D-M3.5-04 | KV 缓存 $268435456$ 字节 $=0.25$ GiB；解码注意力估计 $1073741824$ FLOPs | pass |
+| D-M3.5-05 | 冷态顶部概率 $0.8372831813099706$，热态 $0.3863193248271418$，束搜索 $(0,1)$ | pass |
+
+从仓库父目录运行 python -m pytest course/tests 以执行 M3.5 及所有 preceding 课程。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M3-e" />
+
+**V-M3-e — 模型与缓存计算器。** 规范位于 viz/specs/V-M3-e.yaml，纯计算模块为 viz/compute/model_calculator.ts。输入 $d,h,h_{\mathrm{kv}},L,V,n$ 和 dtype 以更新 tied-embedding 参数估计值、每 token 训练 FLOPs、KV-cache 字节数以及带标签的激活保存量估计值。
+
+该计算器明确区分精确会计恒等式与估算值：$12Ld^2+Vd$ 是规定的 tied-weight 约定，$6N$ 是领先的训练 FLOP 估算值，而激活数值排除了 attention-score 工作区。现有前端可将这些数据渲染为数字卡片和缓存与上下文对比线，无需任何读者替换。
+
+## 6。结语
+
+**反直觉的问题。** 为什么当上下文增长时，一个参数量固定的模型会显著变慢，尽管新 token 仅增加了一个位置？**解答：** D-M3.5-04 将参数计算与缓存计算区分开来。参数路径每 token 约为 $2N$，但新的查询需要读取所有 $n$ 个已缓存的位置，且 K/V 缓存本身的增长为 $2Lnh_{\mathrm{kv}}d_hb_e$。因此，即使 $N$ 保持不变，更长的上下文也会增加内存流量和注意力计算量。
+
+**作业 A-M3。** 在 code/minilm/ 中完成由配置驱动的 nanoGPT 基线：选择 AdamW 和学习率调度，可选地平滑标签，可选地绑定嵌入层，暴露 KV 缓存统计信息，并实现贪婪搜索、温度采样、top-$k$、top-$p$ 以及束搜索解码。运行相同的 tiny-Shakespeare 和 BPE 测试用例，导出 V-M3-a 注意力数据，并报告损失值、tokens/s、缓存字节数及解码设置。
+
+**核心检查。** 从架构上看，训练选择决定了参数如何更新，而推理选择决定了缓存表示如何转化为 token。从概率角度看，每一步仍然始于基于前缀条件的下一个 token 分布；优化、缓存和解码仅改变了该分布的学习、评估、存储或采样方式。

@@ -1,3 +1,11 @@
 node_modules/
 dist/
 Textbook_materials/
+public/concept-graph/
+public/quant-materials/
+public/open-courses/
+content/bs-math/translation-cache.json
+content/bs-math/translation-failure.json
+__pycache__/
+tmp/
+

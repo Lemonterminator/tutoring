@@ -1,0 +1,68 @@
+import { quantLessonHref } from "../../../framework/quant/learning-resources";
+
+## Place in the pricing track
+
+Course 2 of 4 connects the numerical work to the model. The goal is to derive and explain a European call or put with continuous dividend yield $q$, then use identities that are stronger checks than comparing two copies of the same code. For this course assume $S,K>0$, $T,\sigma>0$, and constant $r,q,\sigma$ unless a limit is explicitly discussed.
+
+The <a href={quantLessonHref("QUANT-BS0")}>eight-chapter BS and Greeks paper course</a> supplies full step-by-step derivations, paper pauses, assignment corrections and error curves. Chapter 01 starts with P/Q measures, chapters 03-05 connect finite differences, complex-step, Hermite and P3, and chapters 06-08 extend to Put and higher-order risk.
+
+## Forward notation and no-arbitrage parity
+
+Let $D=e^{-rT}$, $F=S e^{(r-q)T}$ and $A=S e^{-qT}=DF$. Then
+
+$$d_1=\frac{\log(F/K)+\tfrac12\sigma^2T}{\sigma\sqrt T},\qquad d_2=d_1-\sigma\sqrt T.$$
+
+The call and put prices are
+
+$$C=D\{F\Phi(d_1)-K\Phi(d_2)\},\qquad P=D\{K\Phi(-d_2)-F\Phi(-d_1)\}.$$
+
+Since $(S_T-K)^+-(K-S_T)^+=S_T-K$ at expiry, a call minus a put replicates a prepaid share minus a discounted strike. Thus $C-P=A-KD$. This is an **arbitrage identity**, independent of the probability distribution assumed for $S_T$. Differentiating it at fixed $K,r,q,T$ gives $\Delta_P=\Delta_C-e^{-qT}$, $\Gamma_P=\Gamma_C$ and $\mathrm{Vega}_P=\mathrm{Vega}_C$.
+
+The forward form separates the forward level $F$ from discounting $D$. It also makes the IV price bounds natural: $\max(A-KD,0)\le C<A$ and $\max(KD-A,0)\le P<KD$ for finite positive volatility. Do not use spot intrinsic value as the lower bound when $r$ or $q$ is nonzero.
+
+## Two routes to the same price
+
+**Replication/PDE.** Under continuous dividends, a delta-hedged portfolio removes the Brownian term of $dV$ from Itô's formula. No arbitrage yields
+
+$$V_t+\tfrac12\sigma^2S^2V_{SS}+(r-q)SV_S-rV=0,$$
+
+with terminal payoff $(S-K)^+$ or $(K-S)^+$. The terminal condition and a suitable growth condition determine the solution. You should be able to explain the hedge and where the $(r-q)$ term enters, even if you do not solve the heat equation by hand.
+
+**Risk-neutral expectation.** A change of measure makes discounted gains a martingale; under the risk-neutral law, $dS_t=(r-q)S_tdt+\sigma S_tdW_t^{\mathbb Q}$. Hence $V_0=e^{-rT}\mathbb E^{\mathbb Q}[\text{payoff}(S_T)]$. The lognormal distribution of $S_T$ produces the two $\Phi$ terms. Girsanov justifies the Brownian drift change under its assumptions; it is not a claim that physical expected stock return equals $r-q$.
+
+## Greeks and their conventions
+
+Write $\phi$ for the standard normal PDF and $B=K e^{-rT}$. Delta, Gamma and Vega are
+
+$$\Delta_C=e^{-qT}\Phi(d_1),\quad \Delta_P=-e^{-qT}\Phi(-d_1),$$
+
+$$\Gamma_C=\Gamma_P=\frac{e^{-qT}\phi(d_1)}{S\sigma\sqrt T},\qquad \mathrm{Vega}_C=\mathrm{Vega}_P=S e^{-qT}\phi(d_1)\sqrt T.$$
+
+Vega here means price change per unit $1.00$ of volatility, not per one percentage point. Direct division gives $\mathrm{Vega}=\sigma S^2T\Gamma$. Near forward ATM and expiry, $\phi(d_1)$ stays near $\phi(0)$ while $\sigma\sqrt T$ shrinks, so Gamma behaves like $1/(S\sigma\sqrt T)$ along that path. Far from the money the PDF can instead decay to zero.
+
+Let calendar-time Theta be $\Theta=\partial V/\partial t=-\partial V/\partial T$, holding model parameters fixed. Then
+
+$$\Theta_C=-\frac{S e^{-qT}\phi(d_1)\sigma}{2\sqrt T}-rB\Phi(d_2)+qS e^{-qT}\Phi(d_1),$$
+
+$$\Theta_P=-\frac{S e^{-qT}\phi(d_1)\sigma}{2\sqrt T}+rB\Phi(-d_2)-qS e^{-qT}\Phi(-d_1).$$
+
+Rho per unit $1.00$ of the continuously compounded rate is $\rho_C=KT e^{-rT}\Phi(d_2)$ and $\rho_P=-KT e^{-rT}\Phi(-d_2)$. At fixed $S,K,r,q,\sigma,T$ the PDE check is $\Theta+\tfrac12\sigma^2S^2\Gamma+(r-q)S\Delta-rV=0$. The $q$ term in Theta is positive for the call and negative for the put under this calendar-time convention.
+
+## Boundaries and derivative meaning
+
+As $\sigma\sqrt T\to0$, the **price** tends to discounted forward intrinsic value: $C\to\max(A-B,0)$ and $P\to\max(B-A,0)$. The derivatives need separate treatment. At the kink $A=B$, the limiting payoff is not classically differentiable; assigning Gamma $=0$ or Delta $=\tfrac12e^{-qT}$ is an API convention, not an exact derivative at expiry. The path by which $T$ and $\sigma$ approach zero can change a limiting Delta.
+
+If $S=0$ or $K\le0$, decide explicitly whether the public API accepts the input. A single `bs_terms` kernel should report validity and degeneracy to every scalar, vector, parallel and Python entry point; no caller should infer validity from NaN. The Gamma guard alone cannot define all price and Greek behavior.
+
+## Practice with this repository
+
+1. Derive parity from the terminal payoffs, then check it and its Delta/Gamma/Vega consequences on the planned $(K/S,\sigma,T)$ grid. Include nonzero $r$ and $q$.
+2. Starting with $d_1,d_2$, derive the call Delta and show $S e^{-qT}\phi(d_1)=K e^{-rT}\phi(d_2)$. Use that identity to simplify Vega and Gamma.
+3. Plot Delta, Gamma and Vega against $S/K$ for the two assignment scenarios. Explain the near-expiry ATM Gamma spike and identify which tail values underflow harmlessly.
+
+## Reading, in order
+
+1. John C. Hull, *Options, Futures, and Other Derivatives*, 11th Global ed., Pearson, 2021/2022, [publisher contents](https://www.pearson.com/en-gb/subject-catalog/p/options-futures-and-other-derivatives-global-edition/P200000004519/9781292410654). Read the chapters listed there as “Properties of Stock Options,” “Wiener Processes and Itô’s Lemma,” “The Black–Scholes–Merton Model” and “The Greek Letters.” Paid.
+2. Steven E. Shreve, *Stochastic Calculus for Finance II: Continuous-Time Models*, Springer, 2004, [publisher](https://link.springer.com/book/9780387401010). Read the Black–Scholes–Merton equation and risk-neutral pricing/Girsanov sections; confirm subsection numbers in your edition. Paid.
+3. Scott Sheffield, MIT 18.440, *Probability and Random Variables*, Lecture 36 (2014), [free risk-neutral/Black–Scholes notes](https://ocw.mit.edu/courses/18-440-probability-and-random-variables-spring-2014/resources/mit18_440s14_lecture36/). Use as a short bridge before Shreve.
+

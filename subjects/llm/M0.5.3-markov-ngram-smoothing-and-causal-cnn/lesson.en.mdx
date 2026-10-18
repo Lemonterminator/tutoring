@@ -1,0 +1,231 @@
+## 1. Motivation
+
+M0.5.2 showed that a scalar recurrent state can carry a long history only through a repeated multiplier. The next defect is the phrase “Markov model”: an RNN is not generally Markov in the observed token alone, but its observed token plus hidden state is Markov. This lesson makes that information bottleneck explicit, derives the N-gram estimator and its smoothed version, and proves the receptive field of a dilated causal CNN.
+
+## 2. Forward definition
+
+Let $x_t\in\mathcal{V}$ be a discrete token, $h_t\in\mathbb{R}^{d_h}$ a recurrent state, and $F: \mathcal{V}\times\mathbb{R}^{d_h}\to\mathcal{V}\times\mathbb{R}^{d_h}$ a deterministic update. Write
+
+$$
+(x_{t+1},h_{t+1})=F(x_t,h_t)\in\mathcal{V}\times\mathbb{R}^{d_h},
+\qquad h_t=G(x_{<t})\in\mathbb{R}^{d_h}.
+$$
+
+For a context $h\in\mathcal{V}^{n-1}$ and vocabulary $\mathcal{V}$ of size $V$, let $c(h,w)\in\mathbb{N}_0$ be the count of token $w\in\mathcal{V}$ after context $h$, and $c(h)=\sum_{w\in\mathcal{V}}c(h,w)\in\mathbb{N}_0$. The unsmoothed and add-one conditionals are
+
+$$
+\hat p(w\mid h)=\frac{c(h,w)}{c(h)}\in[0,1],
+\qquad
+\hat p_{+1}(w\mid h)=\frac{c(h,w)+1}{c(h)+V}\in(0,1].
+$$
+
+A causal convolution with kernel width $2$ and dilation $d_l$ has receptive field $R_l\in\mathbb{N}$ after $l$ layers. The sequence $d_l=2^{l-1}$ is the setting checked below.
+
+## 3. Derivations
+
+### D-M0.5.3-01 · The RNN state pair is Markov
+
+**Claim.** In general $x_t$ alone is not Markov, but the pair $(x_t,h_t)\in\mathcal{V}\times\mathbb{R}^{d_h}$ is Markov because the next pair depends only on the current pair. The state $h_t=G(x_{<t})$ is a deterministic compression of the full prefix.
+
+**Steps.**
+
+1. Define the deterministic recurrent update
+   $$
+   (x_{t+1},h_{t+1})=F(x_t,h_t)\in\mathcal{V}\times\mathbb{R}^{d_h}.
+   $$
+   (The update reads the current observation and current state, not the earlier prefix directly.)
+2. For any two histories that arrive at the same pair $(x_t,h_t)$, apply the same function:
+   $$
+   F(x_t,h_t)=F(x_t,h_t)\in\mathcal{V}\times\mathbb{R}^{d_h}.
+   $$
+   (Equal inputs to a deterministic function give equal next states.)
+3. Therefore the conditional law of the next pair satisfies
+   $$
+   p(x_{t+1},h_{t+1}\mid x_{le t},h_{le t})
+   =p(x_{t+1},h_{t+1}\mid x_t,h_t)\in[0,1].
+   $$
+   (Conditioning on the pair makes the earlier history redundant.)
+4. To see why $x_t$ alone is insufficient, use the scalar update
+   $$
+   x_{t+1}=x_t+0.25h_t\in\mathbb{R},
+   \qquad h_{t+1}=0.7h_t+x_t\in\mathbb{R}.
+   $$
+   (The hidden state enters the next observation even when the current observation is fixed.)
+5. Fix $x_t=1$ and compare $h_t=-0.5$ with $h_t=0.75$:
+   $$
+   x_{t+1}=0.875\quad\text{or}\quad x_{t+1}=1.1875\in\mathbb{R}.
+   $$
+   (The same observed token has two different next-token values because the compressed histories differ.)
+6. Hence the observed process need not satisfy $p(x_{t+1}\mid x_{le t})=p(x_{t+1}\mid x_t)$, while the augmented pair does satisfy the Markov property. (The hidden state is the information needed to close the transition.)
+7. Since $h_t=G(x_{<t})$, an RNN is a full-order model realized through a finite state rather than a finite-order Markov model in $x_t$ alone. (The state summarizes the whole prefix, even though the summary may lose information.)
+
+**Check.** `checks/M0.5/D-M0.5.3-01.py` — pair transition error `0.0`, an `x_t`-only counterexample is `True`, `passed = True`.
+
+**Intuition.** Calling an RNN “Markov” without naming the hidden state hides the information bottleneck. The pair $(x_t,h_t)$ is the unit that has a one-step transition.
+
+### D-M0.5.3-02 · Conditional counts are the N-gram MLE
+
+**Claim.** For one context $h$, maximizing the conditional log-likelihood
+
+$$
+\max_{p(w\mid h)\in\mathbb{R}^{V}}\sum_{w\in\mathcal{V}}c(h,w)\log p(w\mid h)
+\quad\text{subject to}\quad
+\sum_{w\in\mathcal{V}}p(w\mid h)=1,\quad p(w\mid h)\ge0
+$$
+
+gives
+
+$$
+\hat p(w\mid h)=\frac{c(h,w)}{c(h)}\in[0,1].
+$$
+
+**Steps.**
+
+1. Introduce a scalar Lagrange multiplier $\lambda\in\mathbb{R}$ for normalization:
+   $$
+   \mathcal{J}(p,\lambda)=\sum_w c(h,w)\log p(w\mid h)+\lambda\left(\sum_wp(w\mid h)-1\right)\in\mathbb{R}.
+   $$
+   (The multiplier moves the probability-simplex constraint into the objective.)
+2. Differentiate with respect to one positive probability coordinate:
+   $$
+   \frac{\partial\mathcal{J}}{\partial p(w\mid h)}=\frac{c(h,w)}{p(w\mid h)}+\lambda\in\mathbb{R}.
+   $$
+   (The derivative of $c\log p$ is $c/p$ and the constraint contributes $\lambda$.)
+3. Set the derivative to zero and solve each coordinate:
+   $$
+   0=\frac{c(h,w)}{p(w\mid h)}+\lambda
+   \quad\Longrightarrow\quad
+   p(w\mid h)=-\frac{c(h,w)}{\lambda}\in[0,1].
+   $$
+   (All positive-count coordinates share the same multiplier.)
+4. Sum over $w$ and impose normalization:
+   $$
+   1=\sum_wp(w\mid h)=-\frac{1}{\lambda}\sum_wc(h,w)=-\frac{c(h)}{\lambda}\in\mathbb{R}.
+   $$
+   (The context count is the sum of the next-token counts.)
+5. Solve $\lambda=-c(h)$ and substitute:
+   $$
+   \hat p(w\mid h)=\frac{c(h,w)}{c(h)}\in[0,1].
+   $$
+   (The conditional divides by the context count, not by the corpus size.)
+6. If $c(h,w)=0$, the optimum can lie on the boundary $p(w\mid h)=0$; D-M0.5.3-03 changes that boundary behavior by adding a prior. (A zero count creates a zero MLE probability.)
+
+**Check.** `checks/M0.5/D-M0.5.3-02.py` — probability error `0.0`, Lagrange stationarity error `0.0`, `passed = True`.
+
+**Intuition.** Counting is maximum likelihood for a categorical conditional. The denominator is the number of times the context occurred, so each row of the count table becomes its own probability distribution.
+
+### D-M0.5.3-03 · Add-one smoothing is Dirichlet posterior prediction
+
+**Claim.** A Dirichlet$(1,\ldots,1)$ prior yields posterior predictive
+
+$$
+\hat p_{+1}(w\mid h)=\frac{c(h,w)+1}{c(h)+V}\in(0,1].
+$$
+
+The same mean is the MAP estimator under a Dirichlet$(2,\ldots,2)$ prior. This prevents zero counts from producing zero predictive probability.
+
+**Steps.**
+
+1. Let $\boldsymbol{p}_h\in\Delta^{V-1}$ be the conditional probability vector and choose the prior
+   $$
+   \boldsymbol{p}_h\sim\operatorname{Dirichlet}(\alpha_1,\ldots,\alpha_V),\qquad \alpha_w=1\in\mathbb{R}_{>0}.
+   $$
+   (The symmetric prior assigns one pseudo-count to every vocabulary item.)
+2. The categorical likelihood for counts $c(h,w)$ is proportional to
+   $$
+   \prod_{w\in\mathcal{V}}p(w\mid h)^{c(h,w)}\in\mathbb{R}_{\ge0}.
+   $$
+   (Independent observations multiply powers of their selected probabilities.)
+3. Multiply likelihood and prior density:
+   $$
+   p(\boldsymbol{p}_h\mid c)\propto\prod_wp(w\mid h)^{c(h,w)+\alpha_w-1}
+   =\prod_wp(w\mid h)^{c(h,w)}.
+   $$
+   (Dirichlet exponents add, so the posterior is Dirichlet with parameters $c(h,w)+1$.)
+4. The posterior predictive for one new token is the posterior mean:
+   $$
+   p(w_{\mathrm{new}}=w\mid c)=\mathbb{E}[p(w\mid h)\mid c]
+   =\frac{c(h,w)+1}{\sum_{v\in\mathcal{V}}(c(h,v)+1)}\in(0,1].
+   $$
+   (A Dirichlet coordinate has mean equal to its parameter divided by the parameter sum.)
+5. Simplify the denominator:
+   $$
+   \sum_v(c(h,v)+1)=c(h)+V\in\mathbb{N},
+   \qquad
+   p(w_{\mathrm{new}}=w\mid c)=\frac{c(h,w)+1}{c(h)+V}.
+   $$
+   (There are $V$ pseudo-counts, one for each vocabulary item.)
+6. For a Dirichlet$(2,\ldots,2)$ prior, the posterior parameters are $c(h,w)+2$. The interior MAP coordinate is
+   $$
+   \operatorname{MAP}(p(w\mid h))=\frac{c(h,w)+2-1}{c(h)+2V-V}=\frac{c(h,w)+1}{c(h)+V}\in(0,1].
+   $$
+   (The Dirichlet mode subtracts one from each posterior parameter, and here all parameters exceed one.)
+7. Thus add-one smoothing gives positive mass to every vocabulary item, while the unsmoothed MLE assigns zero to an unseen item. (The discrete zero-count boundary is the finite-count analogue of the forward-KL penalty for missing data support.)
+
+**Check.** `checks/M0.5/D-M0.5.3-03.py` — posterior-predictive error `0.0`, Dirichlet(2) MAP error `0.0`, zero-count probability `0.1`, `passed = True`.
+
+**Intuition.** Smoothing is not an arbitrary patch. It is a prior predictive calculation that trades a small amount of observed-count sharpness for nonzero probability on unseen events.
+
+### D-M0.5.3-04 · Dilated causal CNN receptive field
+
+**Claim.** A causal CNN with kernel width $2$ and dilations $1,2,4,\ldots,2^{L-1}$ has receptive field
+
+$$
+R_L=2^L\in\mathbb{N}.
+$$
+
+**Steps.**
+
+1. Before any layer, one output position reads itself, so $R_0=1\in\mathbb{N}$. (The initial position is the base case.)
+2. A width-$2$ causal layer with dilation $d_l$ reads the current position and one position $d_l$ steps earlier:
+   $$
+   R_l=R_{l-1}+d_l\in\mathbb{N}.
+   $$
+   (The new tap extends the left boundary by exactly the dilation.)
+3. Set $d_l=2^{l-1}$ and expand the recurrence:
+   $$
+   R_L=1+\sum_{l=1}^{L}2^{l-1}\in\mathbb{N}.
+   $$
+   (Each layer contributes the distance of its new causal tap.)
+4. Use the finite geometric-series identity:
+   $$
+   \sum_{l=1}^{L}2^{l-1}=\frac{2^L-1}{2-1}=2^L-1\in\mathbb{N}.
+   $$
+   (The ratio is $2$ and the first term is $1$.)
+5. Substitute into the receptive-field expression:
+   $$
+   R_L=1+(2^L-1)=2^L\in\mathbb{N}.
+   $$
+   (The base position and the accumulated extension combine to the claimed field.)
+6. A causal CNN is therefore an order-$R_L$ finite-context model at a fixed output position, while full attention can read every earlier position inside its context window. (The contrast is about the dependency set, not about the cost of computing it.)
+
+**Check.** `checks/M0.5/D-M0.5.3-04.py` — receptive-field error `0.0`; the check records attention as `unbounded inside context window`, `passed = True`.
+
+**Intuition.** Dilation grows a finite causal window exponentially in depth. Attention changes the dependency pattern from a fixed receptive field to all available earlier positions.
+
+## 4. Numerical verification
+
+The four checks use deterministic float64 arrays and exact integer receptive-field arithmetic.
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M0.5.3-01 | pair transition error `0.0`; x-only counterexample `True` | pass |
+| D-M0.5.3-02 | probability error `0.0`; Lagrange stationarity error `0.0` | pass |
+| D-M0.5.3-03 | posterior-predictive error `0.0`; MAP error `0.0`; zero-count probability `0.1` | pass |
+| D-M0.5.3-04 | receptive-field error `0.0` | pass |
+
+Run `python -m pytest course/tests` from the repository parent. The N-gram widget also has a Node test for its pure compute contract.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M0.5-b" />
+
+**V-M0.5-b — N-gram trainer.** The reader chooses $n$, smoothing $\lambda$, and a fixed toy corpus. The pure compute module returns context counts, conditional probabilities, and held-out perplexity. Its single insight is that zero counts make an unsmoothed conditional impossible while add-one smoothing assigns nonzero posterior-predictive mass; the spec is `viz/specs/V-M0.5-b.yaml`, and the tested computation is `viz/compute/ngram_trainer.ts`.
+
+## 6. Closing
+
+**Counterintuitive question.** If an RNN is a full-order model, why can a finite-order N-gram sometimes be easier to analyze? **Worked answer:** D-M0.5.3-01 says the RNN state can compress the whole prefix, so the pair $(x_t,h_t)$ is Markov but the hidden state is learned and opaque. D-M0.5.3-02 and D-M0.5.3-03 make an N-gram conditional an explicit count table, at the cost of a finite context and sparse counts.
+
+**Assignment A-M0.5.** Implement the add-one-smoothed bigram model, report held-out perplexity, and export the count/probability tables used by V-M0.5-b. The assignment contract is in `code/common/A-M0.5-README.md`.
+
+**Spine check.** Architecture-wise, RNNs and causal CNNs define different ways to compress or restrict the past before predicting the next token. Probability-wise, constrained categorical MLE yields N-gram counts, while a Dirichlet prior gives the smoothed conditional.

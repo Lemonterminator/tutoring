@@ -1,0 +1,12 @@
+{
+  "id": "GAME-ELBO",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "variational",
+  "module": "Math practice",
+  "title": {
+    "en": "ELBO: bounds, Gaussian gradients and reparameterization",
+    "zh": "ELBO：下界、高斯梯度与重参数化"
+  },
+  "prereqs": []
+}

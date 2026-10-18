@@ -1,0 +1,46 @@
+## 在定价路线中的位置
+
+四门课中的第 3 门，为库里的隐含波动率步骤做准备。给定市场价格 $P_m$，求解 $V(\sigma)=P_m$ 之前，先定义可接受的输入域，并区分“数学上有唯一根”与“浮点数据足以辨认这个根”。本课沿用第 2 门的 Black–Scholes 价格和 Vega。
+
+## 哪些价格能反推出波动率
+
+当 $S,K,T>0$，记 $A=S e^{-qT}$、$B=K e^{-rT}$。有限正波动率给出
+
+$$\max(A-B,0)<C(\sigma)<A,\qquad \max(B-A,0)<P(\sigma)<B.$$
+
+下界由 $\sigma=0$ 取得（若 API 允许）；上界是 $\sigma\to\infty$ 的极限，没有有限波动率逆解。在精确算术下，只要价格严格在相应区间内部，正 IV 唯一，因为
+
+$$\frac{\partial V}{\partial\sigma}=S e^{-qT}\phi(d_1)\sqrt T>0.$$
+
+平价关系使同执行价、同到期日的 call 与 put 具有同一 IV，也可检查原报价与转换后的 OTM 报价是否一致。$T=0$ 时价格只是 payoff，无法识别波动率。对 NaN、无穷、非正 $S,K$、负 $T$ 和越界价格，应返回明确状态，而不是等 Newton 失败。
+
+## 曲率、Newton 与条件数
+
+价格对波动率的二阶导 Vomma 为 $\partial^2 V/\partial\sigma^2=\mathrm{Vega}\,d_1d_2/\sigma$。符号随 $d_1d_2$ 变化，不能假设价格全局凸。无保护 Newton 更新 $\sigma_{n+1}=\sigma_n-[V(\sigma_n)-P_m]/\mathrm{Vega}(\sigma_n)$ 可能越过 $\sigma=0$、溢出，或在 Vega 极小时跳得很远。
+
+逆问题的局部绝对条件数为 $|d\sigma/dP_m|=1/\mathrm{Vega}$。深度 OTM 或短到期时，binary64 价格可能与零无法区分，即使真实 IV 并不为零。此时小价格残差不能说明 IV 准确。应将目标波动率容差与可分辨的价格变化 $\mathrm{Vega}\,\delta\sigma$ 比较。
+
+## 带 bracket 的求解器约定
+
+1. 检查输入域和 call/put 对应的无套利价格界。真正越界返回 `PriceOutOfBounds`。将下界的 `ZeroVolBoundary`、上界的 `NoFiniteVol` 与一般失败区分开。
+2. 取 $\sigma_L=0$，逐步扩大 $\sigma_U$，直到目标价被 bracket，或达到记录在接口中的上限/精度限制。每轮保持端点价格残差异号。
+3. Vega 可用、Newton 候选有限且严格位于区间内部时才用 Newton；否则二分。根据价格残差符号更新 bracket。Brent 方法也维护 bracket，可作对照。
+4. 停止条件同时看价格和波动率：绝对加相对价格残差、区间宽度或波动率步长、最大迭代次数。不同波动率算出相同浮点价格时返回 `PrecisionLimit`。孤立的 `1e-12` 没有说明单位和尺度。
+
+条件允许时，可在 OTM 价格或归一化远期价格上求根。大内在价值减去后所剩的微小时间价值本身可能丢精度，因此归一化还需要稳定的定价公式；靠平价换期权类型也无法找回报价输入中已舍入掉的信息。
+
+## 工业级算法与初值
+
+Brenner–Subrahmanyam 的 ATM 近似和 Corrado–Miller 公式适合作限定条件下的初值，不能替代 bracket。Jäckel 的 *Let's Be Rational* 使用归一化 Black 价格、按区域分支的有理近似初值及四阶 Householder 迭代。论文报告的接近机器精度还依赖稳定的定价函数。先完成透明的带保护求解器，再用它作高级基准。
+
+## 与仓库绑定的练习
+
+1. 从非负 payoff、平价及最大 payoff 推出 call/put 价格界。在 price→IV→price 网格中，将精确上下界与紧邻界内的价格分开测。
+2. 找一组 $(K/S,\sigma,T)$ 与故意糟糕的 Newton 初值，使无保护更新越界或停滞；记录迭代，再比较自动扩张 bracket 与二分回退。
+3. 对 $T=1/365$ 的深度 OTM 执行价，把目标价扰动一个可表示的 `double` 间隔。将 IV 变化与 $\Delta P/\mathrm{Vega}$ 比较，并标出无法数值识别 IV 的区域。
+
+## 阅读顺序
+
+1. Richard P. Brent（1973），*Algorithms for Minimization without Derivatives*，Prentice-Hall，[作者书目](https://maths-people.anu.edu.au/brent/select.html)。读保证收敛的求零部分；页码按手头版本核对。先读[免费实用求根讲义](https://www.buttenschoen.ca/MATH551/practical-root-finding/)也可以。
+2. Peter Jäckel（2015），“Let's Be Rational”，*Wilmott* 2015(75)，40–53，[DOI](https://doi.org/10.1002/wilm.10395)。完成简单求解器后，再读归一化价格、收敛与精度讨论；全文可能需要机构访问。
+3. QuantLib 开源实现 [`impliedvolatility.cpp`](https://github.com/lballabio/QuantLib/blob/master/ql/instruments/impliedvolatility.cpp) 使用带 bracket 的 Brent 求解器。重点观察 API 与求解器约定，不把其容差直接视为适合本库。

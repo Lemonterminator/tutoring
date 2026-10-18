@@ -4,7 +4,10 @@ import { frameworkComponents } from '../components';
 import { displayLang, examMode, lang, setExamMode, setLang } from '../i18n/state';
 import type { TermDict } from '../i18n/terms';
 import { tr } from '../i18n/ui';
+import { ThemeToggle } from '../theme/ThemeToggle';
 import { InertContext, LessonContext, type LessonMeta } from './LessonContext';
+import { getLessonNavigation } from './lesson-catalog';
+import { LessonIndex, LessonPager, type LessonIndexData, type LessonNavigationLabels } from './LessonNavigation';
 
 type MdxBody = ComponentType<{ components?: Record<string, unknown> }>;
 export type LessonProps = { meta: LessonMeta; En: MdxBody; Fi: MdxBody; terms: TermDict };
@@ -19,6 +22,19 @@ export function Lesson({ meta, En, Fi, terms }: LessonProps) {
   const shadowRef = useRef<HTMLDivElement>(null);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [tip, setTip] = useState<Tip | null>(null);
+  const navigation = meta.navigation ?? getLessonNavigation(meta.subject, meta.id);
+  const labels: LessonNavigationLabels = shown === 'fi'
+    ? {
+      index: 'Oppitunnin tiedot', id: 'Tunnus', module: 'Moduuli', prerequisites: 'Esitiedot', estimatedHours: 'Arvioitu aika', spine: 'Oppimisen runko',
+      derivations: 'Johdotukset', visualizations: 'Visualisoinnit', assignment: 'Tehtävä', references: 'Lähteet', contents: tr('contents'),
+      previous: 'Edellinen oppitunti', next: 'Seuraava oppitunti', openIndex: 'Kaikki oppitunnit',
+    }
+    : {
+      index: 'Lesson index', id: 'ID', module: 'Module', prerequisites: 'Prerequisites', estimatedHours: 'Estimated time', spine: 'Learning spine',
+      derivations: 'Derivations', visualizations: 'Visualizations', assignment: 'Assignment', references: 'References', contents: tr('contents'),
+      previous: 'Previous lesson', next: 'Next lesson', openIndex: 'All lessons',
+    };
+  const indexMeta: LessonIndexData = { id: meta.id };
 
   useEffect(() => {
     document.documentElement.lang = shown;
@@ -65,19 +81,13 @@ export function Lesson({ meta, En, Fi, terms }: LessonProps) {
             />
             {tr('examMode')}
           </label>
+          <ThemeToggle lang={shown} />
         </div>
       </header>
 
       <div class="page">
         <nav class="toc" aria-label={tr('contents')}>
-          <div class="toc__head">{tr('contents')}</div>
-          <ol>
-            {toc.map((item) => (
-              <li key={item.id}>
-                <a href={`#${item.id}`}>{item.text}</a>
-              </li>
-            ))}
-          </ol>
+          <LessonIndex meta={indexMeta} toc={toc} labels={labels} />
           <a href="#glossary">{tr('glossary')}</a>
         </nav>
 
@@ -97,6 +107,7 @@ export function Lesson({ meta, En, Fi, terms }: LessonProps) {
               ))}
             </dl>
           </section>
+          <LessonPager navigation={navigation} labels={labels} titleLanguage={shown} />
         </main>
       </div>
 

@@ -1,0 +1,18 @@
+import { PracticeGame } from '../../../framework/games/PracticeGame';
+import { shapeCards } from '../../../framework/games/llm-foundations-cards';
+import { quantLessonHref } from '../../../framework/quant/learning-resources';
+import { SourceLessonLink } from '../../../framework/games/GameLinks';
+
+## Start practicing
+
+<a href={quantLessonHref('QUANT-GAMES')}>← Back to game library</a>
+
+Start with vector and matrix shapes, orient Jacobians, and compute transpose times upstream gradient. This practices the first lesson’s forward definitions and chain-rule convention.
+
+<PracticeGame generate={shapeCards} lang="en" />
+
+## Limits and source lesson
+
+Two-dimensional exercises locate transpose errors but do not replace shape checks in real tensor programs. The final problem removes intermediate steps.
+
+<SourceLessonLink source="llm:M0.1" lang="en" />

@@ -1,0 +1,1697 @@
+{
+  "course": "18-06sc-linear-algebra-fall-2011",
+  "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/",
+  "license": "CC BY-NC-SA 4.0",
+  "version": 1,
+  "games": [
+    {
+      "id": "MIT-LA-01",
+      "sequence": 1,
+      "unit": 1,
+      "session": "1.1",
+      "slug": "the-geometry-of-linear-equations",
+      "kind": "topic",
+      "title": {
+        "en": "The Geometry of Linear Equations",
+        "zh": "线性方程的几何"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/the-geometry-of-linear-equations/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.1sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6913aa2f37dada8fdda334168b30339b_MIT18_06SCF11_Ses1.1sum.pdf",
+          "filename": "6913aa2f37dada8fdda334168b30339b_MIT18_06SCF11_Ses1.1sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/924857f47516849941e6217c76d3b357_J7DzL2_Na80.pdf",
+          "filename": "924857f47516849941e6217c76d3b357_J7DzL2_Na80.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/da7edc26bc12b2aca08bbeff1dc2f25f_My5w4MXWBew.pdf",
+          "filename": "da7edc26bc12b2aca08bbeff1dc2f25f_My5w4MXWBew.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.1prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f511d20996159f321b6704f5b2070e04_MIT18_06SCF11_Ses1.1prob.pdf",
+          "filename": "f511d20996159f321b6704f5b2070e04_MIT18_06SCF11_Ses1.1prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.1sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/290a5d857d2a51bf21d4eebf05905620_MIT18_06SCF11_Ses1.1sol.pdf",
+          "filename": "290a5d857d2a51bf21d4eebf05905620_MIT18_06SCF11_Ses1.1sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-02",
+      "sequence": 2,
+      "unit": 1,
+      "session": "1.2",
+      "slug": "elimination-with-matrices",
+      "kind": "topic",
+      "title": {
+        "en": "Elimination with Matrices",
+        "zh": "用矩阵消元"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/elimination-with-matrices/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.2sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0903b4b404284cd14b66ecccea103fd4_MIT18_06SCF11_Ses1.2sum.pdf",
+          "filename": "0903b4b404284cd14b66ecccea103fd4_MIT18_06SCF11_Ses1.2sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/454334e7d4fcc0b38df4085e9b7e83e3_QVKj3LADCnA.pdf",
+          "filename": "265e502cbb641058a996fbb83c26e0a8_QVKj3LADCnA.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/b96aab30dca7e88a637e3e98932de472_GLFg2UBMAxc.pdf",
+          "filename": "b96aab30dca7e88a637e3e98932de472_GLFg2UBMAxc.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.2prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/2a96d025346d8845829251cb918caddd_MIT18_06SCF11_Ses1.2prob.pdf",
+          "filename": "2a96d025346d8845829251cb918caddd_MIT18_06SCF11_Ses1.2prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.2sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/43e6b5f1175983c7220ce471d4a93317_MIT18_06SCF11_Ses1.2sol.pdf",
+          "filename": "43e6b5f1175983c7220ce471d4a93317_MIT18_06SCF11_Ses1.2sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-03",
+      "sequence": 3,
+      "unit": 1,
+      "session": "1.3",
+      "slug": "multiplication-and-inverse-matrices",
+      "kind": "topic",
+      "title": {
+        "en": "Multiplication and Inverse Matrices",
+        "zh": "矩阵乘法与逆矩阵"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/multiplication-and-inverse-matrices/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.3sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/1963da71c4d96e5d14e7939780f79bcc_MIT18_06SCF11_Ses1.3sum.pdf",
+          "filename": "1963da71c4d96e5d14e7939780f79bcc_MIT18_06SCF11_Ses1.3sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d83ded9024aae1310ab3236a216d34d7_FX4C-JpTFgY.pdf",
+          "filename": "d83ded9024aae1310ab3236a216d34d7_FX4C-JpTFgY.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f9354bd85c6f923d33f8e8129e30c094_zWxhmBCdvFs.pdf",
+          "filename": "f9354bd85c6f923d33f8e8129e30c094_zWxhmBCdvFs.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.3prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/8e9ccbcc13300a9bda7f24a684bd16b6_MIT18_06SCF11_Ses1.3prob.pdf",
+          "filename": "8e9ccbcc13300a9bda7f24a684bd16b6_MIT18_06SCF11_Ses1.3prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.3sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d2dc903ca48f3d1ffa1528abde719c94_MIT18_06SCF11_Ses1.3sol.pdf",
+          "filename": "d2dc903ca48f3d1ffa1528abde719c94_MIT18_06SCF11_Ses1.3sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-04",
+      "sequence": 4,
+      "unit": 1,
+      "session": "1.4",
+      "slug": "factorization-into-a-lu",
+      "kind": "topic",
+      "title": {
+        "en": "Factorization into A = LU",
+        "zh": "分解 A = LU"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/factorization-into-a-lu/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.4sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/c5961452fbb31f8a0b34ecd0ffc5cdc4_MIT18_06SCF11_Ses1.4sum.pdf",
+          "filename": "c5961452fbb31f8a0b34ecd0ffc5cdc4_MIT18_06SCF11_Ses1.4sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6a1ed7a39cbff2dd88de7c559c5373ad_MsIvs_6vC38.pdf",
+          "filename": "6a1ed7a39cbff2dd88de7c559c5373ad_MsIvs_6vC38.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/2bc2e009a682eaa46a198af45d6dc80c_-eA2D_rIcNA.pdf",
+          "filename": "2bc2e009a682eaa46a198af45d6dc80c_-eA2D_rIcNA.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.4prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0ea3c333ad8f83379b45efd8ffe88729_MIT18_06SCF11_Ses1.4prob.pdf",
+          "filename": "0ea3c333ad8f83379b45efd8ffe88729_MIT18_06SCF11_Ses1.4prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.4sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/c0a61f86b1cb7c8bcb9d140b4e94bdae_MIT18_06SCF11_Ses1.4sol.pdf",
+          "filename": "c0a61f86b1cb7c8bcb9d140b4e94bdae_MIT18_06SCF11_Ses1.4sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-05",
+      "sequence": 5,
+      "unit": 1,
+      "session": "1.5",
+      "slug": "transposes-permutations-vector-spaces",
+      "kind": "topic",
+      "title": {
+        "en": "Transposes, Permutations, Vector Spaces",
+        "zh": "转置、置换与向量空间"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/transposes-permutations-vector-spaces/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.5sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/33b21afab62ea8df6c7bd241240df60d_MIT18_06SCF11_Ses1.5sum.pdf",
+          "filename": "33b21afab62ea8df6c7bd241240df60d_MIT18_06SCF11_Ses1.5sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/e8776251d7b3c71d9fc1dc8f66a1b048_JibVXBElKL0.pdf",
+          "filename": "e8776251d7b3c71d9fc1dc8f66a1b048_JibVXBElKL0.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f90dceb9a6b4958ec32157474a45eda5_QQpvGlF_1Qo.pdf",
+          "filename": "f90dceb9a6b4958ec32157474a45eda5_QQpvGlF_1Qo.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.5prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/32b9793a7998e09296cd6234fe7e9017_MIT18_06SCF11_Ses1.5prob.pdf",
+          "filename": "32b9793a7998e09296cd6234fe7e9017_MIT18_06SCF11_Ses1.5prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.5sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/76bdb83fe7ac8f76eccd5c7c1849c50b_MIT18_06SCF11_Ses1.5sol.pdf",
+          "filename": "76bdb83fe7ac8f76eccd5c7c1849c50b_MIT18_06SCF11_Ses1.5sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-06",
+      "sequence": 6,
+      "unit": 1,
+      "session": "1.6",
+      "slug": "column-space-and-nullspace",
+      "kind": "topic",
+      "title": {
+        "en": "Column Space and Nullspace",
+        "zh": "列空间与零空间"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/column-space-and-nullspace/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.6sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/a9361fe289da445a7ca1fe2f88b55ca7_MIT18_06SCF11_Ses1.6sum.pdf",
+          "filename": "a9361fe289da445a7ca1fe2f88b55ca7_MIT18_06SCF11_Ses1.6sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/7c283d19f8bf10f3c33671c420bd1908_8o5Cmfpeo6g.pdf",
+          "filename": "7c283d19f8bf10f3c33671c420bd1908_8o5Cmfpeo6g.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/5b4f1c3c69b84147c351605c67c05b2b_S8DQZjE4V8U.pdf",
+          "filename": "5b4f1c3c69b84147c351605c67c05b2b_S8DQZjE4V8U.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.6prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/255ec48e518355a8ef94b086e3a5a247_MIT18_06SCF11_Ses1.6prob.pdf",
+          "filename": "255ec48e518355a8ef94b086e3a5a247_MIT18_06SCF11_Ses1.6prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.6sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f4ae8cc2b4f36574983dd4c313f106eb_MIT18_06SCF11_Ses1.6sol.pdf",
+          "filename": "f4ae8cc2b4f36574983dd4c313f106eb_MIT18_06SCF11_Ses1.6sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-07",
+      "sequence": 7,
+      "unit": 1,
+      "session": "1.7",
+      "slug": "solving-ax-0-pivot-variables-special-solutions",
+      "kind": "topic",
+      "title": {
+        "en": "Solving Ax = 0: Pivot Variables, Special Solutions",
+        "zh": "解 Ax = 0：主元变量与特殊解"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/solving-ax-0-pivot-variables-special-solutions/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.7sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/dddb31dfe72d2e2e2fd09e74713b7775_MIT18_06SCF11_Ses1.7sum.pdf",
+          "filename": "dddb31dfe72d2e2e2fd09e74713b7775_MIT18_06SCF11_Ses1.7sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d10b5b22953763dddc04f0d472d1d80c_VqP2tREMvt0.pdf",
+          "filename": "11def16763845b3602821117592f4b56_VqP2tREMvt0.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/e48cdbd12025cad3a61600319f38f19e_3cMyj8EKFGo.pdf",
+          "filename": "e48cdbd12025cad3a61600319f38f19e_3cMyj8EKFGo.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.7prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/67a97b58e4ee19bfe2ac57ab94cddff8_MIT18_06SCF11_Ses1.7prob.pdf",
+          "filename": "67a97b58e4ee19bfe2ac57ab94cddff8_MIT18_06SCF11_Ses1.7prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.7sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d5e9b3dac09bd41988d0cba7ed021efc_MIT18_06SCF11_Ses1.7sol.pdf",
+          "filename": "d5e9b3dac09bd41988d0cba7ed021efc_MIT18_06SCF11_Ses1.7sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-08",
+      "sequence": 8,
+      "unit": 1,
+      "session": "1.8",
+      "slug": "solving-ax-b-row-reduced-form-r",
+      "kind": "topic",
+      "title": {
+        "en": "Solving Ax = b: Row Reduced Form R",
+        "zh": "解 Ax = b：行最简形"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/solving-ax-b-row-reduced-form-r/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.8sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f5a74578196a8afc2fd2ba8581acb17f_MIT18_06SCF11_Ses1.8sum.pdf",
+          "filename": "f5a74578196a8afc2fd2ba8581acb17f_MIT18_06SCF11_Ses1.8sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6a682e0506398c57dc7d2fa81a36fb01_9Q1q7s1jTzU.pdf",
+          "filename": "6a682e0506398c57dc7d2fa81a36fb01_9Q1q7s1jTzU.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/8080e0a1cd5d6d144eb363675ff2ce1e_fjsPjh0B2tU.pdf",
+          "filename": "8080e0a1cd5d6d144eb363675ff2ce1e_fjsPjh0B2tU.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.8prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/78fb9d04e3b75be152197bb83fea3d13_MIT18_06SCF11_Ses1.8prob.pdf",
+          "filename": "78fb9d04e3b75be152197bb83fea3d13_MIT18_06SCF11_Ses1.8prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.8sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d85abdc57e0c75fbb35cb9e25263294f_MIT18_06SCF11_Ses1.8sol.pdf",
+          "filename": "d85abdc57e0c75fbb35cb9e25263294f_MIT18_06SCF11_Ses1.8sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-09",
+      "sequence": 9,
+      "unit": 1,
+      "session": "1.9",
+      "slug": "independence-basis-and-dimension",
+      "kind": "topic",
+      "title": {
+        "en": "Independence, Basis and Dimension",
+        "zh": "独立性、基与维数"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/independence-basis-and-dimension/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.9sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0bbc30e3f1d7933ea07a2d2e9ab050d9_MIT18_06SCF11_Ses1.9sum.pdf",
+          "filename": "0bbc30e3f1d7933ea07a2d2e9ab050d9_MIT18_06SCF11_Ses1.9sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ac8aac665b4b53b6d9af5d658f92a4dd_yjBerM5jWsc.pdf",
+          "filename": "265592b34ca558541dcce602b51d550a_yjBerM5jWsc.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0d432adcd7958f5dbedecccd20ec1efc_MMWqGD4Urso.pdf",
+          "filename": "0d432adcd7958f5dbedecccd20ec1efc_MMWqGD4Urso.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.9prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/562c31026033b44a05491b57834a5a0e_MIT18_06SCF11_Ses1.9prob.pdf",
+          "filename": "562c31026033b44a05491b57834a5a0e_MIT18_06SCF11_Ses1.9prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.9sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/793cbea8c118cf3b30ba2944a5c61dee_MIT18_06SCF11_Ses1.9sol.pdf",
+          "filename": "793cbea8c118cf3b30ba2944a5c61dee_MIT18_06SCF11_Ses1.9sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-10",
+      "sequence": 10,
+      "unit": 1,
+      "session": "1.10",
+      "slug": "the-four-fundamental-subspaces",
+      "kind": "topic",
+      "title": {
+        "en": "The Four Fundamental Subspaces",
+        "zh": "四个基本子空间"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/the-four-fundamental-subspaces/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.10sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/62a9db9eeab190694d40afe4734068ca_MIT18_06SCF11_Ses1.10sum.pdf",
+          "filename": "62a9db9eeab190694d40afe4734068ca_MIT18_06SCF11_Ses1.10sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/dcc02491b2c1dc3a4f9338a82f7537dd_nHlE7EgJFds.pdf",
+          "filename": "afe0e43e133e663fbea3a48fb8372bfa_nHlE7EgJFds.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/69f8d92836fa1181356ea9d7f04fd816_D8u1LV9CnCk.pdf",
+          "filename": "69f8d92836fa1181356ea9d7f04fd816_D8u1LV9CnCk.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.10prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/1036f9ef2f53425811d3ab8176b4b4d7_MIT18_06SCF11_Ses1.10prob.pdf",
+          "filename": "1036f9ef2f53425811d3ab8176b4b4d7_MIT18_06SCF11_Ses1.10prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.10sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/68f4777bbcac272c9184347a9849333a_MIT18_06SCF11_Ses1.10sol.pdf",
+          "filename": "68f4777bbcac272c9184347a9849333a_MIT18_06SCF11_Ses1.10sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-11",
+      "sequence": 11,
+      "unit": 1,
+      "session": "1.11",
+      "slug": "matrix-spaces-rank-1-small-world-graphs",
+      "kind": "topic",
+      "title": {
+        "en": "Matrix Spaces; Rank 1; Small World Graphs",
+        "zh": "矩阵空间、秩一与小世界图"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/matrix-spaces-rank-1-small-world-graphs/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.11sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/732789d4b5c1247ccab5faf13b6f29d2_MIT18_06SCF11_Ses1.11sum.pdf",
+          "filename": "732789d4b5c1247ccab5faf13b6f29d2_MIT18_06SCF11_Ses1.11sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/e51c8ed02239a920bc13919fbde2a28e_2IdtqGM6KWU.pdf",
+          "filename": "0165be6d5715e8b1d4b77bef22e614d5_2IdtqGM6KWU.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/7db51b0ebe096ee57bb0e6bcf9a1b43d_BaBoztM9Q1w.pdf",
+          "filename": "7db51b0ebe096ee57bb0e6bcf9a1b43d_BaBoztM9Q1w.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.11prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/8bcdd1d9795d55865119bb010765a021_MIT18_06SCF11_Ses1.11prob.pdf",
+          "filename": "8bcdd1d9795d55865119bb010765a021_MIT18_06SCF11_Ses1.11prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.11sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f203b1ebf66c210c62e5730a4b9f9f6d_MIT18_06SCF11_Ses1.11sol.pdf",
+          "filename": "f203b1ebf66c210c62e5730a4b9f9f6d_MIT18_06SCF11_Ses1.11sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-12",
+      "sequence": 12,
+      "unit": 1,
+      "session": "1.12",
+      "slug": "graphs-networks-incidence-matrices",
+      "kind": "topic",
+      "title": {
+        "en": "Graphs, Networks, Incidence Matrices",
+        "zh": "图、网络与关联矩阵"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/graphs-networks-incidence-matrices/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.12sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d71b25b942dd3dec0ede49d712deb4b0_MIT18_06SCF11_Ses1.12sum.pdf",
+          "filename": "d71b25b942dd3dec0ede49d712deb4b0_MIT18_06SCF11_Ses1.12sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/3f8e0016948ea0224d2cd16dd4f4e80c_6-wh6yvk6uc.pdf",
+          "filename": "3f8e0016948ea0224d2cd16dd4f4e80c_6-wh6yvk6uc.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/789f87ed894d05254c8bb49f122d57e4_h0m2tsmSPTI.pdf",
+          "filename": "789f87ed894d05254c8bb49f122d57e4_h0m2tsmSPTI.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses1.12prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/13115844908c991f11d52f44f29ecc11_MIT18_06SCF11_Ses1.12prob.pdf",
+          "filename": "13115844908c991f11d52f44f29ecc11_MIT18_06SCF11_Ses1.12prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses1.12sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/1bbfcb718126a0a8ef8755b84922c536_MIT18_06SCF11_Ses1.12sol.pdf",
+          "filename": "1bbfcb718126a0a8ef8755b84922c536_MIT18_06SCF11_Ses1.12sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-13",
+      "sequence": 13,
+      "unit": 1,
+      "session": "1.13",
+      "slug": "an-overview-of-key-ideas",
+      "kind": "topic",
+      "title": {
+        "en": "An Overview of Key Ideas",
+        "zh": "关键思想概览"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/an-overview-of-key-ideas/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.13sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ca8b2f24428c3ab6c74757ae5ff5056b_MIT18_06SCF11_Ses1.13sum.pdf",
+          "filename": "ca8b2f24428c3ab6c74757ae5ff5056b_MIT18_06SCF11_Ses1.13sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f88df3281099e7dd7f368050f36244ee_0oBJN8F616U.pdf",
+          "filename": "203505b17cb9f1cedc1db2a2d384184f_0oBJN8F616U.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0013a5b9019fc1d7da3b303c4d395b83_OZxzHcW663g.pdf",
+          "filename": "0013a5b9019fc1d7da3b303c4d395b83_OZxzHcW663g.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-14",
+      "sequence": 14,
+      "unit": 1,
+      "session": "1.14",
+      "slug": "exam-1-review",
+      "kind": "review",
+      "title": {
+        "en": "Exam 1 Review",
+        "zh": "第一次考试复习"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/exam-1-review/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses1.14sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/b547dd4153ccc350860df8f43085c2d6_MIT18_06SCF11_Ses1.14sum.pdf",
+          "filename": "b547dd4153ccc350860df8f43085c2d6_MIT18_06SCF11_Ses1.14sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ae051c7b15bd20481cbab408d5fca486_l88D4r74gtM.pdf",
+          "filename": "ae051c7b15bd20481cbab408d5fca486_l88D4r74gtM.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0f5a0643c2eaa5667603aa39ec807f70_AMLekTJR5_U.pdf",
+          "filename": "0f5a0643c2eaa5667603aa39ec807f70_AMLekTJR5_U.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-15",
+      "sequence": 15,
+      "unit": 1,
+      "session": "Exam 1",
+      "slug": "exam-1",
+      "kind": "exam",
+      "title": {
+        "en": "Exam 1",
+        "zh": "第一次考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/ax-b-and-the-four-subspaces/exam-1/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_ex1.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/170cb8d5b8ee2a2c170d611f87d0525d_MIT18_06SCF11_ex1.pdf",
+          "filename": "170cb8d5b8ee2a2c170d611f87d0525d_MIT18_06SCF11_ex1.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_ex1s.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ae27336edabea99bcde8649185987f5b_MIT18_06SCF11_ex1s.pdf",
+          "filename": "ae27336edabea99bcde8649185987f5b_MIT18_06SCF11_ex1s.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-16",
+      "sequence": 16,
+      "unit": 2,
+      "session": "2.1",
+      "slug": "orthogonal-vectors-and-subspaces",
+      "kind": "topic",
+      "title": {
+        "en": "Orthogonal Vectors and Subspaces",
+        "zh": "正交向量与子空间"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/orthogonal-vectors-and-subspaces/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.1sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/fdce42d9c8d8dc4eac7a9db3c1978e18_MIT18_06SCF11_Ses2.1sum.pdf",
+          "filename": "fdce42d9c8d8dc4eac7a9db3c1978e18_MIT18_06SCF11_Ses2.1sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/835b7ef3b33aee6338e61b89b3f10c7b_YzZUIYRCE38.pdf",
+          "filename": "74adfa397142e097801f8cb09f729046_YzZUIYRCE38.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/e9e49c6aba80b11d7936b0f1d8e83ee3_h9aDgvW59TU.pdf",
+          "filename": "e9e49c6aba80b11d7936b0f1d8e83ee3_h9aDgvW59TU.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.1prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/31faf1ce3bab94b78feccf05107b9f93_MIT18_06SCF11_Ses2.1prob.pdf",
+          "filename": "31faf1ce3bab94b78feccf05107b9f93_MIT18_06SCF11_Ses2.1prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.1sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/05fd63b14b76d5ad7ce9cee1ee16186c_MIT18_06SCF11_Ses2.1sol.pdf",
+          "filename": "05fd63b14b76d5ad7ce9cee1ee16186c_MIT18_06SCF11_Ses2.1sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-17",
+      "sequence": 17,
+      "unit": 2,
+      "session": "2.2",
+      "slug": "projections-onto-subspaces",
+      "kind": "topic",
+      "title": {
+        "en": "Projections onto Subspaces",
+        "zh": "投影到子空间"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/projections-onto-subspaces/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.2sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/00e9c8f0eafedeab21a3d079a17ed3d8_MIT18_06SCF11_Ses2.2sum.pdf",
+          "filename": "00e9c8f0eafedeab21a3d079a17ed3d8_MIT18_06SCF11_Ses2.2sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/cb182109450623ef94def421583f1bb4_Y_Ac6KiQ1t0.pdf",
+          "filename": "cb182109450623ef94def421583f1bb4_Y_Ac6KiQ1t0.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.2prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0f9710135b3fbcb08477ed8534c07229_MIT18_06SCF11_Ses2.2prob.pdf",
+          "filename": "0f9710135b3fbcb08477ed8534c07229_MIT18_06SCF11_Ses2.2prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.2sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6b76996d7b439496fa84345340096418_MIT18_06SCF11_Ses2.2sol.pdf",
+          "filename": "6b76996d7b439496fa84345340096418_MIT18_06SCF11_Ses2.2sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-18",
+      "sequence": 18,
+      "unit": 2,
+      "session": "2.3",
+      "slug": "projection-matrices-and-least-squares",
+      "kind": "topic",
+      "title": {
+        "en": "Projection Matrices and Least Squares",
+        "zh": "投影矩阵与最小二乘"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/projection-matrices-and-least-squares/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.3sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/198bde3a6536b62989b6cc09495575c1_MIT18_06SCF11_Ses2.3sum.pdf",
+          "filename": "198bde3a6536b62989b6cc09495575c1_MIT18_06SCF11_Ses2.3sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ea9714a92a64d7937b3cccacb931ca63_osh80YCg_GM.pdf",
+          "filename": "0874a421068b100dbc6aa592d0ab6d10_osh80YCg_GM.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f0931a3768f4b043970be18650568e41_AmQcoopBUTk.pdf",
+          "filename": "79bfc67661f7d63dec8228fb2856002c_AmQcoopBUTk.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.3prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/33fdb9f7b7787e26752169e249def994_MIT18_06SCF11_Ses2.3prob.pdf",
+          "filename": "33fdb9f7b7787e26752169e249def994_MIT18_06SCF11_Ses2.3prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.3sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/815ad23f78e11c1a7d282022fc2db3a9_MIT18_06SCF11_Ses2.3sol.pdf",
+          "filename": "815ad23f78e11c1a7d282022fc2db3a9_MIT18_06SCF11_Ses2.3sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-19",
+      "sequence": 19,
+      "unit": 2,
+      "session": "2.4",
+      "slug": "orthogonal-matrices-and-gram-schmidt",
+      "kind": "topic",
+      "title": {
+        "en": "Orthogonal Matrices and Gram-Schmidt",
+        "zh": "正交矩阵与 Gram–Schmidt"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/orthogonal-matrices-and-gram-schmidt/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.4sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/7ac32be444c25e48590f47573833ccc6_MIT18_06SCF11_Ses2.4sum.pdf",
+          "filename": "7ac32be444c25e48590f47573833ccc6_MIT18_06SCF11_Ses2.4sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/356f454e5c0db220bad1383cd1c54c66_0MtwqhIwdrI.pdf",
+          "filename": "356f454e5c0db220bad1383cd1c54c66_0MtwqhIwdrI.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/c3f237b70703a56e061e9d16139ffbde_HEQuN0QELSQ.pdf",
+          "filename": "c3f237b70703a56e061e9d16139ffbde_HEQuN0QELSQ.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.4prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/b0aca3af754666dff0ab394cf36afaec_MIT18_06SCF11_Ses2.4prob.pdf",
+          "filename": "b0aca3af754666dff0ab394cf36afaec_MIT18_06SCF11_Ses2.4prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.4sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/e1f9595692038807071733916a514cbd_MIT18_06SCF11_Ses2.4sol.pdf",
+          "filename": "e1f9595692038807071733916a514cbd_MIT18_06SCF11_Ses2.4sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-20",
+      "sequence": 20,
+      "unit": 2,
+      "session": "2.5",
+      "slug": "properties-of-determinants",
+      "kind": "topic",
+      "title": {
+        "en": "Properties of Determinants",
+        "zh": "行列式的性质"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/properties-of-determinants/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.5sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/5dd3f8ec0a398fd74264fef3fd591f81_MIT18_06SCF11_Ses2.5sum.pdf",
+          "filename": "5dd3f8ec0a398fd74264fef3fd591f81_MIT18_06SCF11_Ses2.5sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/e004880d8554094799e4c0945f2c5fa8_srxexLishgY.pdf",
+          "filename": "e004880d8554094799e4c0945f2c5fa8_srxexLishgY.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/99502471b977f207a8b5a2c89b2e218f_55AoWKZZtww.pdf",
+          "filename": "746b62a30e41b19c396700071b8786ce_55AoWKZZtww.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.5prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/49d4fb1121ae389543b03fbb446a6012_MIT18_06SCF11_Ses2.5prob.pdf",
+          "filename": "49d4fb1121ae389543b03fbb446a6012_MIT18_06SCF11_Ses2.5prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.5sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/4898a00edcd5ddfa9a545446ff6c2e88_MIT18_06SCF11_Ses2.5sol.pdf",
+          "filename": "4898a00edcd5ddfa9a545446ff6c2e88_MIT18_06SCF11_Ses2.5sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-21",
+      "sequence": 21,
+      "unit": 2,
+      "session": "2.6",
+      "slug": "determinant-formulas-and-cofactors",
+      "kind": "topic",
+      "title": {
+        "en": "Determinant Formulas and Cofactors",
+        "zh": "行列式公式与代数余子式"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/determinant-formulas-and-cofactors/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.6sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/cc79f04d92ee282758780bac2ec5e403_MIT18_06SCF11_Ses2.6sum.pdf",
+          "filename": "cc79f04d92ee282758780bac2ec5e403_MIT18_06SCF11_Ses2.6sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/9b2324e23193d05afe3a6f1a555f60f5_23LLB9mNJvc.pdf",
+          "filename": "9b2324e23193d05afe3a6f1a555f60f5_23LLB9mNJvc.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ebf27cc8b4bcaf3d8678bc5159f59d3e_B17h10EF59g.pdf",
+          "filename": "ebf27cc8b4bcaf3d8678bc5159f59d3e_B17h10EF59g.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.6prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d4004842b468da7628c422e2e403ba2c_MIT18_06SCF11_Ses2.6prob.pdf",
+          "filename": "d4004842b468da7628c422e2e403ba2c_MIT18_06SCF11_Ses2.6prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.6sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/022524a65ff095097fdce7857c87bedf_MIT18_06SCF11_Ses2.6sol.pdf",
+          "filename": "022524a65ff095097fdce7857c87bedf_MIT18_06SCF11_Ses2.6sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-22",
+      "sequence": 22,
+      "unit": 2,
+      "session": "2.7",
+      "slug": "cramers-rule-inverse-matrix-and-volume",
+      "kind": "topic",
+      "title": {
+        "en": "Cramer's Rule, Inverse Matrix and Volume",
+        "zh": "Cramer 法则、逆矩阵与体积"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/cramers-rule-inverse-matrix-and-volume/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.7sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f6e46da0d783d8f9c0a25c407c76166a_MIT18_06SCF11_Ses2.7sum.pdf",
+          "filename": "f6e46da0d783d8f9c0a25c407c76166a_MIT18_06SCF11_Ses2.7sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/fb1488040869b7b3359e17ebcb3139e3_QNpj-gOXW9M.pdf",
+          "filename": "fb1488040869b7b3359e17ebcb3139e3_QNpj-gOXW9M.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ebbf9697dc8dd2c5dcb46065c13f9876_qEBi0K5wfOs.pdf",
+          "filename": "ebbf9697dc8dd2c5dcb46065c13f9876_qEBi0K5wfOs.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.7prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d91543439c69ed9a21cf24981ab4ba98_MIT18_06SCF11_Ses2.7prob.pdf",
+          "filename": "d91543439c69ed9a21cf24981ab4ba98_MIT18_06SCF11_Ses2.7prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.7sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/3a6198ee2541298bec4f5810f996bf42_MIT18_06SCF11_Ses2.7sol.pdf",
+          "filename": "3a6198ee2541298bec4f5810f996bf42_MIT18_06SCF11_Ses2.7sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-23",
+      "sequence": 23,
+      "unit": 2,
+      "session": "2.8",
+      "slug": "eigenvalues-and-eigenvectors",
+      "kind": "topic",
+      "title": {
+        "en": "Eigenvalues and Eigenvectors",
+        "zh": "特征值与特征向量"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/eigenvalues-and-eigenvectors/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.8sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/1999c9f4accdbef05571a1014438f8dd_MIT18_06SCF11_Ses2.8sum.pdf",
+          "filename": "1999c9f4accdbef05571a1014438f8dd_MIT18_06SCF11_Ses2.8sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/e55ee86450e5eeff8c331750e8d46448_cdZnhQjJu4I.pdf",
+          "filename": "e55ee86450e5eeff8c331750e8d46448_cdZnhQjJu4I.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6c525b41e0a7c9f8440dfa4176c877ff_mVeuZzJdd1w.pdf",
+          "filename": "6c525b41e0a7c9f8440dfa4176c877ff_mVeuZzJdd1w.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.8prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/45bdf363c6f1a564a61fdf61aa86748c_MIT18_06SCF11_Ses2.8prob.pdf",
+          "filename": "45bdf363c6f1a564a61fdf61aa86748c_MIT18_06SCF11_Ses2.8prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.8sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/a5b090d92c330788febc5b2092906af9_MIT18_06SCF11_Ses2.8sol.pdf",
+          "filename": "a5b090d92c330788febc5b2092906af9_MIT18_06SCF11_Ses2.8sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-24",
+      "sequence": 24,
+      "unit": 2,
+      "session": "2.9",
+      "slug": "diagonalization-and-powers-of-a",
+      "kind": "topic",
+      "title": {
+        "en": "Diagonalization and Powers of A",
+        "zh": "对角化与矩阵幂"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/diagonalization-and-powers-of-a/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.9sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d05795355f5cbe35356a4a1b39658336_MIT18_06SCF11_Ses2.9sum.pdf",
+          "filename": "d05795355f5cbe35356a4a1b39658336_MIT18_06SCF11_Ses2.9sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f4413747eac747af40856ef3e3f24d4e_13r9QY6cmjc.pdf",
+          "filename": "d404622e0a39f004d40ef4bea4c52929_13r9QY6cmjc.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d7fb35f365c2d4686ef3009c878ed90b_5IGTFgPqlkw.pdf",
+          "filename": "d7fb35f365c2d4686ef3009c878ed90b_5IGTFgPqlkw.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.9prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/dde9fec9ef59ca07608a98c8cfdf47e3_MIT18_06SCF11_Ses2.9prob.pdf",
+          "filename": "dde9fec9ef59ca07608a98c8cfdf47e3_MIT18_06SCF11_Ses2.9prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.9sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/b7f1b40a20430a1fa7222bdfa8daa126_MIT18_06SCF11_Ses2.9sol.pdf",
+          "filename": "b7f1b40a20430a1fa7222bdfa8daa126_MIT18_06SCF11_Ses2.9sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-25",
+      "sequence": 25,
+      "unit": 2,
+      "session": "2.10",
+      "slug": "differential-equations-and-exp-at",
+      "kind": "topic",
+      "title": {
+        "en": "Differential Equations and exp(At)",
+        "zh": "微分方程与 exp(At)"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/differential-equations-and-exp-at/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.10sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/9dc6bf7f9d4bba51bc9f5c9091bd8d52_MIT18_06SCF11_Ses2.10sum.pdf",
+          "filename": "9dc6bf7f9d4bba51bc9f5c9091bd8d52_MIT18_06SCF11_Ses2.10sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/96bf84be7938dc3b2385a4b7991c27c2_IZqwi0wJovM.pdf",
+          "filename": "2f7dd57cfc78b436934383c9673c73b1_IZqwi0wJovM.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/a5f152ce863bb363fa7ba97e6c66a867_FzncDO1eSNI.pdf",
+          "filename": "a5f152ce863bb363fa7ba97e6c66a867_FzncDO1eSNI.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.10prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/be691a8976e7e7b946834654669c24d7_MIT18_06SCF11_Ses2.10prob.pdf",
+          "filename": "be691a8976e7e7b946834654669c24d7_MIT18_06SCF11_Ses2.10prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.10sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/c055bbb4ebda19fceecf04c9c3f05cc4_MIT18_06SCF11_Ses2.10sol.pdf",
+          "filename": "c055bbb4ebda19fceecf04c9c3f05cc4_MIT18_06SCF11_Ses2.10sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-26",
+      "sequence": 26,
+      "unit": 2,
+      "session": "2.11",
+      "slug": "markov-matrices-fourier-series",
+      "kind": "topic",
+      "title": {
+        "en": "Markov Matrices; Fourier Series",
+        "zh": "Markov 矩阵与 Fourier 级数"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/markov-matrices-fourier-series/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.11sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/c8a22883b5e0cc402b3df9c1d754ef5b_MIT18_06SCF11_Ses2.11sum.pdf",
+          "filename": "c8a22883b5e0cc402b3df9c1d754ef5b_MIT18_06SCF11_Ses2.11sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/356a14ba7120b532a1f9419c704614a1_lGGDIGizcQ0.pdf",
+          "filename": "356a14ba7120b532a1f9419c704614a1_lGGDIGizcQ0.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/38dac0802ac9da6da8f11d68371a8dc9_wuyAeWE3iIM.pdf",
+          "filename": "38dac0802ac9da6da8f11d68371a8dc9_wuyAeWE3iIM.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses2.11prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/bba3c75ae696682ccadae215474141b5_MIT18_06SCF11_Ses2.11prob.pdf",
+          "filename": "bba3c75ae696682ccadae215474141b5_MIT18_06SCF11_Ses2.11prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses2.11sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/2d5daa1e2d4014040f317ebb8d92d1c0_MIT18_06SCF11_Ses2.11sol.pdf",
+          "filename": "2d5daa1e2d4014040f317ebb8d92d1c0_MIT18_06SCF11_Ses2.11sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-27",
+      "sequence": 27,
+      "unit": 2,
+      "session": "2.12",
+      "slug": "exam-2-review",
+      "kind": "review",
+      "title": {
+        "en": "Exam 2 Review",
+        "zh": "第二次考试复习"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/exam-2-review/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses2.12sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/5500c16aff18ebcc312df763e8f85992_MIT18_06SCF11_Ses2.12sum.pdf",
+          "filename": "5500c16aff18ebcc312df763e8f85992_MIT18_06SCF11_Ses2.12sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/f29ba440690bf171f209c6fd9ba253d6_QuZL5IKpO_U.pdf",
+          "filename": "f29ba440690bf171f209c6fd9ba253d6_QuZL5IKpO_U.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/5f06b9f8e7abd36c1e160e881635d904_pz3zyUO2gpM.pdf",
+          "filename": "10c6dd8428b4f011299e3b905bee4c11_pz3zyUO2gpM.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-28",
+      "sequence": 28,
+      "unit": 2,
+      "session": "Exam 2",
+      "slug": "exam-2",
+      "kind": "exam",
+      "title": {
+        "en": "Exam 2",
+        "zh": "第二次考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/exam-2/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_ex2.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/2a49ca623b8057f0b8dbcccc252db815_MIT18_06SCF11_ex2.pdf",
+          "filename": "2a49ca623b8057f0b8dbcccc252db815_MIT18_06SCF11_ex2.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_ex2s.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/c224c7a55a1acaf364d0ff4f01b057b2_MIT18_06SCF11_ex2s.pdf",
+          "filename": "c224c7a55a1acaf364d0ff4f01b057b2_MIT18_06SCF11_ex2s.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-29",
+      "sequence": 29,
+      "unit": 3,
+      "session": "3.1",
+      "slug": "symmetric-matrices-and-positive-definiteness",
+      "kind": "topic",
+      "title": {
+        "en": "Symmetric Matrices and Positive Definiteness",
+        "zh": "对称矩阵与正定性"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/symmetric-matrices-and-positive-definiteness/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.1sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/804ab1e53134741d2044d241b50a285e_MIT18_06SCF11_Ses3.1sum.pdf",
+          "filename": "804ab1e53134741d2044d241b50a285e_MIT18_06SCF11_Ses3.1sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/8b7622bf59449df1c89208bb3d10a0a9_UCc9q_cAhho.pdf",
+          "filename": "8b7622bf59449df1c89208bb3d10a0a9_UCc9q_cAhho.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/b383d7a883d770987459b09e9c7976a8_lpnY5QVjU5w.pdf",
+          "filename": "b383d7a883d770987459b09e9c7976a8_lpnY5QVjU5w.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses3.1prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/29d9e3260562a0125d27537cb6baf3d0_MIT18_06SCF11_Ses3.1prob.pdf",
+          "filename": "29d9e3260562a0125d27537cb6baf3d0_MIT18_06SCF11_Ses3.1prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses3.1sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0b82b456a287d080f8f390727287105e_MIT18_06SCF11_Ses3.1sol.pdf",
+          "filename": "0b82b456a287d080f8f390727287105e_MIT18_06SCF11_Ses3.1sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-30",
+      "sequence": 30,
+      "unit": 3,
+      "session": "3.2",
+      "slug": "complex-matrices-fast-fourier-transform-fft",
+      "kind": "topic",
+      "title": {
+        "en": "Complex Matrices; Fast Fourier Transform (FFT)",
+        "zh": "复矩阵与快速 Fourier 变换"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/complex-matrices-fast-fourier-transform-fft/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.2sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/53f17d47bf99d26fdc472b3177c256a8_MIT18_06SCF11_Ses3.2sum.pdf",
+          "filename": "53f17d47bf99d26fdc472b3177c256a8_MIT18_06SCF11_Ses3.2sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/77dc5025246268ae934fbee182e5c568_M0Sa8fLOajA.pdf",
+          "filename": "14f40d4e826079013fc3e260ec0103f0_M0Sa8fLOajA.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/a30fc93b54c4c886b69eb617f6471973_VYS9EYZ3gCo.pdf",
+          "filename": "39d6f27b1a470a4f44a6872dbe427ced_VYS9EYZ3gCo.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses3.2prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ca8938713de08907994e9be8b7c8630a_MIT18_06SCF11_Ses3.2prob.pdf",
+          "filename": "ca8938713de08907994e9be8b7c8630a_MIT18_06SCF11_Ses3.2prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses3.2sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/37617dbf24875b2dfaac3e46e6305773_MIT18_06SCF11_Ses3.2sol.pdf",
+          "filename": "37617dbf24875b2dfaac3e46e6305773_MIT18_06SCF11_Ses3.2sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-31",
+      "sequence": 31,
+      "unit": 3,
+      "session": "3.3",
+      "slug": "positive-definite-matrices-and-minima",
+      "kind": "topic",
+      "title": {
+        "en": "Positive Definite Matrices and Minima",
+        "zh": "正定矩阵与极小值"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/positive-definite-matrices-and-minima/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.3sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d163e012754258d3b374548504d8a18a_MIT18_06SCF11_Ses3.3sum.pdf",
+          "filename": "d163e012754258d3b374548504d8a18a_MIT18_06SCF11_Ses3.3sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/91bc2a7ba124f1c84236e056732a8d89_vF7eyJ2g3kU.pdf",
+          "filename": "8a8c96758f45cd0d32d8b96e73114213_vF7eyJ2g3kU.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/a1b9902468c1e86af0690a4f731c7739_cfn2ZUuWPd0.pdf",
+          "filename": "7c7219cb65176015a7442048e3de3a75_cfn2ZUuWPd0.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses3.3prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/fdeb589c9d29a1f60e306667dd886dba_MIT18_06SCF11_Ses3.3prob.pdf",
+          "filename": "fdeb589c9d29a1f60e306667dd886dba_MIT18_06SCF11_Ses3.3prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses3.3sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/a034549dadd99fe2c7278d6412ddc39f_MIT18_06SCF11_Ses3.3sol.pdf",
+          "filename": "a034549dadd99fe2c7278d6412ddc39f_MIT18_06SCF11_Ses3.3sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-32",
+      "sequence": 32,
+      "unit": 3,
+      "session": "3.4",
+      "slug": "similar-matrices-and-jordan-form",
+      "kind": "topic",
+      "title": {
+        "en": "Similar Matrices and Jordan Form",
+        "zh": "相似矩阵与 Jordan 形"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/similar-matrices-and-jordan-form/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.4sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6e1f793f6c25fd39e002c100e278bf1b_MIT18_06SCF11_Ses3.4sum.pdf",
+          "filename": "6e1f793f6c25fd39e002c100e278bf1b_MIT18_06SCF11_Ses3.4sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6dba2d879d4f00b41cdcfca2fde10a3c_TSdXJw83kyA.pdf",
+          "filename": "6dba2d879d4f00b41cdcfca2fde10a3c_TSdXJw83kyA.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d884415d8533b2bce595c5817459c53f_KUuxdk_V7To.pdf",
+          "filename": "d884415d8533b2bce595c5817459c53f_KUuxdk_V7To.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses3.4prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/dd8682e0d4a5df4ce8b5d65095a63592_MIT18_06SCF11_Ses3.4prob.pdf",
+          "filename": "dd8682e0d4a5df4ce8b5d65095a63592_MIT18_06SCF11_Ses3.4prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses3.4sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d3ee9566462755a67ad9d3af243cd17a_MIT18_06SCF11_Ses3.4sol.pdf",
+          "filename": "d3ee9566462755a67ad9d3af243cd17a_MIT18_06SCF11_Ses3.4sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-33",
+      "sequence": 33,
+      "unit": 3,
+      "session": "3.5",
+      "slug": "singular-value-decomposition",
+      "kind": "topic",
+      "title": {
+        "en": "Singular Value Decomposition",
+        "zh": "奇异值分解"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/singular-value-decomposition/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.5sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/d273f75ee2552a5c3c35ccab37e5edce_MIT18_06SCF11_Ses3.5sum.pdf",
+          "filename": "d273f75ee2552a5c3c35ccab37e5edce_MIT18_06SCF11_Ses3.5sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6d3cc0942a8d806901fa2d66843652c6_TX_vooSnhm8.pdf",
+          "filename": "6d3cc0942a8d806901fa2d66843652c6_TX_vooSnhm8.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/cec032acc79ca5be56485a2e0c09d571_pSbafxDHdgE.pdf",
+          "filename": "2ee97af6c631e8b1263af52999dc5336_pSbafxDHdgE.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses3.5prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/bcb9475b6b6b0e5a600daf900aa8ead0_MIT18_06SCF11_Ses3.5prob.pdf",
+          "filename": "bcb9475b6b6b0e5a600daf900aa8ead0_MIT18_06SCF11_Ses3.5prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses3.5sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/6c64bb0a0ede9ba88977078db4563ea0_MIT18_06SCF11_Ses3.5sol.pdf",
+          "filename": "6c64bb0a0ede9ba88977078db4563ea0_MIT18_06SCF11_Ses3.5sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-34",
+      "sequence": 34,
+      "unit": 3,
+      "session": "3.6",
+      "slug": "linear-transformations-and-their-matrices",
+      "kind": "topic",
+      "title": {
+        "en": "Linear Transformations and their Matrices",
+        "zh": "线性变换及其矩阵"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/linear-transformations-and-their-matrices/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.6sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/cc829145eee5220b2024424bcb14c263_MIT18_06SCF11_Ses3.6sum.pdf",
+          "filename": "cc829145eee5220b2024424bcb14c263_MIT18_06SCF11_Ses3.6sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/89bed67324333da7912bb81212cd512f_Ts3o2I8_Mxc.pdf",
+          "filename": "89bed67324333da7912bb81212cd512f_Ts3o2I8_Mxc.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/e70c3934dc6123a02195e95efe70cffa_2uDvRUowBzg.pdf",
+          "filename": "e70c3934dc6123a02195e95efe70cffa_2uDvRUowBzg.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses3.6prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/8e710a09fcfdfd7994083468222efea9_MIT18_06SCF11_Ses3.6prob.pdf",
+          "filename": "8e710a09fcfdfd7994083468222efea9_MIT18_06SCF11_Ses3.6prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses3.6sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/7fef2f26857398d5a96029f416f07261_MIT18_06SCF11_Ses3.6sol.pdf",
+          "filename": "7fef2f26857398d5a96029f416f07261_MIT18_06SCF11_Ses3.6sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-35",
+      "sequence": 35,
+      "unit": 3,
+      "session": "3.7",
+      "slug": "change-of-basis-image-compression",
+      "kind": "topic",
+      "title": {
+        "en": "Change of Basis; Image Compression",
+        "zh": "换基与图像压缩"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/change-of-basis-image-compression/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.7sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/7ce6815ffe9ec37129e581485494acde_MIT18_06SCF11_Ses3.7sum.pdf",
+          "filename": "7ce6815ffe9ec37129e581485494acde_MIT18_06SCF11_Ses3.7sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/2c2725cfd10398f6bd17434648b447fc_0h43aV4aH7I.pdf",
+          "filename": "2c2725cfd10398f6bd17434648b447fc_0h43aV4aH7I.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/82353e388649de42ddd8232a4704181f_rMv2rDiOTsI.pdf",
+          "filename": "69b441b154a30aeebf1fc42fff8001ce_rMv2rDiOTsI.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses3.7prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/253f93ba4904c5d757f6be7e16b9aeea_MIT18_06SCF11_Ses3.7prob.pdf",
+          "filename": "253f93ba4904c5d757f6be7e16b9aeea_MIT18_06SCF11_Ses3.7prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses3.7sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/59b81b79eaab5acab8135f0dbe502955_MIT18_06SCF11_Ses3.7sol.pdf",
+          "filename": "59b81b79eaab5acab8135f0dbe502955_MIT18_06SCF11_Ses3.7sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-36",
+      "sequence": 36,
+      "unit": 3,
+      "session": "3.8",
+      "slug": "left-and-right-inverses-pseudoinverse",
+      "kind": "topic",
+      "title": {
+        "en": "Left and Right Inverses; Pseudoinverse",
+        "zh": "左逆、右逆与伪逆"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/left-and-right-inverses-pseudoinverse/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.8sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/0550c89b69c99e97dcbf52074e293308_MIT18_06SCF11_Ses3.8sum.pdf",
+          "filename": "0550c89b69c99e97dcbf52074e293308_MIT18_06SCF11_Ses3.8sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/ef47fdd70952bd981a883c20138e03c4_Go2aLo7ZOlU.pdf",
+          "filename": "ef47fdd70952bd981a883c20138e03c4_Go2aLo7ZOlU.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/fb51b340570267316fcc14d0d3a07777_hSRcHTafkjE.pdf",
+          "filename": "fb51b340570267316fcc14d0d3a07777_hSRcHTafkjE.pdf"
+        },
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_Ses3.8prob.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/41c162f1f1c6d4f61e42a556a56b77bf_MIT18_06SCF11_Ses3.8prob.pdf",
+          "filename": "41c162f1f1c6d4f61e42a556a56b77bf_MIT18_06SCF11_Ses3.8prob.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_Ses3.8sol.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/65f6a7ea1da9932a2939085151ca23a0_MIT18_06SCF11_Ses3.8sol.pdf",
+          "filename": "65f6a7ea1da9932a2939085151ca23a0_MIT18_06SCF11_Ses3.8sol.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-37",
+      "sequence": 37,
+      "unit": 3,
+      "session": "3.9",
+      "slug": "exam-3-review",
+      "kind": "review",
+      "title": {
+        "en": "Exam 3 Review",
+        "zh": "第三次考试复习"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/exam-3-review/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_Ses3.9sum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/7285f40986020f97ebe138acc914c66c_MIT18_06SCF11_Ses3.9sum.pdf",
+          "filename": "7285f40986020f97ebe138acc914c66c_MIT18_06SCF11_Ses3.9sum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/298b92329936c45bd90c7f90b605879b_HgC1l_6ySkc.pdf",
+          "filename": "246e18f190adc4a5ebed3bf57b0a70c6_HgC1l_6ySkc.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/a1eca5b46b973dc4f212e7d1a57dc60a_OsHY7ycgbaE.pdf",
+          "filename": "75b06674c5c0542b51d73280140fbce0_OsHY7ycgbaE.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-38",
+      "sequence": 38,
+      "unit": 3,
+      "session": "Exam 3",
+      "slug": "exam-3",
+      "kind": "exam",
+      "title": {
+        "en": "Exam 3",
+        "zh": "第三次考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/positive-definite-matrices-and-applications/exam-3/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_ex3.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/067b49baff2de3b7133794b52b824d36_MIT18_06SCF11_ex3.pdf",
+          "filename": "067b49baff2de3b7133794b52b824d36_MIT18_06SCF11_ex3.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_ex3s.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/92b86aaa4f5f4cce178c69faeb52039e_MIT18_06SCF11_ex3s.pdf",
+          "filename": "92b86aaa4f5f4cce178c69faeb52039e_MIT18_06SCF11_ex3s.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-39",
+      "sequence": 39,
+      "unit": 4,
+      "session": "4.1",
+      "slug": "final-course-review",
+      "kind": "review",
+      "title": {
+        "en": "Final Course Review",
+        "zh": "全课程复习"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/final-course-review/",
+      "sources": [
+        {
+          "kind": "notes",
+          "title": "MIT18_06SCF11_FinalRevsum.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/89e753b45eed437828821e585bed0e59_MIT18_06SCF11_FinalRevsum.pdf",
+          "filename": "89e753b45eed437828821e585bed0e59_MIT18_06SCF11_FinalRevsum.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/aaf7b61135ed6575e3d3cfe857a3946b_RWvi4Vx4CDc.pdf",
+          "filename": "67e85afc79dece185c29098155875c49_RWvi4Vx4CDc.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "3play pdf file",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/76991b37fec6d261b1dc3da7c4024d43_4PnArrxCZLE.pdf",
+          "filename": "4e0d9f449b9a58e1548520a930d834f0_4PnArrxCZLE.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-40",
+      "sequence": 40,
+      "unit": 4,
+      "session": "4.2",
+      "slug": "final-exam",
+      "kind": "exam",
+      "title": {
+        "en": "Final Exam",
+        "zh": "期末考试挑战"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/final-exam/",
+      "sources": [
+        {
+          "kind": "problems",
+          "title": "MIT18_06SCF11_final_ex.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/245582e7bf822b1a99289385d4b1fe1c_MIT18_06SCF11_final_ex.pdf",
+          "filename": "245582e7bf822b1a99289385d4b1fe1c_MIT18_06SCF11_final_ex.pdf"
+        },
+        {
+          "kind": "solutions",
+          "title": "MIT18_06SCF11_final_exs.pdf",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/03fa86c672cab6cce168955824c92f6e_MIT18_06SCF11_final_exs.pdf",
+          "filename": "03fa86c672cab6cce168955824c92f6e_MIT18_06SCF11_final_exs.pdf"
+        }
+      ]
+    },
+    {
+      "id": "MIT-LA-41",
+      "sequence": 41,
+      "unit": 4,
+      "session": "4.3",
+      "slug": "final-1806-lecture-2023",
+      "kind": "bonus",
+      "title": {
+        "en": "Final 18.06 Lecture 2023",
+        "zh": "2023 告别讲座：线性代数应用回顾"
+      },
+      "officialUrl": "https://ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/final-1806-lecture-2023/",
+      "sources": [
+        {
+          "kind": "transcript",
+          "title": "Final 18.06 Lecture 2023 transcript",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/lUUte2o2Sn8_transcript.pdf",
+          "filename": "lUUte2o2Sn8_transcript.pdf"
+        },
+        {
+          "kind": "transcript",
+          "title": "Final 18.06 Lecture 2023 transcript",
+          "asset": "18-06sc-linear-algebra-fall-2011/materials/lUUte2o2Sn8_transcript.pdf",
+          "filename": "lUUte2o2Sn8_transcript.pdf"
+        }
+      ]
+    }
+  ]
+}

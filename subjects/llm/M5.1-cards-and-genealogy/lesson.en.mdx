@@ -1,0 +1,102 @@
+## 1. Motivation
+
+M4 studied one efficiency defect at a time. That is useful for derivation, but it makes model comparison easy to get wrong. A model can have sparse computation and still require a large resident weight set. Two models can have the same active parameter count and very different KV-cache traffic. A recurrence ratio can change the serving path without changing the vocabulary or loss.
+
+M5 fixes that bookkeeping defect with one architecture card per model. The card is not a leaderboard entry. It is a provenance-controlled record of design choices, costs, and unknowns.
+
+The examples in this lesson are a teaching map. They do not claim that an edge in the genealogy proves direct copying or a complete historical lineage. Model-specific fields belong in M5.2 only after a technical report, model card, or configuration URL has been attached.
+
+## 2. Card definition
+
+Use the same fields for every card:
+
+| Field | Required content |
+| --- | --- |
+| Identity | name, release date, total/active parameters, layers, $d_{\mathrm{model}}$, heads, $h_{\mathrm{kv}}$, vocabulary, context length, license |
+| Attention variant | MHA, GQA, MQA, MLA, sparse, or hybrid; window scheme; sinks; QK-norm |
+| Position encoding | RoPE base and partial-RoPE fraction, NoPE layers, ALiBi, or long-context method |
+| Norm placement | Pre, Post, or sandwich; LayerNorm, RMSNorm, and QK-norm |
+| FFN or MoE | activation; dense width; total/active/shared experts; routing and balancing |
+| Residual structure | standard, multi-stream/hyper-connection, or another explicitly sourced form |
+| Extra objectives | MTP, auxiliary losses, or explicitly unknown |
+| Numerics | training precision and inference quantization |
+| Recurrence | none, or linear-attention/SSM layers with their ratio to attention layers |
+| Sources | technical report, model card, and configuration URLs |
+
+The symbols in the card keep their M4 meanings. For example, $h_{\mathrm{kv}}$ is the number of independent key/value heads, $d_h$ is head width, and $L$ is the layer count. A card must not silently substitute $h$ for $h_{\mathrm{kv}}$.
+
+## 3. Provenance and the genealogy
+
+Each field has one of three statuses:
+
+1. **Verified.** The field is stated in a primary technical report, model card, or released configuration, and the card links directly to that source.
+2. **Unknown.** The public source does not state the field, or the source has not yet been checked. Unknown is a valid result.
+3. **Derived.** The field is computed from verified fields using an earlier lesson, such as cache bytes from M3.5/M4.3. The card records both the formula and its inputs.
+
+Do not infer a private model's norm placement, expert count, RoPE base, or recurrence ratio from API behavior. “Transformer-like” is not a value for any one card field. If a report gives only a family-level description, keep the unreported fields unknown.
+
+The genealogy uses one edge per M4 design axis. The root reference is [Attention Is All You Need](https://arxiv.org/abs/1706.03762). The cache/routing branch uses the [DeepSeek-V2 report](https://arxiv.org/abs/2405.04434) and the [DeepSeek-V3 report](https://arxiv.org/abs/2412.19437). The recurrence branch uses [Mamba](https://arxiv.org/abs/2312.00752) and the [Qwen3 report](https://arxiv.org/abs/2505.09388). The open-weight attention/MoE example uses the [gpt-oss model card](https://openai.com/index/gpt-oss-model-card/). The sparse-attention example is linked to the [DeepSeek-V3.2 report](https://arxiv.org/abs/2512.02556). A node whose current architecture source is not verified is shown with an unknown-source status rather than a guessed card.
+
+The other named nodes have direct primary references as well: [GPT-2](https://openai.com/index/better-language-models/), [Llama](https://arxiv.org/abs/2302.13971), [Mistral](https://arxiv.org/abs/2310.06825), [Gemma 3](https://arxiv.org/abs/2503.19786), and the [Qwen3-Next model card](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct). Kimi K2/K3, DeepSeek-V4, and the grouped SSM-hybrid node remain explicitly source-gated in the widget when a current primary architecture document has not been attached.
+
+The teaching edges are:
+
+| Edge | M4 axis made visible |
+| --- | --- |
+| Transformer → GPT-2/Llama | decoder self-attention and positional choices |
+| Transformer → Mistral/Gemma 3/gpt-oss | local or alternating window attention |
+| Transformer → DeepSeek-V2/V3 | MLA cache compression plus sparse MoE |
+| DeepSeek-V3 → DeepSeek-V3.2 | sparse query/key selection |
+| DeepSeek-V3.2 → DeepSeek-V4 | compressed attention and multi-stream residual choices; source status must be checked in the card |
+| DeepSeek-V2 → Kimi K2/K3 | latent-cache and sparse-routing design axis |
+| Transformer → Qwen3 → Qwen3-Next | GQA/MoE followed by a recurrence/attention hybrid |
+| Mamba → Qwen3-Next and SSM hybrids | selective state-space recurrence |
+
+This is the data shown by V-M5-a. Filtering by year or axis changes which edges are visible; it does not rewrite any card. The widget's edge labels say what design axis is being compared, not what historical influence has been proven.
+
+## 4. Numerical verification
+
+The card separates total parameters, active parameters, and cache state. One exact derived field is the KV-cache byte count:
+
+$$
+B_{\mathrm{KV}}
+=2L\,n\,h_{\mathrm{kv}}\,d_h\,b
+\quad\text{bytes},
+$$
+
+where $L$ is layers, $n$ is cached sequence length, $h_{\mathrm{kv}}$ is independent KV heads, $d_h$ is head width, and $b$ is bytes per stored scalar. The factor $2$ counts keys and values. This is an accounting identity under the stated cache layout, not a claim about a particular kernel's temporary buffers.
+
+For $L=32$, $n=4096$, $h_{\mathrm{kv}}=8$, $d_h=128$, and $b=2$:
+
+$$
+B_{\mathrm{KV}}
+=2\cdot32\cdot4096\cdot8\cdot128\cdot2
+=536{,}870{,}912\ \text{bytes}
+=512\ \text{MiB}.
+$$
+
+With the same dimensions but MHA's $h_{\mathrm{kv}}=32$, the value is $2{,}147{,}483{,}648$ bytes, or $2$ GiB. Thus “8 active experts” or “the same active parameter count” cannot determine cache cost by itself. The M5.2 cards will use this formula only when all inputs are sourced or explicitly marked as an assumption.
+
+The executable widget check compares the genealogy output against deterministic filters:
+
+    node --experimental-strip-types course/viz/compute/architecture_genealogy.test.mjs
+
+It checks stable output, year filtering, recurrence filtering, family filtering, and the unknown-source path.
+
+## 5. Interactive visualization
+
+<CourseWidget id="V-M5-a" />
+
+**V-M5-a — Architecture genealogy tree.** The YAML contract is in viz/specs/V-M5-a.yaml and the pure compute module is viz/compute/architecture_genealogy.ts. The reader can filter by year, family, and one of the M4 axes. Each visible node carries a source URL or an explicit unknown status; each edge carries its axis label.
+
+The widget makes one insight visible: an architecture genealogy is a set of design-axis transitions, not a single line from “old” to “new.” A renderer supplied by the existing frontend can draw the returned nodes and edges as a tree or layered graph. No DOM or framework code belongs in the compute module.
+
+## 6. Closing
+
+**Counterintuitive question.** Two models with identical total and active parameters can differ by 10× in KV-cache size and 3× in decode throughput. Which card fields explain it?
+
+**Worked answer.** Start with attention variant and $h_{\mathrm{kv}}$: the exact cache identity above changes linearly with $h_{\mathrm{kv}}$. Then inspect window scheme, recurrence ratio, precision $b$, and whether routing requires expert-parallel communication. Total and active parameters describe different parts of the serving cost; neither one substitutes for the cache and path fields.
+
+**Assignment A-M5.** Add configuration toggles that reproduce three toy cards: a DeepSeek-V3-like MLA+MoE+MTP card, a Gemma-3-like local/global card with dual RoPE bases, and a Qwen3-Next-like Gated DeltaNet/attention 3:1 hybrid. “Like” names the selected teaching axes; it is not a claim that the toy model reproduces the private production implementation. Run the same corpus through all three, and report loss, tokens per second, and cache bytes in one table. M5.2 fills the sourced cards before the assignment is marked complete.
+
+**Spine check.** Every card still describes a prefix-conditioned next-token distribution. The card records how the prefix is stored and mixed, how active computation is selected, and what state must be carried to the next token. The unresolved defect is not algebraic: a missing source remains an unknown field.

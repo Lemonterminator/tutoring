@@ -1,0 +1,167 @@
+## 1. 动机
+
+自回归模型生成 logits；解码器将这些 logits 转换为用于采样下一个 token 的分布。因此，Temperature、top-k 和 top-p 会改变采样分布，而不会改变模型学习到的条件概率本身。本课将推导温度缩放（temperature scaling）与熵的单调性，并明确阐述截断与重归一化操作。
+
+## 2。前向定义
+
+设 $z=(z_1,\ldots,z_K)\in\mathbb{R}^K$ 为有限 logits，$T>0$ 为温度。定义
+
+$$
+p_T=\operatorname{softmax}(z/T),
+\qquad
+(p_T)_i=\frac{\exp(z_i/T)}{\sum_{j=1}^{K}\exp(z_j/T)}.
+$$
+
+Top-k 保留概率最大的 $k$ 个值，将其余值设为零并重新归一化。Top-p 将概率从大到小排序，保留累积质量达到 $p$ 的最小前缀，将其余值设为零并重新归一化。这些是**解码规则**，而非对参数化模型分布 $p_\theta$ 的更改。
+
+## 3. 推导过程
+
+### D-M0.5.8-01 · 温度缩放 Softmax 及其极限
+
+**命题。** 对于 $p_T=\operatorname{softmax}(z/T)$，当 $T\to0^+$ 时，唯一的最大 Logit 会变为点质量分布；而当 $p_T$ 时，随着 $T\to\infty$，分布趋向于均匀分布。
+
+**步骤。**
+
+1. 设 $z_{\max}=\max_i z_i$ 并从每个 Logit 中减去它：
+   $$
+   (p_T)_i=
+   \frac{\exp((z_i-z_{\max})/T)}
+   {\sum_{j=1}^{K}\exp((z_j-z_{\max})/T)}.
+   $$
+   （减去一个公共值不会改变 Softmax，且可避免不必要的溢出。）
+2. 假设最大值在索引 $i^\star$ 处唯一。则 $z_{i^\star}-z_{\max}=0$，而对于 $z_i-z_{\max}<0$ 有 $i\ne i^\star$。因此，当 $T\to0^+$ 时，
+   $$
+   \exp((z_{i^\star}-z_{\max})/T)=1,
+   \qquad
+   \exp((z_i-z_{\max})/T)\to0\quad(i\ne i^\star).
+   $$
+   （负间隙除以趋近于零的温度将趋向负无穷。）
+3. 取比值：
+   $$
+   \lim_{T\to0^+}p_T=e_{i^\star},
+   $$
+   其中 $e_{i^\star}$ 是 argmax 处的 one-hot 分布。（如果有多个 Logit 并列最大，则极限在最大化索引上均匀分布。）
+4. 对于 $T\to\infty$，对每个有限的 $z_i$ 使用一阶指数展开：
+   $$
+   \exp(z_i/T)=1+\frac{z_i}{T}+O(T^{-2}).
+   $$
+   分母为
+   $$
+   \sum_{j=1}^{K}\exp(z_j/T)
+   =K+\frac1T\sum_{j=1}^{K}z_j+O(T^{-2}).
+   $$
+   （分子和分母均趋近于有限的非零值。）
+5. 将分子除以分母并取极限：
+   $$
+   \lim_{T\to\infty}(p_T)_i=\frac1K.
+   $$
+   （所有 Logit 相对于温度都变得微不足道。）
+6. 对于已检查的 Logits $z=(2.0,0.5,-1.0)$，$T=10^{-6}$ 给出了数值 argmax 极限，而 $T=10^9$ 给出了数值均匀极限。（该检查使用了 float64 中的稳定最大值平移技术。）
+
+**验证。** checks/M0.5/D-M0.5.8-01.py 报告 argmax 极限误差为 0.0，均匀极限误差为 5.000000413701855e-10；passed = True。
+
+**直观理解。** 温度控制着相对 Logit 间隙的重要性。低温将最大的间隙转化为近乎确定的选择；高温使所有有限间隙变小并拉平分布。
+
+### D-M0.5.8-02 · 熵随温度单调变化
+
+**定理。** 对于有限的 Logits，当 $p_T=\operatorname{softmax}(z/T)$ 且 $T>0$ 时，
+
+$$
+\frac{dH(p_T)}{dT}=\frac{\operatorname{Var}_{p_T}(z)}{T^3}\ge0.
+$$
+
+等价地，省略参数后为 $\frac{dH}{dT}=\frac{\operatorname{Var}_p(z)}{T^3}\ge0$。
+
+当 Logits 在 $p_T$ 下具有零方差时（包括所有 Logit 相等的情况），等号严格成立。
+
+**步骤。**
+
+1. 设 $\beta=1/T$ 并定义配分函数
+   $$
+   Z(\beta)=\sum_{i=1}^{K}\exp(\beta z_i),
+   \qquad
+   p_i(\beta)=\frac{\exp(\beta z_i)}{Z(\beta)}.
+   $$
+   （这是通过变量代换 $p_T$ 得到的与 $\beta=1/T$ 相同的分布。）
+2. 用 $\beta$ 表示熵：
+   $$
+   H=-\sum_i p_i\log p_i
+   =-\sum_i p_i(\beta z_i-\log Z)
+   =\log Z(\beta)-\beta\mathbb{E}_{p}[z].
+   $$
+   （使用 $\log p_i=\beta z_i-\log Z$ 和 $\sum_i p_i=1$。）
+3. 对对数配分函数求导：
+   $$
+   \frac{d\log Z}{d\beta}
+   =\frac1Z\sum_i z_i\exp(\beta z_i)
+   =\mathbb{E}_{p}[z].
+   $$
+   （配分函数的导数是未归一化的一阶矩。）
+4. 直接对期望 Logit 求导：
+   $$
+   \frac{dp_i}{d\beta}
+   =p_i\left(z_i-\mathbb{E}_p[z]\right),
+   $$
+   因此
+   $$
+   \frac{d\mathbb{E}_p[z]}{d\beta}
+   =\sum_i z_i\frac{dp_i}{d\beta}
+   =\sum_i p_i z_i(z_i-\mathbb{E}_p[z])
+   =\operatorname{Var}_p(z).
+   $$
+   （最后的等式展开了中心二阶矩。）
+5. 对熵关于 $\beta$ 求导：
+   $$
+   \frac{dH}{d\beta}
+   =\mathbb{E}_p[z]-\left(\mathbb{E}_p[z]+\beta\operatorname{Var}_p(z)\right)
+   =-\beta\operatorname{Var}_p(z).
+   $$
+   （一阶矩项相互抵消。）
+6. 由于 $\beta=T^{-1}$，
+   $$
+   \frac{d\beta}{dT}=-\frac1{T^2}=-\beta^2.
+   $$
+   应用链式法则：
+   $$
+   \frac{dH}{dT}
+   =\frac{dH}{d\beta}\frac{d\beta}{dT}
+   =(-\beta\operatorname{Var}_p(z))(-\beta^2)
+   =\frac{\operatorname{Var}_p(z)}{T^3}\ge0.
+   $$
+   （方差非负且 $T^3>0$。）
+7. 对于已检查的 Logits $z=(1.7,-0.3,0.4)$，在 4 处的 float6$T=(0.4,0.8,1.5,3.0)$ 熵值为
+   $$
+   (0.1972606234471401,\ 0.6567055815608713,\ 0.9461934982752733,\ 1.0592194318872865).
+   $$
+   最大中心差分导数误差为 5.558578042297313e-10，熵恒等式误差为 1.1102230246251565e-16。（数值序列呈递增趋势，符合定理预测。）
+
+**验证。** checks/M0.5/D-M0.5.8-02.py 验证了导数、配分函数恒等式以及单调性；passed = True。
+
+**对比（已标注）。** Top-k 和 Top-p 并非温度极限。它们删除概率支撑集并重新归一化。因此，即使 $p_\theta$，它们产生的分布也与 $T=1$ 不同：建模决定了 Logits，而解码则决定了如何从中采样。
+
+**直观理解。** 温度改变了每个选择的“软度”。截断做出了离散支撑集的决定。两者都可以改善选定的生成行为，但都不能证明底层条件似然发生了变化。
+
+## 4. 数值验证
+
+两个确定性 float64 检查涵盖了低温和高温极限、熵恒等式 $H=\log Z(\beta)-\beta\mathbb{E}_p[z]$、导数 $dH/dT=\operatorname{Var}_p(z)/T^3$ 以及温度网格上的单调性。V-M0.5-d 应用了带有显式重归一化的 top-k 和 top-p。
+
+| 推导 | 数值输出 | 结果 |
+| --- | --- | --- |
+| D-M0.5.8-01 | argmax 误差 0.0；均匀误差 5.000000413701855e-10 | pass |
+| D-M0.5.8-02 | 最大导数误差 5.558578042297313e-10；恒等式误差 1.1102230246251565e-16；单调性为 True | pass |
+
+从仓库父目录运行 python -m pytest course/tests。该组件测试还额外验证了归一化、支持截断以及冷态与热态的熵排序。
+
+## 5。交互式可视化
+
+<CourseWidget id="V-M0.5-d" />
+
+**V-M0.5-d — 分布调节器。** 该组件的规范位于 viz/specs/V-M0.5-d.yaml，其纯计算逻辑位于 viz/compute/distribution_shaper.ts。可调整 logits、temperature、top-k 和 top-p 参数。该组件会报告后处理概率、熵以及保留的支持集。现有前端提供条形图图层；计算契约将建模 logits 与解码变换保持分离。
+
+## 6。结语
+
+**反直觉的问题。** 一个困惑度（perplexity）较低的模型，生成的文本质量是否可能比一个困惑度较高的模型更差？**解答：** 是的。D-M0.5.1-02 指出似然训练是覆盖式（mass-covering）的，而 D-M0.5.8-02 则表明解码过程可以独立地展平或截断已学习到的分布。因此，生成效果的比较必须同时说明模型得分和解码规则。
+
+**作业 A-M0.5。** 完成本作业需报告温度（temperature）、top-k 和 top-p 设置，并附上保留集困惑度及生成的样本。将解码视为一个独立的实验变量，并在数值上复现熵曲线。
+
+**核心检查。** 从架构角度看，所有先前的自回归架构均输出其下一符号的条件 logits；而温度调整和截断操作位于该条件之后。从概率角度看，采样变换是对 rollout 分布的显式修改，因此绝不能将其与最大似然估计（MLE）或模型已学习的 $p_\theta$ 混为一谈。

@@ -1,0 +1,49 @@
+## 在定价路线中的位置
+
+四门课中的第 4 门，将数学整理成 C++17 库的接口约定。建议实现顺序是：单一 terms 内核；put 与平价；完整 Greeks；隐含波动率；Python 镜像与 golden 案例。作业里的 Delta/Gamma 扫步长是一项案例研究，不能证明某方法在所有情形下最好。
+
+## 所有入口共用一份数值约定
+
+先定义接受的输入域：有限的 $S,K,r,q,\sigma,T$，且 $S,K>0$、$T,\sigma\ge0$ 是一种可行选择。若选别的范围，要明写。内部 `bs_terms` 可保存 $D,F,\sigma\sqrt T,d_1,d_2$ 和状态；但退化输入并不总有普通的有限 $d_1,d_2$。带标签的结果或感知状态的分支，比装有看似合理 NaN 的结构体更清楚。
+
+标量、向量、`par_unseq`、Python 路径必须采用同一价格约定。$\sigma=0$ 时用折现远期内在价值，$T=0$ 时用到期 payoff。远期 ATM 折点上的 Delta/Gamma 返回值是 API 选择，不是经典导数。公开接口要列明该选择，并使 C++ 与 Python 一致。`detla_forward` 这样的拼写兼容别名可暂时保留为弃用 wrapper，等调用方迁移。
+
+生产使用的解析价格与实验性复数延拓应分开。`std::complex<double>` 价格只有在每个原语，包括正态 CDF，都按所需阶数解析延拓时才真正支持 complex-step。作业的一阶复数 CDF 足以研究 Delta，却不能证实 45° Gamma 的四阶精度。Gamma 实验应与解析公式对照，必要时再用经过验证的完整复数特殊函数。
+
+## 并行执行与性能
+
+`std::execution::par_unseq` 允许不同元素的操作交错执行，禁止调用标准定义的 vectorization-unsafe 函数，尤其是同步操作。元素操作抛出未捕获异常时会调用 `std::terminate`。不要共享可变状态；先预分配输出，让每个输入只写各自的槽位。显式传递下标的 helper 比 `&slot - base` 更易审查；无论哪种写法，都必须保证地址确实来自同一个连续数组。
+
+依具体实现，`std::exp`、`std::erfc` 可设置浮点状态或 `errno`。仅凭这一点不能断定违反标准。C++11 起 `errno` 是线程局部的；但 unsequenced 实现下的行为仍需检查目标数学库。`par_unseq` 只是允许并行或向量化，不保证加速。承诺速度提升前，应用实际 MSVC 配置和输入规模比较标量、`par` 与 `par_unseq`。
+
+## 能捕捉不同错误的验证证据
+
+组合多种独立检查：到期 payoff 与平价恒等式、解析 Greek 关系、价格对波动率的单调性、边界状态、少量精选 golden CSV，以及 Python 参考实现。若 Python 与 C++ 用同一公式，可能一起犯错。CSV 要记录单位与生成依据；容差要兼顾绝对输出尺度、相对尺度和条件数。接近零的尾部价格，单用相对误差没有意义。
+
+作业要求的两种场景和固定列名 CSV 很适合作回归材料。对**选定网格**汇总 max/median/p99 误差，不等于普适精度排名：结果取决于网格上下限、是否纳入无法分辨的点及复数 CDF 近似。报告应明确最佳稳定步长范围和失败/退化点。“45° complex-step 总是生产 Gamma 的最佳方法”超出了这些数据；在本模型中，解析 Gamma 更直接。
+
+## 五周学习与实现路线
+
+| 每周约 8 小时 | 阅读与练习 | 库的阶段目标 |
+| --- | --- | --- |
+| 第 1 周 | 第 1 门的浮点与 FD；复现作业两条误差曲线。 | 重构内核前，记录现有 API、退化情形和实测行为。 |
+| 第 2 周 | 第 1 门的 complex-step/CDF；第 2 门的远期记号与平价；推导正确的 45° 展开。 | 加入 `bs_terms` 和 put 定价，检查平价。 |
+| 第 3 周 | 第 2 门的 PDE、风险中性路线及 Greeks；画 Delta/Gamma/Vega 曲线。 | 加入 `Greeks`，写明单位和折点约定。 |
+| 第 4 周 | 第 3 门的价格界、条件数和带 bracket 的求根；比较求解器。 | 实现 IV 状态与受保护求解器。 |
+| 第 5 周 | 本门的并行语义、独立检查；以 Jäckel 为进阶基准。 | 补 Python 镜像、精选 golden 案例和简洁验证报告。 |
+
+面试讲解时，每一阶段至少能给出一个推导、一个数值失败模式、一个检查恒等式和一个明确的 API 决策。
+
+## 与仓库绑定的练习
+
+1. 对 $S=0$、$K=0$、$\sigma=0$、$T=0$、远期 ATM、NaN 和无穷，列一页行为表。比较当前标量、向量、并行和 Python 输出，把“观察到的结果”与“建议 API 规则”分栏。
+2. 在 40,000 点压力网格上，以兼顾尺度的容差比较标量、向量、并行输出。检查每次并行迭代只写一个不同槽位，且回调没有共享可变状态。
+3. 用独立 Python 计算生成少量 golden CSV 案例：包含非零 $r,q$、call/put、多种 $T$ 和明确边界状态。再检查平价、单调性及 Vega–Gamma 恒等式，避免共同公式错误悄悄通过。
+
+## 阅读顺序
+
+1. C++ 工作草案 [`[algorithms.parallel]`](https://timsong-cpp.github.io/cppwp/std20/algorithms.parallel) 与 cppreference 的 [`std::execution` 策略](https://en.cppreference.com/cpp/algorithm/execution_policy_tag_t)。读 `par_unseq`、向量化安全与未捕获异常规则。开放可读；具体实现还应按你的 MSVC 版本核对。
+2. cppreference 的 [`math_errhandling`](https://en.cppreference.com/cpp/numeric/math/math_errhandling) 与 [`errno`](https://en.cppreference.com/cpp/error/errno)。用来区分 C++ 异常、浮点标志与 `errno`。
+3. Michael J. Wichura（1988），“Algorithm AS 241: The Percentage Points of the Normal Distribution”，*Journal of the Royal Statistical Society Series C* 37(3)，477–484，[期刊页](https://academic.oup.com/jrsssc/article/37/3/477/6985522)。检查仓库里的逆正态 CDF 时选读；论文不能单独证实实现里附加的 Halley 精化。
+
+Hull 与 Shreve 是定价主教材；Higham、Goldberg、Squire–Trapp、Martins、Cody、Brent、Jäckel 支持数值路线。Gatheral 的 *The Volatility Surface*（Wiley，2006，[出版社](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119202073)）适合完成常波动率库后选读，并非先修。Joshi 的 C++ 设计书、未指定版本的 Kahan 讲义与 *Numerical Recipes* 暂不列入核心路线，待需要准确版次或可访问章节时再用。

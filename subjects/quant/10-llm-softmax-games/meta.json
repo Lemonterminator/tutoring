@@ -1,0 +1,13 @@
+{
+  "id": "GAME-M0-SOFTMAX",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "llm-foundations",
+  "module": "Math practice",
+  "title": {
+    "en": "LLM lesson one: Softmax and cross entropy",
+    "zh": "LLM 第一课：Softmax 与交叉熵"
+  },
+  "prereqs": [],
+  "sourceLesson": "llm:M0.1"
+}

@@ -1,0 +1,248 @@
+## 1. Motivation
+
+Standard attention computes a score matrix $S\in\mathbb{R}^{n\times n}$, stores it or its softmax, and then multiplies by $V$. The quadratic arithmetic is often acceptable. The defect is moving an $n\times n$ object between high-bandwidth memory (HBM) and on-chip SRAM.
+
+FlashAttention fixes the memory-traffic path without approximating the attention result. It scans score/value blocks, keeps a running maximum, denominator, and weighted numerator, and never needs to materialize the full attention matrix. The online identity is exact in exact arithmetic. Floating-point rounding and underflow remain implementation effects.
+
+## 2. Forward definition
+
+For one query $q\in\mathbb{R}^{d}$, keys $K\in\mathbb{R}^{n\times d}$, and values $V\in\mathbb{R}^{n\times d_v}$, define scores
+
+$$
+s=Kq\in\mathbb{R}^{n},
+\qquad
+s_j=k_j^\top q\in\mathbb{R}.
+$$
+
+The dense attention output is
+
+$$
+y
+=\operatorname{softmax}(s)^\top V
+=\frac{\sum_{j=1}^{n}e^{s_j}v_j}{\sum_{j=1}^{n}e^{s_j}},
+\qquad
+y\in\mathbb{R}^{d_v}.
+$$
+
+To avoid overflow, a dense stable implementation chooses $m=\max_j s_j\in\mathbb{R}$ and computes
+
+$$
+\ell=\sum_{j=1}^{n}e^{s_j-m}\in\mathbb{R}_{\ge 0},
+\qquad
+O=\sum_{j=1}^{n}e^{s_j-m}v_j\in\mathbb{R}^{d_v},
+\qquad
+y=O/\ell\in\mathbb{R}^{d_v}.
+$$
+
+For a block $b$ with scores $s^{(b)}\in\mathbb{R}^{r}$ and values $V^{(b)}\in\mathbb{R}^{r\times d_v}$, its local statistics are
+
+$$
+m_b=\max_j s^{(b)}_j\in\mathbb{R},
+\qquad
+\ell_b=\sum_j e^{s^{(b)}_j-m_b}\in\mathbb{R}_{\ge0},
+\qquad
+O_b=\sum_j e^{s^{(b)}_j-m_b}v^{(b)}_j\in\mathbb{R}^{d_v}.
+$$
+
+If a block is fully masked, every score is $-\infty$. We use the empty-set convention
+
+$$
+M_0=-\infty\in\mathbb{R},
+\qquad
+E_0=0\in\mathbb{R},
+\qquad
+W_0=0\in\mathbb{R}^{d_v}.
+$$
+
+Such a block contributes nothing. It is a special case, not an input to the general recurrence.
+
+**Source.** Dao et al., [FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness](https://arxiv.org/abs/2205.14135), introduces the IO-aware exact tiled algorithm and analyzes its HBM accesses.
+
+## 3. Derivations
+
+### D-M4.2-01 · Online softmax is exact in real arithmetic
+
+**Theorem.** Suppose a processed prefix has state $(m,\ell,O)\in\mathbb{R}\times\mathbb{R}_{\ge0}\times\mathbb{R}^{d_v}$, where $O/\ell$ is its exact softmax-weighted value sum when $\ell>0$. For a nonempty finite block with local statistics $(m_b,\ell_b,O_b)$, define
+
+$$
+m'=\max(m,m_b)\in\mathbb{R},
+$$
+
+$$
+\ell'
+=e^{m-m'}\ell+e^{m_b-m'}\ell_b\in\mathbb{R}_{\ge0},
+$$
+
+$$
+O'
+=e^{m-m'}O+e^{m_b-m'}O_b\in\mathbb{R}^{d_v}.
+$$
+
+Then $O'/\ell'$ equals the exact softmax-weighted sum over the old prefix and the new block. A fully masked block leaves the state unchanged under the empty-set convention.
+
+**Steps.**
+
+1. Let the old prefix have scores $s_1,\ldots,s_a\in\mathbb{R}$, with
+   $$
+   m=\max_{1\le j\le a}s_j,
+   \qquad
+   \ell=\sum_{j=1}^{a}e^{s_j-m}\in\mathbb{R}_{\ge0},
+   $$
+   $$
+   O=\sum_{j=1}^{a}e^{s_j-m}v_j\in\mathbb{R}^{d_v}.
+   $$
+   For the new block, write scores $t_1,\ldots,t_b\in\mathbb{R}$ and
+   $$
+   m_b=\max_{1\le r\le b}t_r,
+   \qquad
+   \ell_b=\sum_{r=1}^{b}e^{t_r-m_b}\in\mathbb{R}_{\ge0},
+   $$
+   $$
+   O_b=\sum_{r=1}^{b}e^{t_r-m_b}u_r\in\mathbb{R}^{d_v}.
+   $$
+2. Set the new reference point to the larger maximum:
+   $$
+   m'=\max(m,m_b).
+   $$
+   This is only a change of exponential reference. For every old score,
+   $$
+   e^{s_j-m'}
+   =e^{m-m'}e^{s_j-m}.
+   $$
+   For every new score,
+   $$
+   e^{t_r-m'}
+   =e^{m_b-m'}e^{t_r-m_b}.
+   $$
+3. Sum the old and new contributions to the denominator:
+   $$
+   \sum_{j=1}^{a}e^{s_j-m'}
+   +\sum_{r=1}^{b}e^{t_r-m'}
+   $$
+   $$
+   =e^{m-m'}\sum_{j=1}^{a}e^{s_j-m}
+   +e^{m_b-m'}\sum_{r=1}^{b}e^{t_r-m_b}
+   $$
+   $$
+   =e^{m-m'}\ell+e^{m_b-m'}\ell_b
+   =\ell'.
+   $$
+4. Apply the same change of reference to the weighted numerator:
+   $$
+   \sum_{j=1}^{a}e^{s_j-m'}v_j
+   +\sum_{r=1}^{b}e^{t_r-m'}u_r
+   $$
+   $$
+   =e^{m-m'}\sum_{j=1}^{a}e^{s_j-m}v_j
+   +e^{m_b-m'}\sum_{r=1}^{b}e^{t_r-m_b}u_r
+   $$
+   $$
+   =e^{m-m'}O+e^{m_b-m'}O_b
+   =O'.
+   $$
+5. If the old and new sets are not empty, the exact dense weighted sum over their union is
+   $$
+   \frac{
+   \sum_{j=1}^{a}e^{s_j-m'}v_j
+   +\sum_{r=1}^{b}e^{t_r-m'}u_r
+   }{
+   \sum_{j=1}^{a}e^{s_j-m'}
+   +\sum_{r=1}^{b}e^{t_r-m'}
+   }
+   =\frac{O'}{\ell'}\in\mathbb{R}^{d_v}.
+   $$
+6. This proves the induction step. The base state is the empty set $(M_0,E_0,W_0)=(-\infty,0,0)$, so the first nonempty block initializes $m=m_b$, $\ell=\ell_b$, and $O=O_b$.
+7. If all scores in a block are $-\infty$, then $m_b=-\infty$ and $\ell_b=0$, but the expression $e^{m-m'}$ can become the indeterminate form $e^{-\infty-(-\infty)}$. Therefore the implementation returns the old state immediately. If the old state is empty, it remains $(-\infty,0,0)$ and contributes no value.
+8. The check compares random blockwise output with dense softmax, reconstructs probabilities from the final $(m,\ell)$, and includes two fully masked blocks. It obtains maximum output error $5.551115123125783\times10^{-17}$ and maximum probability error $0$.
+
+**Check.** checks/M4/D-M4.2-01.py verifies the exact block recurrence, the induction invariant, and the all-$-\infty$ special case; it prints passed: True.
+
+**Floating-point caveat, correctly scoped.** The identity is exact in exact real arithmetic. In float64 or lower precision, ordinary rounding and underflow can occur, including underflow in the vector numerator $O$. This is an implementation-level numerical effect. The online/blockwise identity itself is not an approximation, and this lesson does not claim a general bounded relative-error guarantee.
+
+**Intuition.** Each block chooses its own stable origin. The recurrence rescales the old and new statistics to one shared origin before adding them.
+
+### D-M4.2-02 · Tiling and IO complexity
+
+**Approximation, labeled.** The asymptotic HBM read estimates in this derivation use a two-level memory model. They describe data movement, not a universal wall-clock time.
+
+**Steps.**
+
+1. For a sequence of length $n$ and head dimension $d$, the dense score matrix has shape
+   $$
+   S=QK^\top\in\mathbb{R}^{n\times n},
+   \qquad
+   Q,K\in\mathbb{R}^{n\times d}.
+   $$
+   Materializing $S$ requires $\Theta(n^2)$ elements. Reading or writing the query, key, value, and output tensors contributes $\Theta(nd)$ elements. Thus a naive materialized algorithm has the course estimate
+   $$
+   R_{\mathrm{naive}}
+   =O(n^2+nd),
+   \qquad
+   R_{\mathrm{naive}}\in\mathbb{R}_{\ge0}.
+   $$
+2. Let SRAM hold $M$ scalar elements. Choose a query tile with $B_r$ rows and a key/value tile with $B_c$ rows. Their score tile has shape
+   $$
+   S_{\mathrm{tile}}\in\mathbb{R}^{B_r\times B_c}.
+   $$
+   The tile working set contains $Q_{\mathrm{tile}}\in\mathbb{R}^{B_r\times d}$, $K_{\mathrm{tile}}\in\mathbb{R}^{B_c\times d}$, $V_{\mathrm{tile}}\in\mathbb{R}^{B_c\times d}$, the score tile, and an output tile in $\mathbb{R}^{B_r\times d}$. The fit condition is
+   $$
+   B_rB_c+(B_r+B_c)d+O((B_r+B_c)d)\le M.
+   $$
+3. In the balanced regime, take $B_r\asymp B_c\asymp B$. The dominant working-set terms give $Bd\lesssim M$, so
+   $$
+   B\asymp\frac{M}{d}.
+   $$
+4. There are approximately $(n/B)^2$ query-key tile pairs. A tile reads and writes $O(Bd)$ vector elements. Multiplying the number of tiles by the traffic per tile:
+   $$
+   R_{\mathrm{tile}}
+   =O\left(\left(\frac{n}{B}\right)^2Bd\right)
+   =O\left(\frac{n^2d}{B}\right).
+   $$
+   Substitute $B\asymp M/d$:
+   $$
+   R_{\mathrm{tile}}
+   =O\left(\frac{n^2d}{M/d}\right)
+   =O\left(\frac{n^2d^2}{M}\right).
+   $$
+   The output and boundary terms add lower-order $O(nd)$ terms in this simplified expression.
+5. The online recurrence from D-M4.2-01 keeps only row statistics with shapes $m\in\mathbb{R}^{B_r}$, $\ell\in\mathbb{R}^{B_r}$, and $O\in\mathbb{R}^{B_r\times d}$. It consumes a tile, updates those statistics, and writes the output without writing an $n\times n$ score or probability matrix to HBM.
+6. In the backward pass, storing $(m,\ell)$ per query row costs $O(n)$ values. Given a query tile and key tile, recompute the score tile $S_{\mathrm{tile}}\in\mathbb{R}^{B_r\times B_c}$, reconstruct
+   $$
+   P_{\mathrm{tile},ij}
+   =\frac{e^{S_{\mathrm{tile},ij}-m_i}}{\ell_i},
+   \qquad
+   P_{\mathrm{tile}}\in\mathbb{R}^{B_r\times B_c},
+   $$
+   for unmasked entries, and then form the local gradients. Thus the full attention matrix is recomputed from compact row statistics instead of stored in HBM.
+7. The check evaluates $O(n^2d^2/M)$ and $O(n^2+nd)$ directly, verifies inverse scaling with $M$, and compares the recomputed weighted value output with dense attention. It obtains tiled reads $1048576$, naive reads $1114112$, and reconstruction error $0$.
+
+**Check.** checks/M4/D-M4.2-02.py verifies the IO scaling and backward reconstruction from $(m,\ell)$; it prints passed: True.
+
+**Claim, correctly scoped.** FlashAttention is exact with respect to the attention algebra when the same scores and values are used. Its practical speed depends on tile sizes, kernel implementation, hardware, and memory hierarchy.
+
+## 4. Numerical verification
+
+| Derivation | Numerical output | Result |
+| --- | --- | --- |
+| D-M4.2-01 | maximum output error $5.551115123125783\times10^{-17}$; maximum weight error $0$; two masked blocks | pass |
+| D-M4.2-02 | tiled reads $1048576$; naive reads $1114112$; recomputed output error $0$ | pass |
+
+Run python checks/M4/D-M4.2-01.py and python checks/M4/D-M4.2-02.py from course/. The widget test and repository test suite execute the same edge-case convention.
+
+## 5. Interactive visualizations
+
+<CourseWidget id="V-M4-b" />
+
+**V-M4-b — Online-softmax stepper.** The specification is viz/specs/V-M4-b.yaml and the pure compute module is viz/compute/online_softmax.ts. The widget shows each block's running $m$, $\ell$, and $O$, then displays $O/\ell$. It includes a fully masked block so the reader can see that the state is unchanged rather than observing a NaN.
+
+The widget equation is D-M4.2-01. Its insight sentence states that the blockwise result equals dense softmax while the full attention matrix is never materialized. The existing frontend can render the step table and a compact numerator/denominator trace using its established MDX/Canvas2D or SVG conventions.
+
+## 6. Closing
+
+**Counterintuitive question.** How can an algorithm avoid storing the attention matrix and still return exactly the same output?
+
+**Worked answer.** D-M4.2-01 shows that the output needs only two sufficient statistics per query row: the denominator $\ell\in\mathbb{R}$ and the weighted numerator $O\in\mathbb{R}^{d_v}$, plus the running reference maximum $m\in\mathbb{R}$ for stable exponentials. A tile changes the reference point, but the factors $e^{m-m'}$ and $e^{m_b-m'}$ convert both pieces to the same reference before addition. Therefore $O/\ell$ is the same normalized weighted sum as dense attention. D-M4.2-02 then uses tiling to keep those statistics on chip and avoid HBM traffic for an $n\times n$ matrix.
+
+**Assignment A-M4.** Add the online-softmax implementation to code/minilm/ or code/efficiency/, test it against dense attention on random blocks, include an all-$-\infty$ causal block, and export the V-M4-b step trace. Record the IO convention and the floating-point caveat in the assignment report.
+
+**Spine check.** Architecturally, attention still defines the same prefix-conditioned weighted value distribution. Computationally, the algorithm changes the accumulation order and memory path, not the distribution being computed.

@@ -1,0 +1,13 @@
+{
+  "id": "GAME-M0-NORMS",
+  "subject": "quant",
+  "kind": "game",
+  "gameGroup": "llm-foundations",
+  "module": "Math practice",
+  "title": {
+    "en": "LLM lesson one: LayerNorm and RMSNorm",
+    "zh": "LLM 第一课：LayerNorm 与 RMSNorm"
+  },
+  "prereqs": [],
+  "sourceLesson": "llm:M0.1"
+}

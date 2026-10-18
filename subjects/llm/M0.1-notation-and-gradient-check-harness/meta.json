@@ -1,0 +1,33 @@
+{
+  "subject": "llm",
+  "id": "M0.1",
+  "module": "M0",
+  "title": {
+    "en": "Notation and the gradient-check harness",
+    "zh": "符号表示与梯度检查框架"
+  },
+  "prereqs": [],
+  "estimatedHours": 4,
+  "spine": {
+    "en": {
+      "a": "Fix the Jacobian and reverse-mode conventions used to track information and gradients through every later sequence architecture.",
+      "b": "Fix the scalar-loss convention that lets every later conditional-model derivation be checked numerically."
+    },
+    "zh": {
+      "a": "修正雅可比矩阵和反向模式约定，用于追踪后续所有序列架构中的信息和梯度。",
+      "b": "修正标量损失约定，使后续所有条件模型推导均可进行数值验证。"
+    }
+  },
+  "derivations": [
+    "D-M0.1-01",
+    "D-M0.1-02",
+    "D-M0.1-03",
+    "D-M0.1-04",
+    "D-M0.1-05"
+  ],
+  "visualizations": [
+    "V-M0-a"
+  ],
+  "assignment": "A-M0",
+  "references": []
+}

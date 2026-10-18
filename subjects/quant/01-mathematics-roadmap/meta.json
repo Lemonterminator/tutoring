@@ -1,0 +1,10 @@
+{
+  "id": "QUANT-1", "subject": "quant", "module": "Mathematical foundations and learning paths",
+  "title": { "en": "Mathematics for quantitative research: learning roadmap", "zh": "量化数学学习路线与材料缺口" },
+  "prereqs": ["QUANT-0"],
+  "spine": {
+    "en": { "a": "Choose foundations shared by quantitative roles, then a research or pricing specialization.", "b": "Distinguish available material from complete courses and from personal mastery." },
+    "zh": { "a": "先补共同数学基础，再选择预测研究或定价方向。", "b": "区分已有材料、完整课程覆盖和个人掌握程度。" }
+  },
+  "references": ["Oxford MSc Mathematical and Computational Finance", "CMU MSCF curriculum", "Aalto statistics course listing (2024–2025)"]
+}
